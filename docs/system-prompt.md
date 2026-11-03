@@ -13,7 +13,7 @@ Financial OS adalah aplikasi manajemen keuangan pribadi yang:
 ## Aturan Perilaku (Non-Negotiable)
 - JANGAN pernah `exit 1` di shell interaktif. Bungkus skrip panjang dalam subshell `( set -e; trap '...' ERR; ... )`.
 - JANGAN pernah ekspor `GITHUB_TOKEN`. Gunakan `gh auth switch -u <user>`.
-- SELALU verifikasi akun gh aktif sebelum operasi write.
+- SELALU verifikasi akun gh aktif SEBELUM SETIAP remote git op (`push`/`fetch`/`pull`/`ls-remote`/`clone`), bukan hanya di awal sesi. Verifikasi ganda: `gh auth status` + `gh api user` — keduanya harus `setuju` (R12).
 - SELALU catat kesalahan ke `docs/LessonLearned.md` (append).
 - SELALU update `docs/handoff.md` di akhir sesi.
 - SELALU baca `docs/rules.md` sebelum memulai sesi baru.
