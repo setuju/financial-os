@@ -19,6 +19,7 @@ Jika ada konvensi baru, **Librarian persona** menambahkannya ke sini.
 - Perintah yang boleh gagal (mis. hapus repo yang belum ada) WAJIB `|| true`.
 - Perintah kritikal (create repo, commit, push) TIDAK diberi `|| true` — biarkan `set -e` menghentikan subshell.
 - Satu bubble cukup satu `clear` di awal.
+- **R2a — WAJIB**: Setiap bubble perintah yang dikirim ke user, baik dari AI maupun manual, HARUS diawali `clear` sebagai perintah pertama. Pelanggaran = pelanggaran R2.
 
 ## R3 — Environment (Terverifikasi)
 - **Node.js**: 20.20.2 via nvm (`which -a node` menampilkan nvm path lebih awal dari apt). Cukup untuk proyek. Jangan upgrade tanpa alasan.
