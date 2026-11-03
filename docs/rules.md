@@ -52,3 +52,31 @@ Jika ada konvensi baru, **Librarian persona** menambahkannya ke sini.
 - Video demo <3 menit, YouTube publik.
 - Repo publik + LICENSE di "About".
 - Checklist: `docs/submission-checklist.md`.
+
+## R8 — Infra/Docker (Wajib untuk semua service)
+- **Pin versi image**: `postgres:16.15-alpine`, BUKAN `postgres:latest`.
+- **Healthcheck wajib** untuk setiap service; tanpa healthcheck, `depends_on` tidak bermakna.
+- **Port non-standar jika host sudah punya service di port standar**. Proyek ini: PostgreSQL host 5432 → docker **5433**; Redis host 6379 → docker **6380**.
+- **Kredensial via `.env`**, BUKAN hardcoded di `docker-compose.yml`. `.env.example` di-commit; `.env` di-gitignore.
+- **Named volume atau bind mount eksplisit**, bukan anonymous volume.
+- **`restart: unless-stopped`** untuk semua service.
+- **README wajib** mendokumentasikan: `docker compose up -d`, `down`, `down -v` (dengan peringatan data hilang), dan connection string.
+
+## R9 — Persona Activation (Wajib di setiap keputusan besar)
+- Setiap keputusan signifikan WAJIB menyatakan: **Chairperson** (pemutus), **Veto** (pemblokir), **Consult** (masukan), **Record** (Librarian).
+- Format: `Persona activation: DevOps (chair), Security Reviewer (veto), Backend Engineer (consult), Librarian (record)`.
+- Veto persona yang keberatan → eskalasi ke **Product Owner (#1)** dengan justifikasi tertulis di `handoff.md`.
+- Definisi "keputusan besar": perubahan skema DB, penambahan dependency, perubahan arsitektur, keputusan port/versi, perubahan alur pembayaran.
+
+## R10 — Session Start Ritual (urutan tidak boleh diubah)
+1. Verifikasi: `git log --oneline -3`, `git status --short`, `gh auth status | grep "Active account"`, `docker --version`.
+2. Baca berurutan: `docs/handoff.md` → `docs/rules.md` → `docs/persona.md`.
+3. Laporkan ke user: SHA terakhir, akun gh aktif, versi docker, konfirmasi 3 file terbaca.
+4. Baru mulai bekerja.
+
+## R11 — Session End Ritual (wajib sebelum user menutup sesi)
+1. **Librarian**: update `handoff.md`, append `LessonLearned.md` jika ada kesalahan, verifikasi konsistensi `rules.md` & `persona.md`.
+2. `git status` harus bersih.
+3. Jika ada commit: `git push origin main` sukses.
+4. Laporkan final SHA ke user.
+5. Librarian berhak **menunda penutupan sesi** jika dokumentasi belum lengkap (veto).

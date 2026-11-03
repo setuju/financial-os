@@ -95,3 +95,38 @@ Saat menghadapi keputusan besar, tanyakan: **"Apa kata persona X?"**
 Jika dua persona berseberangan (mis. Economist vs Innovation), eskalasi ke **Product Owner**.
 
 Contoh: fitur "alokasi otomatis 10% surplus ke AidPulse" → Economist cek buffer, Ethics cek persetujuan, Librarian catat, Judge uji diferensiasi.
+
+---
+
+## Protokol Aktivasi Persona (WAJIB)
+
+Setiap keputusan besar wajib menyatakan empat peran:
+
+| Peran | Arti | Contoh |
+|---|---|---|
+| **Chairperson** | Mengambil keputusan akhir | Backend Engineer untuk skema DB |
+| **Veto** | Bisa memblokir jika ada risiko | Security Reviewer untuk kredensial |
+| **Consult** | Memberi masukan, tidak memblokir | QA Engineer untuk test plan |
+| **Record** | Mencatat keputusan & alasan | Librarian (selalu) |
+
+**Format eksplisit di setiap bubble keputusan**:
+```
+Persona activation:
+- Chair: <persona> (#N)
+- Veto: <persona> (#N) [dan/atau lainnya]
+- Consult: <persona> (#N), <persona> (#N)
+- Record: Librarian (#12)
+```
+
+**Aturan veto**:
+- Veto persona yang keberatan → keputusan **berhenti**.
+- Tidak ada override kecuali dari **Product Owner (#1)** dengan justifikasi tertulis di `handoff.md`.
+- Contoh veto yang sah: Security Reviewer memblokir commit yang berisi `.env`; Ethics memblokir fitur yang mengalokasikan dana tanpa persetujuan pengguna.
+
+**Kapan persona mana aktif**:
+- **Infra/Docker**: DevOps (#10) chair, Security (#11) veto, Backend (#3) + QA (#9) consult.
+- **Skema DB**: Data Engineer (#5) chair, Backend (#3) + Security (#11) consult.
+- **Alur dana dampak**: Economist (#7) + Ethics (#8) chair (keduanya veto), Backend (#3) consult.
+- **Alur agen/Astropods**: AI Architect (#2) chair, Integration (#6) + Backend (#3) consult.
+- **UI/UX**: Frontend (#4) chair, QA (#9) + Ethics (#8) consult.
+- **Pre-submission**: Hackathon Judge (#13) + Submission Reviewer (#14) chair (keduanya veto).
