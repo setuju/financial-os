@@ -80,3 +80,30 @@ Jika ada konvensi baru, **Librarian persona** menambahkannya ke sini.
 3. Jika ada commit: `git push origin main` sukses.
 4. Laporkan final SHA ke user.
 5. Librarian berhak **menunda penutupan sesi** jika dokumentasi belum lengkap (veto).
+
+## R12 — Verifikasi Akun gh SEBELUM Setiap Operasi Remote Git (WAJIB)
+
+- Verifikasi akun gh aktif BUKAN hanya di awal sesi. Wajib dijalankan **tepat sebelum** setiap perintah yang menyentuh remote: `git push`, `git fetch`, `git pull`, `git ls-remote`, `git clone`.
+- Alasan: user bekerja di banyak proyek paralel dan bisa switch akun kapan saja. `gh auth switch` dari terminal lain bisa terjadi di tengah sesi kita.
+- Verifikasi ganda — dua sumber harus sama-sama `setuju`:
+  1. `gh auth status` → "Active account: true" = `setuju`
+  2. `gh api user --jq .login` = `setuju` (memverifikasi token efektif yang akan dipakai git)
+- Jika salah satu gagal: **STOP**. Jangan auto-switch tanpa konfirmasi user. Laporkan akun aktif + usul switch.
+- Defensive: `unset GITHUB_TOKEN GH_TOKEN` sebelum verifikasi (R1 tetap berlaku).
+- Pattern wajib (copy ke setiap bubble dengan remote git op):
+
+```bash
+( set +H
+  unset GITHUB_TOKEN GH_TOKEN
+  ACTIVE=$(gh auth status 2>&1 | grep -B1 "Active account: true" | head -1 | sed 's/.*account \([^ ]*\).*/\1/')
+  EFFECTIVE=$(gh api user --jq .login 2>/dev/null || echo "")
+  if [ "$ACTIVE" != "setuju" ] || [ "$EFFECTIVE" != "setuju" ]; then
+    echo "STOP R12: active=$ACTIVE token=$EFFECTIVE, wajib setuju"
+    exit 128
+  fi
+  git push origin main
+)
+```
+
+- **R12a**: Jika bubble berisi >1 operasi remote, ulangi verifikasi sebelum **setiap** operasi, bukan sekali di awal.
+- **R12b**: `gh auth setup-git` idempotent — dianjurkan sebelum push kritis sebagai defensive measure.

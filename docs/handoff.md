@@ -73,3 +73,11 @@
 - Jangan `docker compose down -v` kecuali ingin reset DB.
 - Semua file `.env` gitignored — jangan di-commit.
 - Jangan ekspor `GITHUB_TOKEN`; pakai `gh auth switch -u setuju`.
+
+## Addendum Sesi 2 — Push Recovery & R12
+
+- Push `f85a9b3` gagal 2× dengan "Repository not found" (23:17, 23:25), meski `gh auth status` = setuju dan `gh repo view` berhasil.
+- `gh auth setup-git` (config before=after, tidak berubah) + retry → sukses pada 23:28.
+- Akar penyebab tidak 100% pasti. Kandidat: race mid-session (user switch akun), stale credential cache, atau GitHub blip.
+- **R12 ditambahkan ke `rules.md`**: verifikasi akun gh **sebelum setiap** remote git op, dengan verifikasi ganda (`gh auth status` + `gh api user`).
+- Push final: `f85a9b3` → `origin/main`.
