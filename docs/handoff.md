@@ -125,3 +125,44 @@ R1 GitHub · R2 Shell · R2a Clear · R3 Environment · R4 Git · R5 Dokumentasi
 - `pnpm-lock.yaml` di-commit; jangan di-modify manual
 - **Backend cold start** ~550ms pertama kali; steady-state 3–13ms. Normal.
 - **Tidak** jalankan `pnpm approve-builds` interaktif — config di `backend/pnpm-workspace.yaml` sudah `allowBuilds: esbuild: true`
+
+---
+
+## Sesi 3 Close (2026-11-04)
+
+### Milestone Baru
+- Frontend Next.js 14.2.35 + Tailwind + TS strict scaffolded (`frontend/`)
+- `frontend/lib/api.ts` — type-safe wrapper untuk backend `/health`
+- `frontend/app/page.tsx` — health dashboard server-rendered, force-dynamic
+- **Demo end-to-end PASSED**: browser → Next.js → Fastify → PostgreSQL + Redis
+  - HTML assertion 6/6 (title, card, Healthy badge, PG ok, Redis ok, uptime)
+  - Verified live in Windows browser via `http://localhost:3000`
+
+### Commit Sesi 3
+- `5ee719e` — `feat(frontend): scaffold next 14 + health dashboard`
+- (SHA final commit ini) — `docs(session 3 close): record exit-1 violation, frontend milestone, demo e2e`
+
+### Environment Notes
+- RAM WSL2: 2.8GB total, ~2.2GB available saat idle. Tight tapi cukup.
+  - Frontend production start ≈ 250MB (bukan dev/HMR)
+  - Backend node ≈ 150MB
+  - Docker PG+Redis ≈ 300MB
+  - `pnpm dev` (HMR) tidak dipakai untuk demo — hemat ~500MB
+- Backend `/health` latency: warm 3–13ms, cold-after-idle bisa 500–2000ms (PG pool + Redis reconnect paralel saat first request setelah idle >30s). Acceptable — bukan bug, karakteristik pool.
+- Backend tidak expose `/` route (404) — by design, frontend yang handle UI.
+
+### Next Steps (Sesi 4)
+1. **Anti-Budget parser** (Minggu 2) — input bahasa alami → jurnal → PostgreSQL
+2. **AG Grid** — tampilkan jurnal (Minggu 2)
+3. **Registrasi akun sponsor** sisa: Astropods, AG Grid trial, Bryntum trial, Elastic trial, KERNEL, APIMatic, Zapier
+4. **Surplus Oracle** (Minggu 3)
+5. **PayPal Payouts** (Minggu 3)
+6. Lanjut per `docs/roadmap.md`
+
+### Aturan
+Tidak ada R baru di Sesi 3. R1–R12 tetap. R2 (no exit 1) diuji ulang dan **gagal 1×** (Kesalahan 13) — akan dijadikan pengingat permanen.
+
+### Preconditions Sesi 4
+- Docker Desktop running; `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d`
+- `gh auth status` = `setuju` (R12 enforced: status + `gh api user`)
+- Node 20.20.2 via nvm; pnpm 12.16.1

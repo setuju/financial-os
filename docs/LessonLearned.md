@@ -60,3 +60,13 @@
 - `/health` handler overall timeout 3 detik via `Promise.race`
 - Return 503 cepat saat DB down — lebih informatif daripada menggantung.
 **Pelajaran**: Health check harus cepat. Latensi tinggi pada probe = observability rusak.
+
+## Kesalahan 13: Top-Level `exit 1` Mematikan Shell Interaktif
+**Apa yang terjadi**: Bubble demo (Sesi 3) menulis `if ! curl ...; then ...; exit 1; fi` di top-level shell interaktif. Meskipun R2 melarang, saya melanggarnya. Terminal user crash dengan "process exited with code 1", harus reopen.
+**Dampak**: User kehilangan state terminal. Ini **kedua kalinya** saya melanggar aturan yang saya tulis sendiri (Kesalahan 8 = `clear`, Kesalahan 13 = `exit 1`).
+**Koreksi**:
+- `exit` HANYA boleh di dalam `( ... )` — subshell menyerap exit code, shell interaktif hidup.
+- Top-level: gunakan `echo` + natural return, atau wrap seluruh logika dalam subshell.
+- Standard pattern tiap bubble ke user: `clear` + `( set +H; ... )` — tanpa pengecualian.
+- Gate dengan `if ! R12 ...; then echo STOP; else ...; fi` — jangan `|| { ... }` yang membiarkan sisa blok tetap jalan.
+**Pelajaran**: Aturan yang saya tulis untuk user harus saya patuhi lebih ketat dari siapapun. Kalau R2 melarang `exit 1`, maka `exit 1` tidak boleh ada di bubble saya — titik. Ini kontrak, bukan preferensi.
