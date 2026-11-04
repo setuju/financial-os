@@ -27,9 +27,17 @@ export default async function Journal() {
               All transactions parsed from natural-language input.
             </p>
           </div>
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
-            ← Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/journal/new"
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + New
+            </Link>
+            <Link href="/" className="text-sm text-blue-600 hover:underline">
+              ← Dashboard
+            </Link>
+          </div>
         </div>
 
         {transactions === null ? (

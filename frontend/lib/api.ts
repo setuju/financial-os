@@ -51,3 +51,35 @@ export async function getTransactions(limit = 50): Promise<Transaction[] | null>
     return null;
   }
 }
+
+// ---- Create transaction (for Server Action use) ----
+
+export type CreateTransactionResult =
+  | { ok: true; transaction: Transaction }
+  | { ok: false; error: 'no_amount' | 'invalid_input' | 'zero_amount' | 'network_error' };
+
+export async function createTransaction(text: string): Promise<CreateTransactionResult> {
+  try {
+    const res = await fetch(`${API_URL}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      cache: 'no-store',
+    });
+    if (res.status === 201) {
+      const data = (await res.json()) as { transaction: Transaction };
+      return { ok: true, transaction: data.transaction };
+    }
+    if (res.status === 400) {
+      const data = (await res.json()) as { error?: string };
+      const allowed = ['no_amount', 'invalid_input', 'zero_amount'] as const;
+      const err = (allowed as readonly string[]).includes(data.error ?? '')
+        ? (data.error as typeof allowed[number])
+        : 'invalid_input';
+      return { ok: false, error: err };
+    }
+    return { ok: false, error: 'network_error' };
+  } catch {
+    return { ok: false, error: 'network_error' };
+  }
+}
