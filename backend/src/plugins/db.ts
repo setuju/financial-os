@@ -15,7 +15,7 @@ export default fp(
       connectionString: config.databaseUrl,
       max: 10,
       idleTimeoutMillis: 30_000,
-      connectionTimeoutMillis: 5_000,
+      connectionTimeoutMillis: 2_000,
     });
     app.decorate('pg', pool);
     app.addHook('onClose', async () => {

@@ -13,8 +13,9 @@ export default fp(
   async (app: FastifyInstance) => {
     const client = new Redis(config.redisUrl, {
       lazyConnect: false,
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => Math.min(times * 200, 2000),
+      connectTimeout: 2_000,
+      maxRetriesPerRequest: 1,
+      retryStrategy: (times) => Math.min(times * 200, 2_000),
     });
     app.decorate('redis', client);
     app.addHook('onClose', async () => {
