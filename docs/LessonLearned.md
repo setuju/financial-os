@@ -39,3 +39,24 @@
 - `gh auth setup-git` (idempotent) + retry → sukses. Config before=after, jadi bukan helper yang berubah — kandidat penyebab: race mid-session switch akun, stale cache, atau blip GitHub.
 - **R12 ditambahkan**: verifikasi akun gh tepat sebelum setiap remote git op, dengan dua sumber (`gh auth status` + `gh api user`).
 **Pelajaran**: Auth check di awal sesi tidak menjamin auth di tengah sesi pada lingkungan multi-akun. Verifikasi harus tepat sebelum operasi kritis. GitHub membalas **404** (bukan 403) untuk repo privat tanpa akses — jangan percaya "not found" begitu saja.
+
+## Kesalahan 11: Kill + Wait pada Multi-Layer Process Tree
+**Apa yang terjadi**: Bubble smoke test A3c (Sesi 2) menjalankan `pnpm start &` → `kill $BACK_PID` → `wait $BACK_PID`. `pnpm start` men-spawn `tsx` yang men-spawn `node`. SIGTERM ke pnpm tidak membunuh grandchildren; `wait` menunggu seluruh job selesai — hang ~15 menit sampai user menekan Ctrl+C.
+**Dampak**: Waktu user terbuang; terminal macet; diagnosis harus recovery manual.
+**Koreksi**:
+- Pakai `exec node --import tsx src/index.ts` — flatten process tree jadi 1 layer.
+- Atau `setsid` + `kill -9 -$PGID` untuk membunuh seluruh process group.
+- Jangan pernah `wait` setelah `kill` tanpa memastikan tidak ada grandchild.
+- Selalu fallback `pkill -9 -f "<pattern>"` setelah kill utama.
+- `trap cleanup EXIT INT TERM` untuk cleanup otomatis pada semua exit path.
+**Pelajaran**: "Kill job leader" di bash ≠ "kill process tree". Selalu flatten atau pakai process group.
+
+## Kesalahan 12: /health Butuh 43 Detik untuk Melaporkan 503 Saat Backend Down
+**Apa yang terjadi**: Saat container PG/Redis mati (laptop sleep semalam), `/health` handler menunggu 43 detik sebelum mengembalikan `{"status":"degraded","pg":"fail","redis":"fail"}` dengan HTTP 503. Kombinasi `pg.connectionTimeoutMillis: 5000` × retry pool + ioredis `maxRetriesPerRequest: 3` × retryStrategy (200ms × n, cap 2000ms).
+**Dampak**: Demo juri berpotensi terlihat "backend hang" bukan "backend sehat tapi DB down". Observability buruk.
+**Koreksi (target Minggu 6)**:
+- `pg.connectionTimeoutMillis: 2000` (dari 5000)
+- `ioredis` `connectTimeout: 2000` + `maxRetriesPerRequest: 1`
+- `/health` handler overall timeout 3 detik via `Promise.race`
+- Return 503 cepat saat DB down — lebih informatif daripada menggantung.
+**Pelajaran**: Health check harus cepat. Latensi tinggi pada probe = observability rusak.
