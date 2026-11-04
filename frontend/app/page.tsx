@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getHealth } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,13 @@ export default async function Home() {
             </p>
           )}
         </div>
+
+        <Link
+          href="/journal"
+          className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          View Journal →
+        </Link>
 
         <p className="mt-8 text-xs text-gray-500">
           Hackathon build — Sesi 3 scaffold. Anti-Budget parser &amp; AG Grid coming next.

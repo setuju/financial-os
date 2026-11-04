@@ -17,3 +17,37 @@ export async function getHealth(): Promise<HealthResponse | null> {
     return null;
   }
 }
+
+// ---- Transactions ----
+
+export type Transaction = {
+  id: string;
+  user_id: string | null;
+  raw_text: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  occurred_at: string;  // ISO 8601
+  source: 'rule' | 'llm';
+  created_at: string;   // ISO 8601
+};
+
+export type TransactionsResponse = {
+  transactions: Transaction[];
+  count: number;
+  limit: number;
+  offset: number;
+};
+
+export async function getTransactions(limit = 50): Promise<Transaction[] | null> {
+  try {
+    const res = await fetch(`${API_URL}/transactions?limit=${limit}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as TransactionsResponse;
+    return data.transactions;
+  } catch {
+    return null;
+  }
+}
