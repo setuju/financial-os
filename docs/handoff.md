@@ -166,3 +166,73 @@ Tidak ada R baru di Sesi 3. R1–R12 tetap. R2 (no exit 1) diuji ulang dan **gag
 - Docker Desktop running; `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d`
 - `gh auth status` = `setuju` (R12 enforced: status + `gh api user`)
 - Node 20.20.2 via nvm; pnpm 12.16.1
+
+---
+
+## Sesi 5 Close (2026-11-05 ~01:35 WIB)
+
+**HEAD**: `fd0049a` (akan berubah setelah commit close ini)
+
+### What shipped
+
+- **Migration runner** (`feat(backend): add transactions schema and idempotent migration runner`, `37dc680`)
+  - `transactions` table: 9 columns, 3 indexes, 3 constraints
+  - `_migrations` tracking table
+  - `pnpm migrate` — idempotent
+- **Anti-Budget parser** (`ab67f3d`)
+  - Bahasa Indonesia → structured transaction
+  - Handles `20ribu`, `1.5jt`, `1.250.000`, `20.5rb`, income/expense verbs, 7 categories
+  - **20 unit tests, all green**
+- **Transactions repo + routes** (`d57fa03`)
+  - `POST /transactions` — parser + INSERT + 201
+  - `GET /transactions?limit&offset` — envelope `{transactions, count, limit, offset}`
+  - E2E verified: 201 (expense), 201 (income), 400 (no_amount), 400 (schema), 200 (list)
+- **Journal page** (`bcf8ad3`)
+  - `/journal` server-rendered table, `force-dynamic`
+  - Sorted newest-first, signed amounts, category chips
+- **New transaction form via Server Action** (`e5294f2`)
+  - `/journal/new` — natural language input → POST → redirect `/journal`
+  - Error states: `no_amount`, `invalid_input`, `zero_amount`, `network_error`, `empty`
+- **R12 auto-switch** (`fd0049a`)
+  - `with_setuju` wrapper: switch → verify → git op → restore
+  - R12c documented: window not atomic (~<1s normal)
+- **Infra + Docker** unchanged — both containers `healthy`
+
+### What deferred
+
+- **AG Grid journal** — Phase 5 reverted. Cause of `next build` hang during attempt **unknown** (occurred with and without AG Grid). Build now works post-revert. To retry **tomorrow with 30-min time-box**; abort immediately if hang returns.
+  - Consider alternatives: `next build --turbo`, TanStack Table (lighter), or accept plain table permanently.
+- **Elastic indexing** — Phase 6 not started.
+- **Surplus Oracle, PayPal Payouts, Bryntum, KERNEL, Zapier** — Minggu 3–5.
+
+### Environment quirks discovered
+
+- `frontend/components/` did not exist despite `docs/handoff.md` claiming scaffold — `create-next-app` in Sesi 3 did not create it. Fixed with `mkdir -p`.
+- `next build` can hang at webpack init **without OOM and without process leak visible in `ps`**. Best recovery so far: `rm -rf .next node_modules` + `pnpm store prune` + `pnpm install` + rebuild. Do not immediately suspect AG Grid (Kesalahan 18).
+- After `timeout` SIGKILL to `next build`, WSL2 may hold state for 10–15 min; retry sooner may re-trigger hang (Kesalahan 19).
+
+### Preconditions for Sesi 6
+
+1. `git status` clean, `HEAD` = final SHA of session close
+2. Docker containers healthy: `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d`
+3. Backend on :3001 (start with `cd backend && pnpm start`)
+4. Frontend build works: `cd frontend && pnpm build` should succeed <200s
+5. `gh auth status` + `gh api user --jq .login` — both may be any account; `with_setuju` wrapper handles switch + restore
+6. R12 auto-switch active
+
+### Next steps (Sesi 6, in order)
+
+1. **Decide AG Grid**: retry with time-box 30 min OR drop permanently and note in Devpost description "tabular display (custom)" not "AG Grid".
+2. **Elastic indexing** (Minggu 2 roadmap): index transactions on insert, `GET /search?q=`.
+3. **Registrasi akun sponsor** sisa: Astropods, Bryntum trial, Elastic trial, KERNEL, APIMatic, Zapier (user manual).
+4. **Surplus Oracle** (Minggu 3): predict vs actual surplus → Dompet Dampak.
+5. **PayPal Payouts** (Minggu 3).
+
+### Rules changes this session
+
+- **R12 revised**: auto-switch to `setuju` for remote git ops, restore original after (see `docs/rules.md` R12c for atomicity caveat)
+- **R12b** unchanged: `unset GITHUB_TOKEN GH_TOKEN` before switch
+
+### LessonLearned entries this session
+
+Kesalahan 15 (folder assumption), 16 (pipe masks exit), 17 (curl no timeout), 18 (AG Grid misdiagnosis), 19 (WSL timeout cleanup lag).

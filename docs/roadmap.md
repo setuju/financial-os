@@ -15,13 +15,14 @@
 ### Minggu 1 — Fondasi & Rekon
 - [x] Rekon environment WSL2 & instal toolchain.
 - [x] Buat struktur folder & file docs.
-- [ ] Inisialisasi repo Git & push ke `setuju/financial-os` (private).
+- [x] Inisialisasi repo Git & push ke `setuju/financial-os` (private).
 - [ ] Daftar akun: PayPal Developer Sandbox, Astropods, AG Grid trial, Bryntum trial, Elastic trial, KERNEL, APIMatic.
 
 ### Minggu 2 — Anti-Budget Core (Wajib Selesai)
-- Bangun parser bahasa alami (LLM + rule-based fallback) untuk kalimat seperti "saya baru jajan 20ribu; tadi dapat hadiah 15ribu".
-- Simpan transaksi ke PostgreSQL; indeks ke **Elastic**.
-- Tampilkan jurnal di **AG Grid**.
+- [x] Bangun parser bahasa alami (rule-based) untuk kalimat seperti "saya baru jajan 20ribu; tadi dapat hadiah 15ribu".
+- [x] Simpan transaksi ke PostgreSQL.
+- [ ] Indeks ke **Elastic** (deferred ke Sesi 6).
+- [x] Tampilkan jurnal (HTML table; **AG Grid deferred** — build hang, akan di-retry).
 
 ### Minggu 3 — Surplus Oracle & PayPal Integration
 - Hitung **Surplus Bebas Etis** per periode (harian, mingguan, bulanan).

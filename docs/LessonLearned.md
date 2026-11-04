@@ -79,3 +79,37 @@
 - Termasuk `gh auth switch`, bukan hanya `gh auth status` / `gh api user`.
 - R12b ditambahkan ke `docs/rules.md` sebagai pengingat eksplisit urutan.
 **Pelajaran**: Aturan kompleks butuh checklist eksplisit per-bubble, bukan andalkan memori. Tiga pelanggaran aturan sendiri (Kesalahan 8, 13, 14) dalam 2 sesi menunjukkan pola sistematis: "aturan yang saya tulis untuk user juga harus saya periksa di setiap bubble yang saya kirim, bukan mengandalkan ingatan."
+
+## Kesalahan 15: Asumsi `frontend/components/` Ada Tanpa `.gitkeep`
+**Apa yang terjadi**: Bubble Phase 5 menulis `frontend/components/TransactionGrid.tsx`. Direktori tidak ada — Sesi 1 buat kosong, git tidak track folder kosong, Sesi 3 (create-next-app) tidak buat ulang.
+**Dampak**: Bubble STOP di step 2, ag-grid ter-install sia-sia (belum di-commit), ~10 menit terbuang.
+**Koreksi**: Selalu `mkdir -p` sebelum menulis file di direktori yang mungkin belum ada. Folder kerangka pakai `.gitkeep`.
+**Pelajaran**: Jangan asumsikan struktur direktori dari handoff — verifikasi dengan `test -d` sebelum menulis.
+
+## Kesalahan 16: `cmd | tail` Menyembunyikan Exit Code
+**Apa yang terjadi**: `timeout 200 pnpm build 2>&1 | tail -25` — pipe membuat `$?` = exit code `tail` (selalu 0), bukan `build`. `timeout` SIGTERM diabaikan `set -e`.
+**Dampak**: Build terpotong di tengah, subshell lanjut, `.next` incomplete. Baru ketahuan dari log start "Could not find a production build".
+**Koreksi**: Pakai `set -o pipefail` + `RC=${PIPESTATUS[0]}`. Atau jangan pipe output kritikal.
+**Pelajaran**: Pipe menyembunyikan error secara default. Untuk command kritikal, `pipefail` wajib.
+
+## Kesalahan 17: `curl -sf` Tanpa `--max-time` Bisa Hang
+**Apa yang terjadi**: Loop wait `curl -sf http://localhost:3000/` tanpa `--max-time`. Jika TCP listener ada tapi HTTP tidak responsif, curl menunggu selamanya.
+**Dampak**: Bubble bisa hang tanpa batas; terminal user macet.
+**Koreksi**: Selalu `curl -sf --max-time N` (2–5 detik untuk readiness, 5–10 untuk response).
+**Pelajaran**: Setiap network probe di bubble wajib punya timeout eksplisit.
+
+## Kesalahan 18: AG Grid Build Hang — Miskategorisasi Penyebab
+**Apa yang terjadi**: Setelah menambah `ag-grid-community@31.3.4` + `ag-grid-react@31.3.4` dengan pola `dynamic(ssr:false)`, `next build` hang permanen di "Creating an optimized production build …". Saya menyimpulkan "AG Grid adalah penyebabnya" setelah 2 kegagalan (200s, 600s). Setelah revert penuh AG Grid, build **tetap hang**. Kesimpulan pertama saya salah.
+**Dampak**: ~90 menit terbuang pada misdiagnosis; akhirnya AG Grid di-revert; waktu hilang.
+**Koreksi**:
+  - Untuk perubahan multi-variabel (paket + file + page rewrite), lakukan **differential diagnosis**: revert semua ke known-good, build, konfirmasi baseline OK, lalu tambah satu variabel per percobaan.
+  - Jika `next build` hang > 5 menit dengan `.next` < 1MB (hanya skeleton), itu **bukan lambat** — itu webpack init yang macet. Curigai environmental, bukan kode.
+**Pelajaran**: Jangan konfirmasi hipotesis dari kegagalan berulang yang sama. Isolasi variabel sebelum menyimpulkan.
+
+## Kesalahan 19: `timeout` Kill tidak Membersihkan State WSL2 Segera
+**Apa yang terjadi**: Setelah 3× kill (`timeout 200`, `timeout 600`, `timeout 300`), build tetap hang selama ~15 menit ke depan. Pada 01:27 (13 menit setelah kegagalan terakhir) build sukses tanpa perubahan kode/restart/env. Dugaan: WSL2 menahan file lock / cache lebih lama dari yang diharapkan setelah SIGKILL berlapis; state akhirnya bersih setelah delay alami.
+**Dampak**: Saya menyimpulkan "environment rusak, restart wajib". Ternyata cukup tunggu 10-15 menit.
+**Koreksi**:
+  - Setelah `timeout` kill build: **beri jeda minimal 5 menit** sebelum retry, atau verifikasi cleanup dengan `lsof frontend/.next/BUILD_ID 2>/dev/null` dan `ss -tlnp | grep :3000`.
+  - Jika build macet berulang tanpa perubahan kode: coba `pnpm store prune` + `rm -rf node_modules .next` sebelum menyimpulkan "restart WSL".
+**Pelajaran**: WSL2 tidak menyelesaikan cleanup proses SIGKILL seketika. Beri waktu sebelum retry atau nuklir state.
