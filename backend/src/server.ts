@@ -4,6 +4,7 @@ import { config } from './config';
 import dbPlugin from './plugins/db';
 import redisPlugin from './plugins/redis';
 import healthRoutes from './routes/health';
+import transactionsRoutes from './routes/transactions';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -12,5 +13,6 @@ export async function buildServer(): Promise<FastifyInstance> {
   await app.register(dbPlugin);
   await app.register(redisPlugin);
   await app.register(healthRoutes);
+  await app.register(transactionsRoutes);
   return app;
 }

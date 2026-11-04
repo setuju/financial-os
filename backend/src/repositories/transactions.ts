@@ -1,0 +1,93 @@
+/**
+ * Transactions repository. Thin data-access layer over pg Pool.
+ * Kept separate from routes so unit tests can hit repo with a mocked pool.
+ *
+ * Note: pg returns NUMERIC as string to preserve precision. We convert to
+ * number here — safe because NUMERIC(15,2) max ~9.99e13 < Number.MAX_SAFE_INTEGER.
+ */
+import type pg from 'pg';
+import type { ParsedTransaction } from '../surplus/parser.js';
+
+export interface TransactionRow {
+  id: string;
+  user_id: string | null;
+  raw_text: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  occurred_at: Date;
+  source: 'rule' | 'llm';
+  created_at: Date;
+}
+
+export interface InsertInput {
+  userId?: string | null;
+  parsed: ParsedTransaction;
+}
+
+export interface ListOptions {
+  limit: number;
+  offset: number;
+}
+
+interface RawRow {
+  id: string;
+  user_id: string | null;
+  raw_text: string;
+  amount: string; // NUMERIC → string from pg
+  type: 'income' | 'expense';
+  category: string;
+  occurred_at: Date;
+  source: 'rule' | 'llm';
+  created_at: Date;
+}
+
+function mapRow(row: RawRow): TransactionRow {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    raw_text: row.raw_text,
+    amount: Number(row.amount),
+    type: row.type,
+    category: row.category,
+    occurred_at: row.occurred_at,
+    source: row.source,
+    created_at: row.created_at,
+  };
+}
+
+export async function insertTransaction(
+  pool: pg.Pool,
+  input: InsertInput,
+): Promise<TransactionRow> {
+  const { parsed, userId = null } = input;
+  const result = await pool.query<RawRow>(
+    `INSERT INTO transactions (user_id, raw_text, amount, type, category, occurred_at, source)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, user_id, raw_text, amount, type, category, occurred_at, source, created_at`,
+    [
+      userId,
+      parsed.rawText,
+      parsed.amount,
+      parsed.type,
+      parsed.category,
+      parsed.occurredAt,
+      parsed.source,
+    ],
+  );
+  return mapRow(result.rows[0]);
+}
+
+export async function listTransactions(
+  pool: pg.Pool,
+  opts: ListOptions,
+): Promise<TransactionRow[]> {
+  const result = await pool.query<RawRow>(
+    `SELECT id, user_id, raw_text, amount, type, category, occurred_at, source, created_at
+     FROM transactions
+     ORDER BY occurred_at DESC, created_at DESC
+     LIMIT $1 OFFSET $2`,
+    [opts.limit, opts.offset],
+  );
+  return result.rows.map(mapRow);
+}
