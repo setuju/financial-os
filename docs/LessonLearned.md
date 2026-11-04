@@ -70,3 +70,12 @@
 - Standard pattern tiap bubble ke user: `clear` + `( set +H; ... )` — tanpa pengecualian.
 - Gate dengan `if ! R12 ...; then echo STOP; else ...; fi` — jangan `|| { ... }` yang membiarkan sisa blok tetap jalan.
 **Pelajaran**: Aturan yang saya tulis untuk user harus saya patuhi lebih ketat dari siapapun. Kalau R2 melarang `exit 1`, maka `exit 1` tidak boleh ada di bubble saya — titik. Ini kontrak, bukan preferensi.
+
+## Kesalahan 14: `gh auth switch` Dipanggil Sebelum `unset GITHUB_TOKEN`
+**Apa yang terjadi**: Bubble R10b (Sesi 4) menaruh `gh auth switch -u setuju` di dalam subshell, sebelum `unset GITHUB_TOKEN GH_TOKEN`. Akibatnya `gh` menolak switch dengan *"The value of the GITHUB_TOKEN environment variable is being used for authentication"*. R12 verify tetap gagal: `active=TidakSetuju token=TidakSetuju`.
+**Dampak**: Waktu terbuang; user harus switch manual di luar subshell.
+**Koreksi**:
+- `unset GITHUB_TOKEN GH_TOKEN` HARUS di **top-level** shell (bukan dalam subshell), sebelum `gh` command apa pun.
+- Termasuk `gh auth switch`, bukan hanya `gh auth status` / `gh api user`.
+- R12b ditambahkan ke `docs/rules.md` sebagai pengingat eksplisit urutan.
+**Pelajaran**: Aturan kompleks butuh checklist eksplisit per-bubble, bukan andalkan memori. Tiga pelanggaran aturan sendiri (Kesalahan 8, 13, 14) dalam 2 sesi menunjukkan pola sistematis: "aturan yang saya tulis untuk user juga harus saya periksa di setiap bubble yang saya kirim, bukan mengandalkan ingatan."
