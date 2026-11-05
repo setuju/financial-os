@@ -122,3 +122,9 @@ with_setuju() {
 - **R12b**: `unset GITHUB_TOKEN GH_TOKEN` sebelum switch (di dalam wrapper).
 - **R12c (baru)**: Wrapper mengubah global gh state sementara. Terminal lain user bisa terkena dampak selama window eksekusi (<1s normal). Wrapper restore akun asal di akhir, tapi window tetap tidak atomik — kesadaran user diperlukan.
 
+
+## R13 — Jangan Build Lokal (Gunakan CI/CD)
+- **JANGAN** jalankan `pnpm build` atau `next build` di lingkungan WSL2 lokal.
+- WSL2 memiliki RAM terbatas dan proses build Next.js/Webpack dapat memicu hang atau *Out of Memory* (OOM).
+- Cukup jalankan `pnpm exec tsc --noEmit` (Typecheck) sebelum commit.
+- Biarkan **Vercel** (untuk frontend) dan **Render** (untuk backend) yang melakukan *build* produksi via pipeline CI/CD.

@@ -236,3 +236,6 @@ Tidak ada R baru di Sesi 3. R1–R12 tetap. R2 (no exit 1) diuji ulang dan **gag
 ### LessonLearned entries this session
 
 Kesalahan 15 (folder assumption), 16 (pipe masks exit), 17 (curl no timeout), 18 (AG Grid misdiagnosis), 19 (WSL timeout cleanup lag).
+
+## Workflow Update (Sesi 7)
+- Pipeline build lokal dihentikan. Semua verifikasi kode menggunakan `tsc --noEmit`. Build produksi sepenuhnya diserahkan ke Vercel dan Render (R13).
