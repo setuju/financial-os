@@ -121,3 +121,50 @@ export async function distributeSurplus(
   }
   return res.json();
 }
+
+// ---- Surplus Oracle ----
+
+export type SurplusMetrics = {
+  totalIncome: number;
+  totalExpense: number;
+  currentSurplus: number;
+};
+
+export type SurplusPrediction = {
+  id: string;
+  predicted_amount: string;
+  actual_amount: string | null;
+  status: 'pending' | 'resolved';
+  created_at: string;
+};
+
+export type SurplusResponse = {
+  metrics: SurplusMetrics;
+  prediction: SurplusPrediction | null;
+};
+
+export async function getSurplus(): Promise<SurplusResponse | null> {
+  try {
+    const res = await fetch(`${API_URL}/surplus/current`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return (await res.json()) as SurplusResponse;
+  } catch {
+    return null;
+  }
+}
+
+export async function predictSurplus(predictedAmount: number): Promise<SurplusPrediction | null> {
+  try {
+    const res = await fetch(`${API_URL}/surplus/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ predictedAmount }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { prediction: SurplusPrediction };
+    return data.prediction;
+  } catch {
+    return null;
+  }
+}

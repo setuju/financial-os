@@ -1,10 +1,12 @@
 import Link from 'next/link';
-import { getHealth } from '@/lib/api';
+import { getHealth, getSurplus } from '@/lib/api';
+import SurplusOracleCard from '@/components/SurplusOracleCard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const health = await getHealth();
+  const surplusData = await getSurplus();
   const isOk = health?.status === 'ok';
 
   const wrapperClass = !health
@@ -43,12 +45,29 @@ export default async function Home() {
           )}
         </div>
 
-        <Link
-          href="/journal"
-          className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          View Journal →
-        </Link>
+        {surplusData && (
+          <div className="mt-8">
+            <SurplusOracleCard 
+              metrics={surplusData.metrics} 
+              initialPrediction={surplusData.prediction} 
+            />
+          </div>
+        )}
+
+        <div className="mt-6 flex gap-4">
+          <Link
+            href="/journal"
+            className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            View Journal →
+          </Link>
+          <Link
+            href="/impact"
+            className="inline-block rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          >
+            Impact Wallet →
+          </Link>
+        </div>
 
         <p className="mt-8 text-xs text-gray-500">
           Hackathon build — Sesi 3 scaffold. Anti-Budget parser &amp; AG Grid coming next.
