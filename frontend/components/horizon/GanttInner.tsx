@@ -16,15 +16,15 @@ interface CustomTask extends TaskModel {
 
 export default function GanttInner({ licenseKey }: { licenseKey: string }) {
   const [config, setConfig] = useState<GanttConfig | null>(null);
-  const ganttRef = useRef<any>(null);
+  // Gunakan tipe class BryntumGantt untuk ref
+  const ganttRef = useRef<BryntumGantt>(null);
 
-  // Bryntum 8: register via globalThis as fallback
-  useEffect(() => {
-    (globalThis as any).bryntum = {
-      ...((globalThis as any).bryntum ?? {}),
-      licenseKey,
-    };
-  }, [licenseKey]);
+  // Safe global assignment tanpa deklarasi ulang dan tanpa 'any'
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { bryntum?: { licenseKey?: string } };
+    w.bryntum = w.bryntum || {};
+    w.bryntum.licenseKey = licenseKey;
+  }
 
   useEffect(() => {
     const today = new Date();
@@ -34,7 +34,7 @@ export default function GanttInner({ licenseKey }: { licenseKey: string }) {
       {
         id: 1,
         name: 'Emergency Fund (Target: $10,000)',
-        startDate: today,          // Date, not string
+        startDate: today,
         duration: 12,
         durationUnit: 'month',
         percentDone: 25,
@@ -46,7 +46,7 @@ export default function GanttInner({ licenseKey }: { licenseKey: string }) {
       {
         id: 2,
         name: 'New Car Down Payment (Target: $5,000)',
-        startDate: nextMonth,      // Date, not string
+        startDate: nextMonth,
         duration: 10,
         durationUnit: 'month',
         percentDone: 10,
@@ -80,10 +80,7 @@ export default function GanttInner({ licenseKey }: { licenseKey: string }) {
 
   return (
     <div className="h-[600px] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-      <BryntumGantt
-        ref={ganttRef}
-                {...config}
-      />
+      <BryntumGantt ref={ganttRef} {...config} />
     </div>
   );
 }

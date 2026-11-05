@@ -15,5 +15,11 @@ const GanttInner = dynamic<{ licenseKey: string }>(
 );
 
 export default function GanttWrapper({ licenseKey }: { licenseKey: string }) {
+  if (typeof window !== 'undefined') {
+    const w = window as unknown as { bryntum?: { licenseKey?: string } };
+    w.bryntum = w.bryntum || {};
+    w.bryntum.licenseKey = licenseKey;
+  }
+
   return <GanttInner licenseKey={licenseKey} />;
 }
