@@ -17,7 +17,7 @@ function findEnvFile(): string | undefined {
 
 const envFile = findEnvFile();
 if (envFile) {
-  dotenv.config({ path: envFile });
+  dotenv.config({ path: envFile, override: false });
 }
 
 function required(name: string): string {
