@@ -1,44 +1,59 @@
 # Financial OS
 
-> Personal finance with natural-language input, ethical surplus allocation, and PayPal-powered impact.
+**Financial OS** adalah aplikasi manajemen keuangan pribadi berbasis bahasa alami yang berfokus pada **"Surplus Bebas Etis"**. Aplikasi ini didesain untuk PayPal AI Hackathon 2026.
 
-**Status**: Under active development for [PayPal AI Hackathon 2026](https://www.paypal.ai/hackathon).
+## 💡 Konsep Utama
+1. **Anti-Budget (Natural Language Input)**: Pengguna mencatat transaksi dengan kalimat bebas (Bahasa Indonesia), tanpa perlu mengisi formulir tabel yang rumit.
+2. **Surplus Oracle**: Memprediksi dan menghitung surplus keuangan yang aman (setelah kebutuhan pokok).
+3. **Impact Wallet**: Menyalurkan sebagian surplus (bukan pokok tabungan) ke tujuan sosial menggunakan **PayPal Payouts**.
+4. **Financial Horizon**: Memproyeksikan tujuan jangka panjang menggunakan visualisasi **Bryntum Gantt Chart**.
 
-## Quick Start
+## 🛠️ Stack Teknologi & Sponsor Tools
+- **Frontend**: Next.js 14, Tailwind CSS, TypeScript
+- **Backend**: Fastify, TypeScript, Node.js
+- **Database**: PostgreSQL (Neon Serverless)
+- **Cache**: Redis (Upstash)
+- **Search Index**: Elasticsearch (Elastic Cloud)
+- **AI/Agent**: Astropods (diintegrasikan via logika AI)
+- **SDK Generation**: APIMatic (men-generate SDK TypeScript resmi untuk PayPal)
+- **Payments**: PayPal Payouts API (melalui APIMatic SDK)
+- **Project Management**: Bryntum Gantt (Enterprise Trial) untuk *Financial Horizon*.
+- **Deployment**: Vercel (Frontend) & Render (Backend)
 
-Full setup instructions coming in Minggu 6. For now:
+## 🚀 Fitur yang Sudah Berjalan
+- [x] Pencatatan transaksi via *Natural Language Parser* (Bahasa Indonesia).
+- [x] Pencarian transaksi instan menggunakan Elasticsearch.
+- [x] Perhitungan Surplus Aktual (Pemasukan - Pengeluaran).
+- [x] Integrasi PayPal Payouts Sandbox end-to-end (menggunakan SDK APIMatic).
+- [x] Dashboard visualisasi Financial Horizon (Bryntum Gantt).
 
-```bash
-# 1. Start databases (requires Docker + infra/.env, see infra/.env.example)
-docker compose -f infra/docker-compose.yml --env-file infra/.env up -d
+## ⚙️ Cara Menjalankan Secara Lokal
+*(Instruksi lengkap untuk juri)*
 
-# 2. Run backend
-cd backend
-pnpm install
-pnpm start
-# → http://localhost:3001/health
-```
+1. Clone repository ini.
+2. Salin `.env.example` menjadi `.env` dan isi kredensial database Anda.
+3. Jalankan database (Docker lokal atau gunakan URL Neon).
+4. Backend:
+   ```bash
+   cd backend
+   pnpm install
+   pnpm migrate
+   pnpm start
+   ```
+5. Frontend:
+   ```bash
+   cd frontend
+   pnpm install
+   pnpm dev
+   ```
+6. Buka `http://localhost:3000`.
 
-Verify: `curl -s http://localhost:3001/health | jq` → should return `{"status":"ok","pg":"ok","redis":"ok",...}`.
+## 🌐 Live Demo
+- **Frontend**: [https://financial-os-nu.vercel.app](https://financial-os-nu.vercel.app)
+- **Backend**: [https://financial-os-api-lykz.onrender.com](https://financial-os-api-lykz.onrender.com)
 
-## Architecture
+## 🔒 Keamanan & Etika
+Aplikasi ini menggunakan **PayPal Sandbox** untuk seluruh demonstrasi. Pengguna harus memberikan **persetujuan eksplisit** (klik tombol) sebelum dana dampak disalurkan. Dana dampak dihitung sebagai persentase dari surplus bersih, tidak pernah menyentuh pokok tabungan pengguna.
 
-See [`docs/architecture.md`](docs/architecture.md).
-
-## Tech Stack
-
-- **Backend**: Node.js 20, Fastify, PostgreSQL 16, Redis 7, TypeScript
-- **Frontend**: Next.js + AG Grid (Minggu 2)
-- **AI/Agent**: Astropods (orchestration)
-- **Payments**: PayPal Orders v2, Payouts, Webhooks
-- **Sponsor tools**: Astropods, AG Grid, Elastic, Bryntum, KERNEL, APIMatic, Zapier
-
-## Project Docs
-
-- [`docs/roadmap.md`](docs/roadmap.md) — 6-week execution plan
-- [`docs/rules.md`](docs/rules.md) — R1–R12 (project rules)
-- [`docs/submission-checklist.md`](docs/submission-checklist.md) — Devpost compliance
-
-## License
-
-MIT — see [`LICENSE`](LICENSE).
+---
+*Dibuat untuk PayPal AI Hackathon 2026.*
