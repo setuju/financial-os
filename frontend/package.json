@@ -9,8 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@bryntum/gantt": "npm:@bryntum/gantt-trial@7.3.2",
-    "@bryntum/gantt-react": "7.3.2",
+    "@bryntum/core-enterprise": "8.0.0",
+    "@bryntum/gantt-enterprise": "8.0.0",
+    "@bryntum/gantt-react-enterprise": "8.0.0",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18"

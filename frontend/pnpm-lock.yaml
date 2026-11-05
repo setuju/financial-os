@@ -8,12 +8,15 @@ importers:
 
   .:
     dependencies:
-      '@bryntum/gantt':
-        specifier: npm:@bryntum/gantt-trial@7.3.2
-        version: '@bryntum/gantt-trial@7.3.2'
-      '@bryntum/gantt-react':
-        specifier: 7.3.2
-        version: 7.3.2
+      '@bryntum/core-enterprise':
+        specifier: 8.0.0
+        version: 8.0.0
+      '@bryntum/gantt-enterprise':
+        specifier: 8.0.0
+        version: 8.0.0
+      '@bryntum/gantt-react-enterprise':
+        specifier: 8.0.0
+        version: 8.0.0
       next:
         specifier: 14.2.35
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -55,15 +58,40 @@ packages:
     resolution: {integrity: sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA==}
     engines: {node: '>=10'}
 
-  '@bryntum/gantt-react@7.3.2':
-    resolution: {integrity: sha512-d4p/GNw/LnHci1Octfl6o1aA+mLIoUrc+LKIwHfoXwAEHzRhvE2YPVurAvVrqsHg65Cxvg+qh6ybv/MIPGu1Rw==}
+  '@bryntum/core-enterprise@8.0.0':
+    resolution: {integrity: sha512-AqsM1r8X1asFF1fNOio16XEFQ8HqoRII6DhFaeyz/Q0rDsE4jXUjZkM68jIgTmx+PP5nQxJx5uQPz16q6vY6/g==}
     engines: {node: '>=0.10.0'}
 
-  '@bryntum/gantt-trial-lib@1.0.1':
-    resolution: {integrity: sha512-VWtowNi9FBCC6EWz8zZjrnPALCsFrYt4HPwmsgqv3qediQPfyYM/5Bq3rFuEUa1/2C/1u7YXzW2q1HZykHnp+Q==}
+  '@bryntum/core-react-enterprise@8.0.0':
+    resolution: {integrity: sha512-+eSePvfJAHWdHdGOOFdx1xo4b0aMoMg/bzBOlbn/q7TujC3TWT0Aim1JOiJcd7kBlrXZdBpjshJcn3oVMxPafw==}
+    engines: {node: '>=0.10.0'}
 
-  '@bryntum/gantt-trial@7.3.2':
-    resolution: {integrity: sha512-eSFnLgTtWn078Cym3phgpnmcnSNKv7YiyvOdwZZ40T8jau6AbbHML1THKgAJ+9QiT7/GMXUZO/aylY2LWlL7yg==}
+  '@bryntum/engine-enterprise@8.0.0':
+    resolution: {integrity: sha512-ipfvMVnnwRDcL/tMLqIMiu7slI8sBtRvwqhFXxiacHI7ZFIMZzwQVGvIfANLSPX9EOEy1QWeUvWauQ8QUjqBKg==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/gantt-enterprise@8.0.0':
+    resolution: {integrity: sha512-l1JW/H4Vj/N0zDgBWwX/1G8Y2fzJYnUik4UKjPQBRwW6yE7P2I7Ogg61+fBce6O/eEr2H9IB57M4oqPV/NtnFg==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/gantt-react-enterprise@8.0.0':
+    resolution: {integrity: sha512-bWKHcdsVFcwCIR4E+x2BNtnMyahZV6YIg+P61sMPAPZ3vc5eayBhGnzZMt4XSi7mmRfOG+ZfS2Vhg/M3/bUmWQ==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/grid-enterprise@8.0.0':
+    resolution: {integrity: sha512-qdCGyH6xJQMHWqnTG8t8JayLOdpWkLmHK6/oPfXuoGpRwklaAazaaYVq+DHyIqqynhebzD1skWt7zkHXmUzCbQ==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/grid-react-enterprise@8.0.0':
+    resolution: {integrity: sha512-5NbxwnNfWibjUhoNXrw7RSs61G0loYeEolU6UlbJ6TDAOMAh578VLghpIuH0GSve04aToMA7EiNkHgINMI5LbA==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/scheduler-enterprise@8.0.0':
+    resolution: {integrity: sha512-eVpzMZPFyY0P2XYqILbPEdJEDxBf8O7aSKPen0hIWmKs/Pi7v7qIz93DbGND3J5QUrqeokSpNmrSsggtAGQZmg==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/scheduler-react-enterprise@8.0.0':
+    resolution: {integrity: sha512-eyJ9PrkjFh5vmIDFhdNFz/ORMNzY193M8b0miLd/TkbdVtqhLSEbbsTuYr4DMYp+HhyGLLRSD55wwqk2soSwjg==}
     engines: {node: '>=0.10.0'}
 
   '@eslint-community/eslint-utils@4.10.1':
@@ -1759,13 +1787,48 @@ snapshots:
 
   '@alloc/quick-lru@5.3.0': {}
 
-  '@bryntum/gantt-react@7.3.2': {}
+  '@bryntum/core-enterprise@8.0.0': {}
 
-  '@bryntum/gantt-trial-lib@1.0.1': {}
-
-  '@bryntum/gantt-trial@7.3.2':
+  '@bryntum/core-react-enterprise@8.0.0':
     dependencies:
-      '@bryntum/gantt-trial-lib': 1.0.1
+      '@bryntum/core-enterprise': 8.0.0
+
+  '@bryntum/engine-enterprise@8.0.0': {}
+
+  '@bryntum/gantt-enterprise@8.0.0':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.0
+      '@bryntum/engine-enterprise': 8.0.0
+      '@bryntum/grid-enterprise': 8.0.0
+      '@bryntum/scheduler-enterprise': 8.0.0
+
+  '@bryntum/gantt-react-enterprise@8.0.0':
+    dependencies:
+      '@bryntum/core-react-enterprise': 8.0.0
+      '@bryntum/gantt-enterprise': 8.0.0
+      '@bryntum/grid-react-enterprise': 8.0.0
+      '@bryntum/scheduler-react-enterprise': 8.0.0
+
+  '@bryntum/grid-enterprise@8.0.0':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.0
+
+  '@bryntum/grid-react-enterprise@8.0.0':
+    dependencies:
+      '@bryntum/core-react-enterprise': 8.0.0
+      '@bryntum/grid-enterprise': 8.0.0
+
+  '@bryntum/scheduler-enterprise@8.0.0':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.0
+      '@bryntum/engine-enterprise': 8.0.0
+      '@bryntum/grid-enterprise': 8.0.0
+
+  '@bryntum/scheduler-react-enterprise@8.0.0':
+    dependencies:
+      '@bryntum/core-react-enterprise': 8.0.0
+      '@bryntum/grid-react-enterprise': 8.0.0
+      '@bryntum/scheduler-enterprise': 8.0.0
 
   '@eslint-community/eslint-utils@4.10.1(eslint@8.57.1(supports-color@7.2.0))':
     dependencies:
