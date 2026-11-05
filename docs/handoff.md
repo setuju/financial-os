@@ -239,3 +239,38 @@ Kesalahan 15 (folder assumption), 16 (pipe masks exit), 17 (curl no timeout), 18
 
 ## Workflow Update (Sesi 7)
 - Pipeline build lokal dihentikan. Semua verifikasi kode menggunakan `tsc --noEmit`. Build produksi sepenuhnya diserahkan ke Vercel dan Render (R13).
+
+---
+
+# Handoff — Sesi 8 (Deployment & Integrasi Penuh)
+
+## Status
+Aplikasi **100% fungsional** dan sudah live di Cloud. Seluruh fitur inti (Minggu 2-4) telah diselesaikan.
+
+### URL Live (Production)
+- **Frontend (Vercel)**: https://financial-os-nu.vercel.app
+- **Backend (Render)**: https://financial-os-api-lykz.onrender.com
+- **Database (Neon)**: Serverless PostgreSQL (ap-southeast-1)
+- **Redis (Upstash)**: Serverless Redis (ap-southeast-1)
+- **Elasticsearch**: Elastic Cloud (ap-southeast-1)
+
+### Fitur yang Sudah Jalan
+1. **Anti-Budget Parser**: Input teks bahasa Indonesia → Jurnal.
+2. **Elasticsearch**: Pencarian transaksi instan (`/transactions/search?q=`).
+3. **Surplus Oracle**: Menghitung surplus (Income - Expense) dan menerima prediksi.
+4. **PayPal Payouts**: Integrasi SDK APIMatic. Endpoint `/impact/payout` berfungsi mengirim dana di Sandbox.
+5. **Impact Wallet**: UI untuk menyalurkan 10% dari surplus.
+6. **Bryntum Horizon**: Gantt Chart v8 Enterprise berjalan di Vercel.
+
+### Deployment Notes (Penting untuk Sesi 9)
+- **Render Free Tier**: Akan *spin-down* setelah 15 menit. Request pertama butuh ~50 detik.
+- **Vercel Serverless**: Batas eksekusi default 10 detik, sudah kita naikkan ke 60 detik (`maxDuration = 60`) di halaman yang kritis.
+- **Bryntum Key**: Menggunakan trial key yang expired **20 Desember 2026**. Jangan lupa ganti key sebelum tanggal tersebut!
+- **Environment Variables**: 
+  - Vercel: `API_URL`, `BRYNTUM_LICENSE_KEY`
+  - Render: `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `REDIS_URL`, `ELASTIC_URL`, `ELASTIC_API_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE`
+
+## Next Steps (Sesi 9 - Besok)
+1. **UI/UX Polish**: Mempercantik halaman utama, journal, impact, dan horizon. Menambahkan *empty states*, *loading skeletons*, dan transisi.
+2. **Video Demo**: Merekam demo < 3 menit.
+3. **Devpost Submission**: Mengisi formulir dan menjadikan repo GitHub **Publik**.

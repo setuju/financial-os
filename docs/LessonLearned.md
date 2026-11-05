@@ -113,3 +113,28 @@
   - Setelah `timeout` kill build: **beri jeda minimal 5 menit** sebelum retry, atau verifikasi cleanup dengan `lsof frontend/.next/BUILD_ID 2>/dev/null` dan `ss -tlnp | grep :3000`.
   - Jika build macet berulang tanpa perubahan kode: coba `pnpm store prune` + `rm -rf node_modules .next` sebelum menyimpulkan "restart WSL".
 **Pelajaran**: WSL2 tidak menyelesaikan cleanup proses SIGKILL seketika. Beri waktu sebelum retry atau nuklir state.
+
+## Kesalahan 20: Vercel 404 Karena File Belum Di-Commit
+**Apa yang terjadi**: Halaman `/horizon` mengembalikan 404 di Vercel meskipun build sukses. Ternyata file `app/horizon/page.tsx` belum pernah masuk ke Git (tertinggal di commit sebelumnya).
+**Koreksi**: Selalu periksa output commit. Jika ada `create mode` untuk file yang seharusnya sudah ada, berarti file itu belum pernah di-commit.
+**Pelajaran**: Selalu verifikasi `git status` dan file fisik sebelum menyalahkan platform deployment.
+
+## Kesalahan 21: Bryntum v8 License Key Prop vs Global
+**Apa yang terjadi**: Mencoba mengirim `licenseKey` sebagai prop ke `<BryntumGantt>`, tetapi TypeScript error karena prop tersebut tidak ada di tipe `BryntumGanttProps`. 
+**Koreksi**: Bryntum v8 mengharuskan registrasi via objek global: `(globalThis.bryntum ??= {}).licenseKey = '...'` sebelum komponen dirender.
+**Pelajaran**: Baca dokumentasi *library* untuk versi mayor terbaru. API sering berubah drastis.
+
+## Kesalahan 22: ESLint `no-explicit-any` Menggagalkan Vercel Build
+**Apa yang terjadi**: Kode berjalan di lokal, tetapi Vercel gagal build karena Next.js secara ketat melarang penggunaan `any` di production.
+**Koreksi**: Gunakan `unknown` atau tipe spesifik (seperti `Record<string, unknown>`). Untuk variabel global, gunakan *type assertion* `as unknown as { ... }`.
+**Pelajaran**: Jangan pernah menggunakan `any` di proyek Next.js yang akan di-deploy ke Vercel. Gunakan `tsc --noEmit` secara rutin.
+
+## Kesalahan 23: Render Missing Dependency (SDK di dalam Folder)
+**Apa yang terjadi**: Render crash `ERR_MODULE_NOT_FOUND: zod` karena SDK APIMatic memiliki `package.json` sendiri di dalam folder `backend/src/paypal/sdk/`. Render hanya menjalankan `pnpm install` di root `backend`.
+**Koreksi**: Tambahkan dependensi yang dibutuhkan SDK (seperti `zod`) ke `package.json` utama backend.
+**Pelajaran**: Jika memiliki sub-project di dalam monorepo, pastikan dependensinya terdaftar di level root yang di-build oleh platform deployment.
+
+## Kesalahan 24: Render Missing Env Var ELASTIC_URL
+**Apa yang terjadi**: Backend crash saat menyala karena `config.ts` memanggil `required('ELASTIC_URL')`, tetapi variabel tersebut belum dimasukkan ke dashboard Render.
+**Koreksi**: Tambahkan `ELASTIC_URL` dan `ELASTIC_API_KEY` ke menu Environment di Render.
+**Pelajaran**: Setiap kali menambahkan `required('...')` baru di `config.ts`, segera catat di handoff agar tidak lupa dimasukkan ke environment variables platform cloud.
