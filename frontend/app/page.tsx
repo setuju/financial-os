@@ -67,6 +67,12 @@ export default async function Home() {
           >
             Impact Wallet →
           </Link>
+          <Link
+            href="/horizon"
+            className="inline-block rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          >
+            Financial Horizon →
+          </Link>
         </div>
 
         <p className="mt-8 text-xs text-gray-500">
