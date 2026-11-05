@@ -56,7 +56,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           }
         });
 
-        const batchId = response.result.batchHeader?.payoutBatchId || null;
+        const batchId = response.batchHeader?.payoutBatchId || null;
 
         // 2. Simpan ke database
         const payout = await createPayout(fastify.pg, {
@@ -67,7 +67,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           paypalBatchId: batchId || undefined,
         });
 
-        return reply.code(201).send({ payout, paypalResponse: response.result });
+        return reply.code(201).send({ payout, paypalResponse: response });
       } catch (error: any) {
         fastify.log.error({ err: error }, 'PayPal payout failed');
         
