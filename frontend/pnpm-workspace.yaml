@@ -1,3 +1,4 @@
 allowBuilds:
-  '@bryntum/gantt-trial': true
-  '@bryntum/gantt-trial-lib': true
+  '@bryntum/gantt-enterprise': true
+  '@bryntum/gantt-enterprise-lib': true
+  '@bryntum/core-enterprise': true
