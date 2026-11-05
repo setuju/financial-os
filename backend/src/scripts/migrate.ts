@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..', '..', '..');
 for (const candidate of ['.env', join(repoRoot, 'infra', '.env')]) {
   if (existsSync(candidate)) {
-    dotenvConfig({ path: candidate });
+    dotenvConfig({ path: candidate, override: false });
     console.log(`[migrate] loaded env from ${candidate}`);
     break;
   }
