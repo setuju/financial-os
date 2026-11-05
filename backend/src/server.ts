@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { config } from './config';
 import dbPlugin from './plugins/db';
+import elasticPlugin from './plugins/elastic';
 import redisPlugin from './plugins/redis';
 import healthRoutes from './routes/health';
 import surplusRoutes from './routes/surplus';
@@ -13,6 +14,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     logger: { level: config.logLevel },
   });
   await app.register(dbPlugin);
+  await app.register(elasticPlugin);
   await app.register(redisPlugin);
   await app.register(healthRoutes);
   await app.register(surplusRoutes);

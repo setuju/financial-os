@@ -3,9 +3,12 @@ import type pg from 'pg';
 import { parseTransaction } from '../surplus/parser.js';
 import { insertTransaction, listTransactions } from '../repositories/transactions.js';
 
+import type { Client as ElasticClient } from '@elastic/elasticsearch';
+
 declare module 'fastify' {
   interface FastifyInstance {
     pg: pg.Pool;
+    elastic: ElasticClient;
   }
 }
 
@@ -51,8 +54,53 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         parsed: parsed.tx,
       });
 
+      // Kirim ke Elasticsearch (fire-and-forget, jangan blokir response jika Elastic down)
+      fastify.elastic.index({
+        index: 'transactions',
+        id: transaction.id,
+        document: {
+          raw_text: transaction.raw_text,
+          category: transaction.category,
+          type: transaction.type,
+          amount: transaction.amount,
+          occurred_at: transaction.occurred_at,
+        },
+      }).catch((err: any) => {
+        fastify.log.error({ err }, 'Failed to index transaction to Elastic');
+      });
+
       return reply.code(201).send({ transaction });
     },
+  );
+
+
+  fastify.get<{ Querystring: { q: string } }>(
+    '/transactions/search',
+    async (req, reply) => {
+      const { q } = req.query;
+      if (!q) {
+        return reply.code(400).send({ error: 'Missing search query' });
+      }
+      
+      try {
+        const result = await fastify.elastic.search({
+          index: 'transactions',
+          query: {
+            multi_match: {
+              query: q,
+              fields: ['raw_text', 'category'],
+            },
+          },
+        });
+        return {
+          hits: result.hits.hits.map((h) => h._source),
+          total: (result.hits.total as any).value,
+        };
+      } catch (error) {
+        fastify.log.error({ err: error }, 'Elastic search failed');
+        return reply.code(500).send({ error: 'search_failed' });
+      }
+    }
   );
 
   fastify.get<{ Querystring: ListQuery }>(

@@ -34,4 +34,6 @@ export const config = {
   logLevel: process.env.LOG_LEVEL ?? 'info',
   databaseUrl: required('DATABASE_URL'),
   redisUrl: required('REDIS_URL'),
+  elasticUrl: required('ELASTIC_URL'),
+  elasticApiKey: required('ELASTIC_API_KEY'),
 } as const;
