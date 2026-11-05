@@ -83,3 +83,41 @@ export async function createTransaction(text: string): Promise<CreateTransaction
     return { ok: false, error: 'network_error' };
   }
 }
+
+// ---- Impact Payouts ----
+
+export type PayoutResponse = {
+  payout: {
+    id: string;
+    receiver_email: string;
+    amount: string;
+    status: string;
+    paypal_batch_id: string;
+    created_at: string;
+  };
+  paypalResponse: {
+    batchHeader?: {
+      payoutBatchId?: string;
+      batchStatus?: string;
+    };
+    [key: string]: unknown;
+  };
+};
+
+export async function distributeSurplus(
+  receiverEmail: string,
+  amount: number,
+  currency: string = 'USD'
+): Promise<PayoutResponse> {
+  const res = await fetch(`${API_URL}/impact/payout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ receiverEmail, amount, currency }),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Payout failed');
+  }
+  return res.json();
+}
