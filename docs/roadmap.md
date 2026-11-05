@@ -52,3 +52,6 @@
 | 10 Nov 2026 | Video demo selesai direkam |
 | 11 Nov 2026 | Repo dijadikan **publik**, lisensi terpasang |
 | 12 Nov 2026, 12:00 PT | **Submission Devpost ditutup** |
+
+## Backlog / Optional (Jika Waktu Tersisa)
+- [ ] **Scan Receipt (OCR)**: Upload foto struk → AI Vision (Gemini API) ekstrak teks → masuk ke parser → simpan sebagai transaksi. Memanfaatkan Neon Object Storage (`assets` bucket) dan `GEMINI_API_KEY`.
