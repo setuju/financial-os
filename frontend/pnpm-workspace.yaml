@@ -1,0 +1,3 @@
+allowBuilds:
+  '@bryntum/gantt-trial': true
+  '@bryntum/gantt-trial-lib': true

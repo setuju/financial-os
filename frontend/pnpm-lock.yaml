@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@bryntum/gantt':
+        specifier: npm:@bryntum/gantt-trial@7.3.2
+        version: '@bryntum/gantt-trial@7.3.2'
+      '@bryntum/gantt-react':
+        specifier: 7.3.2
+        version: 7.3.2
       next:
         specifier: 14.2.35
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -48,6 +54,17 @@ packages:
   '@alloc/quick-lru@5.3.0':
     resolution: {integrity: sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA==}
     engines: {node: '>=10'}
+
+  '@bryntum/gantt-react@7.3.2':
+    resolution: {integrity: sha512-d4p/GNw/LnHci1Octfl6o1aA+mLIoUrc+LKIwHfoXwAEHzRhvE2YPVurAvVrqsHg65Cxvg+qh6ybv/MIPGu1Rw==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/gantt-trial-lib@1.0.1':
+    resolution: {integrity: sha512-VWtowNi9FBCC6EWz8zZjrnPALCsFrYt4HPwmsgqv3qediQPfyYM/5Bq3rFuEUa1/2C/1u7YXzW2q1HZykHnp+Q==}
+
+  '@bryntum/gantt-trial@7.3.2':
+    resolution: {integrity: sha512-eSFnLgTtWn078Cym3phgpnmcnSNKv7YiyvOdwZZ40T8jau6AbbHML1THKgAJ+9QiT7/GMXUZO/aylY2LWlL7yg==}
+    engines: {node: '>=0.10.0'}
 
   '@eslint-community/eslint-utils@4.10.1':
     resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
@@ -1741,6 +1758,14 @@ packages:
 snapshots:
 
   '@alloc/quick-lru@5.3.0': {}
+
+  '@bryntum/gantt-react@7.3.2': {}
+
+  '@bryntum/gantt-trial-lib@1.0.1': {}
+
+  '@bryntum/gantt-trial@7.3.2':
+    dependencies:
+      '@bryntum/gantt-trial-lib': 1.0.1
 
   '@eslint-community/eslint-utils@4.10.1(eslint@8.57.1(supports-color@7.2.0))':
     dependencies:
