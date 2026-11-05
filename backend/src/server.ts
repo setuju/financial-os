@@ -4,6 +4,7 @@ import { config } from './config';
 import dbPlugin from './plugins/db';
 import redisPlugin from './plugins/redis';
 import healthRoutes from './routes/health';
+import impactRoutes from './routes/impact';
 import transactionsRoutes from './routes/transactions';
 
 export async function buildServer(): Promise<FastifyInstance> {
@@ -13,6 +14,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   await app.register(dbPlugin);
   await app.register(redisPlugin);
   await app.register(healthRoutes);
+  await app.register(impactRoutes);
   await app.register(transactionsRoutes);
   return app;
 }
