@@ -39,22 +39,24 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         // 1. Panggil PayPal API via SDK
         const response = await paypalClient.createBatchPayout({
-          senderBatchHeader: {
-            senderBatchId: `batch_${Date.now()}`,
-            emailSubject: 'Financial OS Impact Payout',
-          },
-          items: [
-            {
-              recipientType: 'EMAIL',
-              amount: { value: amount.toFixed(2), currency },
-              receiver: receiverEmail,
-              note,
-              senderItemId: `item_${Date.now()}`,
+          body: {
+            senderBatchHeader: {
+              senderBatchId: `batch_${Date.now()}`,
+              emailSubject: 'Financial OS Impact Payout',
             },
-          ],
+            items: [
+              {
+                recipientType: 'EMAIL',
+                amount: { value: amount.toFixed(2), currency },
+                receiver: receiverEmail,
+                note,
+                senderItemId: `item_${Date.now()}`,
+              },
+            ],
+          }
         });
 
-        const batchId = response.batchHeader?.payoutBatchId || null;
+        const batchId = response.result.batchHeader?.payoutBatchId || null;
 
         // 2. Simpan ke database
         const payout = await createPayout(fastify.pg, {
@@ -65,7 +67,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           paypalBatchId: batchId || undefined,
         });
 
-        return reply.code(201).send({ payout, paypalResponse: response });
+        return reply.code(201).send({ payout, paypalResponse: response.result });
       } catch (error: any) {
         fastify.log.error({ err: error }, 'PayPal payout failed');
         

@@ -1,6 +1,5 @@
-import { PayPalPayoutsMinimalClient, ServerEnvironment } from './sdk/src/index.js';
+import { PayPalPayoutsMinimalClient } from './sdk/src/index.js';
 
-// Pastikan environment variables tersedia
 const clientId = process.env.PAYPAL_CLIENT_ID;
 const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 const mode = process.env.PAYPAL_MODE || 'sandbox';
@@ -10,7 +9,12 @@ if (!clientId || !clientSecret) {
 }
 
 export const paypalClient = new PayPalPayoutsMinimalClient({
-  environment: mode === 'sandbox' ? ServerEnvironment.Sandbox : ServerEnvironment.Production,
+  // Override baseUrl explicitly to ensure correct endpoint regardless of APIMatic's enum naming
+  serverOptions: {
+    baseUrl: mode === 'sandbox' 
+      ? 'https://api-m.sandbox.paypal.com' 
+      : 'https://api-m.paypal.com'
+  },
   oAuth2: {
     clientId,
     clientSecret,
