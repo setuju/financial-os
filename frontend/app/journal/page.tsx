@@ -5,6 +5,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import ExportPdfButton from '@/components/journal/ExportPdfButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,13 +53,16 @@ export default async function Journal() {
         title="Journal"
         description="Every transaction parsed from natural-language input, with raw text preserved for audit."
         actions={
-          <Link
-            href="/journal/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
-          >
-            <Plus className="h-4 w-4" />
-            New transaction
-          </Link>
+          <>
+            <ExportPdfButton transactions={transactions ?? []} />
+            <Link
+              href="/journal/new"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
+            >
+              <Plus className="h-4 w-4" />
+              New transaction
+            </Link>
+          </>
         }
       />
 
