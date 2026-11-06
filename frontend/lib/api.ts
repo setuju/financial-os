@@ -6,7 +6,13 @@ export type HealthResponse = {
   latencyMs: number;
 };
 
-const API_URL = process.env.API_URL ?? 'http://localhost:3001';
+// Server components: hit backend directly (API_URL from Vercel env).
+// Client components: use same-origin proxy /api/proxy/* so we don't need
+// NEXT_PUBLIC_API_URL in the bundle nor CORS for browser fetches.
+const IS_SERVER = typeof window === 'undefined';
+const API_URL = IS_SERVER
+  ? (process.env.API_URL ?? 'http://localhost:3001')
+  : '/api/proxy';
 
 export async function getHealth(): Promise<HealthResponse | null> {
   try {
