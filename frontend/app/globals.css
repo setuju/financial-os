@@ -7,3 +7,10 @@
     @apply bg-surface text-ink font-sans antialiased;
   }
 }
+
+@layer base {
+  html,
+  body {
+    @apply overflow-x-hidden;
+  }
+}
