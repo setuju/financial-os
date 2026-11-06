@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RotateCw, Loader2 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
-import Spinner from '@/components/ui/Spinner';
+import Button from '@/components/ui/Button';
 import {
   getReportSummary,
   type SummaryResponse,
@@ -33,6 +33,24 @@ function computeRange(preset: DatePreset, customFrom: string, customTo: string):
   }
 }
 
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 4000;
+
+async function fetchWithRetry(
+  params: { from: string; to: string; groupBy: ReportGroupBy; type: ReportType; includeProjections: boolean },
+  onAttempt: (attempt: number) => void,
+): Promise<SummaryResponse | null> {
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    onAttempt(i + 1);
+    const res = await getReportSummary(params);
+    if (res) return res;
+    if (i < MAX_ATTEMPTS - 1) {
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    }
+  }
+  return null;
+}
+
 export default function LedgerClient() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -49,7 +67,9 @@ export default function LedgerClient() {
 
   const [data, setData] = useState<SummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -62,18 +82,32 @@ export default function LedgerClient() {
     router.replace(`/ledger?${params.toString()}`, { scroll: false });
   }, [view, type, groupBy, preset, range.from, range.to, includeProjections, router]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = async () => {
+    abortRef.current = false;
     setLoading(true);
     setError(null);
-    getReportSummary({ from: range.from, to: range.to, groupBy, type, includeProjections })
-      .then((res) => {
-        if (cancelled) return;
-        if (res) setData(res);
-        else setError('Could not load report. Backend may be starting up.');
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    setAttempt(1);
+    const res = await fetchWithRetry(
+      { from: range.from, to: range.to, groupBy, type, includeProjections },
+      (a) => { if (!abortRef.current) setAttempt(a); },
+    );
+    if (abortRef.current) return;
+    if (res) {
+      setData(res);
+    } else {
+      setError(
+        'Backend did not respond after ' +
+          MAX_ATTEMPTS +
+          ' attempts. It may still be waking up (Render free tier: ~50s cold start). Wait a moment, then click Retry.',
+      );
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    return () => { abortRef.current = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range.from, range.to, groupBy, type, includeProjections]);
 
   return (
@@ -94,14 +128,34 @@ export default function LedgerClient() {
       />
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-20">
-          <Spinner />
-          <span className="text-sm text-ink-soft">Loading…</span>
+        <div className="flex flex-col items-center justify-center gap-2 py-20">
+          <Loader2 className="h-5 w-5 animate-spin text-ink-soft" />
+          <p className="text-sm text-ink-soft">
+            {attempt > 1 ? `Waking backend… (attempt ${attempt}/${MAX_ATTEMPTS})` : 'Loading ledger…'}
+          </p>
+          {attempt > 1 && (
+            <p className="text-xs text-ink-faint">
+              Render free tier cold start can take ~50s. Retrying automatically.
+            </p>
+          )}
         </div>
       ) : error ? (
-        <EmptyState icon={<AlertCircle className="h-12 w-12 text-rose-500" />} title="Failed to load" description={error} />
+        <EmptyState
+          icon={<AlertCircle className="h-12 w-12 text-rose-500" />}
+          title="Backend unreachable"
+          description={error}
+          action={
+            <Button onClick={load} icon={<RotateCw className="h-4 w-4" />}>
+              Retry
+            </Button>
+          }
+        />
       ) : !data || data.buckets.length === 0 ? (
-        <EmptyState icon={<AlertCircle className="h-12 w-12 text-ink-faint" />} title="No data for this range" description="Adjust your filters or pick a different date range." />
+        <EmptyState
+          icon={<AlertCircle className="h-12 w-12 text-ink-faint" />}
+          title="No data for this range"
+          description="Adjust your filters or pick a different date range."
+        />
       ) : (
         <>
           <SummaryStats totals={data.totals} />

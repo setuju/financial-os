@@ -209,7 +209,7 @@ export async function getReportSummary(params: {
   try {
     const res = await fetch(`${API_URL}/reports/summary?${qs.toString()}`, {
       cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) return null;
     return (await res.json()) as SummaryResponse;
