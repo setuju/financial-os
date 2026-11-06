@@ -1,0 +1,36 @@
+# Exported from Render on 2026-11-06
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: financial-os-api
+      runtime: node
+      repo: https://github.com/setuju/financial-os
+      plan: free
+      envVars:
+      - key: ELASTIC_API_KEY
+        sync: false
+      - key: ELASTIC_URL
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: NODE_ENV
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PAYPAL_MODE
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      region: singapore
+      buildCommand: npm install -g pnpm && pnpm install && pnpm migrate
+      startCommand: pnpm start
+      autoDeployTrigger: commit
+      rootDir: backend/
