@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import type { FastifyInstance } from 'fastify';
 import { config } from './config';
 import dbPlugin from './plugins/db';
@@ -15,6 +16,17 @@ export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: config.logLevel },
   });
+  await app.register(cors, {
+    origin: [
+      'https://financial-os-nu.vercel.app',
+      'http://localhost:3000',
+      /\.vercel\.app$/,
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: false,
+    maxAge: 86400,
+  });
+
   await app.register(dbPlugin);
   await app.register(elasticPlugin);
   await app.register(redisPlugin);
