@@ -1,6 +1,9 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { Sparkles, AlertCircle } from 'lucide-react';
 import { createTransaction } from '@/lib/api';
+import PageHeader from '@/components/ui/PageHeader';
+import Card from '@/components/ui/Card';
+import SubmitButton from '@/components/journal/SubmitButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,13 +15,19 @@ const ERROR_MESSAGES: Record<string, string> = {
   empty: 'Please enter some text describing the transaction.',
 };
 
+const EXAMPLES = [
+  'saya jajan 20ribu tadi pagi di warteg',
+  'tadi dapat bonus 500rb',
+  'bayar listrik 1.250.000',
+  'bensin 50rb',
+];
+
 async function submitTransaction(formData: FormData) {
   'use server';
   const text = String(formData.get('text') ?? '').trim();
   if (!text) {
     redirect('/journal/new?error=empty');
   }
-
   const result = await createTransaction(text);
   if (!result.ok) {
     redirect(`/journal/new?error=${result.error}`);
@@ -33,31 +42,32 @@ interface PageProps {
 export default function NewTransactionPage({ searchParams }: PageProps) {
   const raw = searchParams.error;
   const errCode = Array.isArray(raw) ? raw[0] : raw;
-  const errMessage = errCode ? (ERROR_MESSAGES[errCode] ?? 'Unknown error.') : null;
+  const errMessage = errCode
+    ? ERROR_MESSAGES[errCode] ?? 'Unknown error.'
+    : null;
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="mb-1 text-3xl font-bold">New Transaction</h1>
-            <p className="text-sm text-gray-600">
-              Type in Bahasa Indonesia — the parser extracts amount, type, and category.
-            </p>
-          </div>
-          <Link href="/journal" className="text-sm text-blue-600 hover:underline">
-            ← Journal
-          </Link>
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <PageHeader
+        title="New Transaction"
+        description="Type in Bahasa Indonesia — the parser extracts amount, type, and category."
+        backHref="/journal"
+        backLabel="Journal"
+      />
+
+      {errMessage ? (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-rose-200 bg-danger-soft p-3 text-sm text-rose-800">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <p>{errMessage}</p>
         </div>
+      ) : null}
 
-        {errMessage ? (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-            {errMessage}
-          </div>
-        ) : null}
-
-        <form action={submitTransaction} className="rounded-lg border border-gray-200 bg-white p-6">
-          <label htmlFor="text" className="mb-2 block text-sm font-medium">
+      <Card>
+        <form action={submitTransaction}>
+          <label
+            htmlFor="text"
+            className="mb-2 block text-sm font-medium text-ink"
+          >
             What happened?
           </label>
           <input
@@ -68,31 +78,34 @@ export default function NewTransactionPage({ searchParams }: PageProps) {
             autoFocus
             maxLength={500}
             placeholder="saya jajan 20ribu tadi pagi di warteg"
-            className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="mb-5 w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
 
-          <div className="mb-4 text-xs text-gray-500">
-            <strong>Examples:</strong>
-            <ul className="ml-4 mt-1 list-disc space-y-0.5">
-              <li>saya jajan 20ribu tadi pagi di warteg</li>
-              <li>tadi dapat bonus 500rb</li>
-              <li>bayar listrik 1.250.000</li>
-              <li>bensin 50rb</li>
+          <div className="mb-5 rounded-lg bg-surface-sunken p-3">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
+              <Sparkles className="h-3.5 w-3.5" />
+              Examples
+            </p>
+            <ul className="space-y-1">
+              {EXAMPLES.map((ex) => (
+                <li
+                  key={ex}
+                  className="rounded bg-surface-raised px-2 py-1 font-mono text-xs text-ink-soft"
+                >
+                  {ex}
+                </li>
+              ))}
             </ul>
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            Parse &amp; Save
-          </button>
+          <SubmitButton />
 
-          <p className="mt-4 text-xs text-gray-500">
-            Your raw input is stored verbatim alongside the parsed transaction — you can always audit exactly what you typed.
+          <p className="mt-4 text-center text-xs text-ink-faint">
+            Your raw input is stored verbatim alongside the parsed transaction —
+            you can always audit exactly what you typed.
           </p>
         </form>
-      </div>
-    </main>
+      </Card>
+    </div>
   );
 }
