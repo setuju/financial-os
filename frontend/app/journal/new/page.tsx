@@ -1,39 +1,17 @@
-import { redirect } from 'next/navigation';
-import { Sparkles, AlertCircle } from 'lucide-react';
-import { createTransaction } from '@/lib/api';
+import { AlertCircle } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import Card from '@/components/ui/Card';
-import SubmitButton from '@/components/journal/SubmitButton';
+import NewTransactionForm from '@/components/journal/NewTransactionForm';
 
 export const dynamic = 'force-dynamic';
 
 const ERROR_MESSAGES: Record<string, string> = {
-  no_amount: 'No amount found in your text. Try "saya jajan 20ribu" or "gaji 5jt".',
+  no_amount: 'No amount found in your text. Try "spent 20 dollars on coffee".',
   invalid_input: 'Please enter some text describing the transaction.',
   zero_amount: 'Amount cannot be zero.',
   network_error: 'Could not reach backend. Is it running on port 3001?',
   empty: 'Please enter some text describing the transaction.',
 };
-
-const EXAMPLES = [
-  'spent $20 on coffee this morning',
-  'received $500 bonus',
-  'paid $120 for utilities',
-  'bought groceries for $95',
-];
-
-async function submitTransaction(formData: FormData) {
-  'use server';
-  const text = String(formData.get('text') ?? '').trim();
-  if (!text) {
-    redirect('/journal/new?error=empty');
-  }
-  const result = await createTransaction(text);
-  if (!result.ok) {
-    redirect(`/journal/new?error=${result.error}`);
-  }
-  redirect('/journal');
-}
 
 interface PageProps {
   searchParams: { error?: string | string[] };
@@ -50,7 +28,7 @@ export default function NewTransactionPage({ searchParams }: PageProps) {
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <PageHeader
         title="New Transaction"
-        description="Type in English — the parser extracts amount, type, and category."
+        description="Type or speak — the parser extracts amount, type, and category from natural language."
         backHref="/journal"
         backLabel="Journal"
       />
@@ -63,48 +41,7 @@ export default function NewTransactionPage({ searchParams }: PageProps) {
       ) : null}
 
       <Card>
-        <form action={submitTransaction}>
-          <label
-            htmlFor="text"
-            className="mb-2 block text-sm font-medium text-ink"
-          >
-            What happened?
-          </label>
-          <input
-            type="text"
-            name="text"
-            id="text"
-            required
-            autoFocus
-            maxLength={500}
-            placeholder="spent $20 on coffee this morning"
-            className="mb-5 w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-          />
-
-          <div className="mb-5 rounded-lg bg-surface-sunken p-3">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
-              <Sparkles className="h-3.5 w-3.5" />
-              Examples
-            </p>
-            <ul className="space-y-1">
-              {EXAMPLES.map((ex) => (
-                <li
-                  key={ex}
-                  className="rounded bg-surface-raised px-2 py-1 font-mono text-xs text-ink-soft"
-                >
-                  {ex}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <SubmitButton />
-
-          <p className="mt-4 text-center text-xs text-ink-faint">
-            Your raw input is stored verbatim alongside the parsed transaction —
-            you can always audit exactly what you typed.
-          </p>
-        </form>
+        <NewTransactionForm />
       </Card>
     </div>
   );
