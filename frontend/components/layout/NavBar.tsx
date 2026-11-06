@@ -8,6 +8,7 @@ import {
   BookOpen,
   Heart,
   Target,
+  Table,
 } from 'lucide-react';
 
 type HealthStatus = 'ok' | 'degraded' | 'offline';
@@ -15,6 +16,7 @@ type HealthStatus = 'ok' | 'degraded' | 'offline';
 const LINKS = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/journal', label: 'Journal', icon: BookOpen },
+  { href: '/ledger', label: 'Ledger', icon: Table },
   { href: '/impact', label: 'Impact', icon: Heart },
   { href: '/horizon', label: 'Horizon', icon: Target },
 ];
