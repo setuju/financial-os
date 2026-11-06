@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { BryntumGantt } from '@bryntum/gantt-react-enterprise';
 import type { GanttConfig, TaskModel } from '@bryntum/gantt-enterprise';
 
@@ -16,10 +17,8 @@ interface CustomTask extends TaskModel {
 
 export default function GanttInner({ licenseKey }: { licenseKey: string }) {
   const [config, setConfig] = useState<GanttConfig | null>(null);
-  // Gunakan tipe class BryntumGantt untuk ref
   const ganttRef = useRef<BryntumGantt>(null);
 
-  // Safe global assignment tanpa deklarasi ulang dan tanpa 'any'
   if (typeof window !== 'undefined') {
     const w = window as unknown as { bryntum?: { licenseKey?: string } };
     w.bryntum = w.bryntum || {};
@@ -76,10 +75,17 @@ export default function GanttInner({ licenseKey }: { licenseKey: string }) {
     });
   }, []);
 
-  if (!config) return <div className="p-8 text-center text-gray-500">Memuat Gantt Chart...</div>;
+  if (!config) {
+    return (
+      <div className="flex h-full w-full items-center justify-center gap-2">
+        <Loader2 className="h-5 w-5 animate-spin text-ink-soft" />
+        <p className="text-sm text-ink-soft">Loading Financial Horizon...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-[600px] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+    <div className="h-full w-full min-w-0 overflow-hidden">
       <BryntumGantt ref={ganttRef} {...config} />
     </div>
   );

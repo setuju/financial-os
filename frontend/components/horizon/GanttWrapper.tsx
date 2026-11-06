@@ -1,14 +1,16 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 
 const GanttInner = dynamic<{ licenseKey: string }>(
   () => import('./GanttInner'),
   {
     ssr: false,
     loading: () => (
-      <div className="h-[600px] flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
-        <p className="text-gray-500">Memuat Financial Horizon (Bryntum Gantt)...</p>
+      <div className="flex h-full w-full items-center justify-center gap-2">
+        <Loader2 className="h-5 w-5 animate-spin text-ink-soft" />
+        <p className="text-sm text-ink-soft">Loading Financial Horizon...</p>
       </div>
     ),
   },
