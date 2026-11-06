@@ -10,7 +10,7 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 export async function getHealth(): Promise<HealthResponse | null> {
   try {
-    const res = await fetch(`${API_URL}/health`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/health`, { cache: 'no-store', signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;
     return (await res.json()) as HealthResponse;
   } catch {
@@ -43,6 +43,7 @@ export async function getTransactions(limit = 50): Promise<Transaction[] | null>
   try {
     const res = await fetch(`${API_URL}/transactions?limit=${limit}`, {
       cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as TransactionsResponse;
@@ -65,6 +66,7 @@ export async function createTransaction(text: string): Promise<CreateTransaction
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
     });
     if (res.status === 201) {
       const data = (await res.json()) as { transaction: Transaction };
@@ -114,6 +116,7 @@ export async function distributeSurplus(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ receiverEmail, amount, currency }),
     cache: 'no-store',
+    signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) {
     const error = await res.json();
@@ -145,7 +148,7 @@ export type SurplusResponse = {
 
 export async function getSurplus(): Promise<SurplusResponse | null> {
   try {
-    const res = await fetch(`${API_URL}/surplus/current`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/surplus/current`, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
     return (await res.json()) as SurplusResponse;
   } catch {
@@ -160,6 +163,7 @@ export async function predictSurplus(predictedAmount: number): Promise<SurplusPr
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ predictedAmount }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { prediction: SurplusPrediction };
