@@ -14,10 +14,11 @@ import EmptyState from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
-const rupiah = new Intl.NumberFormat('id-ID', {
+const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 export default async function Home() {
@@ -45,19 +46,19 @@ export default async function Home() {
           <div className="mb-8 grid gap-4 sm:grid-cols-3">
             <StatCard
               label="Total income"
-              value={rupiah.format(surplusData.metrics.totalIncome)}
+              value={usd.format(surplusData.metrics.totalIncome)}
               icon={<TrendingUp className="h-4 w-4" />}
               tone="success"
             />
             <StatCard
               label="Total expense"
-              value={rupiah.format(surplusData.metrics.totalExpense)}
+              value={usd.format(surplusData.metrics.totalExpense)}
               icon={<TrendingDown className="h-4 w-4" />}
               tone="danger"
             />
             <StatCard
               label="Current surplus"
-              value={rupiah.format(surplusData.metrics.currentSurplus)}
+              value={usd.format(surplusData.metrics.currentSurplus)}
               icon={<Sparkles className="h-4 w-4" />}
               tone={surplusData.metrics.currentSurplus >= 0 ? 'success' : 'danger'}
             />

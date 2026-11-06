@@ -16,10 +16,10 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 const EXAMPLES = [
-  'saya jajan 20ribu tadi pagi di warteg',
-  'tadi dapat bonus 500rb',
-  'bayar listrik 1.250.000',
-  'bensin 50rb',
+  'spent $20 on coffee this morning',
+  'received $500 bonus',
+  'paid $120 for utilities',
+  'bought groceries for $95',
 ];
 
 async function submitTransaction(formData: FormData) {
@@ -50,7 +50,7 @@ export default function NewTransactionPage({ searchParams }: PageProps) {
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <PageHeader
         title="New Transaction"
-        description="Type in Bahasa Indonesia — the parser extracts amount, type, and category."
+        description="Type in English — the parser extracts amount, type, and category."
         backHref="/journal"
         backLabel="Journal"
       />
@@ -77,7 +77,7 @@ export default function NewTransactionPage({ searchParams }: PageProps) {
             required
             autoFocus
             maxLength={500}
-            placeholder="saya jajan 20ribu tadi pagi di warteg"
+            placeholder="spent $20 on coffee this morning"
             className="mb-5 w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
 

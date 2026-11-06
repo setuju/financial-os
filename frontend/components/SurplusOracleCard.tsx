@@ -6,10 +6,11 @@ import { predictSurplus, type SurplusPrediction } from '@/lib/api';
 import Card from './ui/Card';
 import Button from './ui/Button';
 
-const rupiah = new Intl.NumberFormat('id-ID', {
+const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 interface Props {
@@ -57,7 +58,7 @@ export default function SurplusOracleCard({ initialPrediction }: Props) {
             </p>
           </div>
           <p className="font-mono text-xl font-semibold tabular-nums text-emerald-900">
-            {rupiah.format(Number(prediction.predicted_amount))}
+            {usd.format(Number(prediction.predicted_amount))}
           </p>
           <p className="mt-1 text-xs text-emerald-700">
             Made on {new Date(prediction.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
@@ -69,7 +70,7 @@ export default function SurplusOracleCard({ initialPrediction }: Props) {
             type="text"
             value={predictedAmount}
             onChange={(e) => setPredictedAmount(e.target.value)}
-            placeholder="e.g. 500000"
+            placeholder="e.g. 500"
             className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
           <Button type="submit" loading={loading} icon={<Send className="h-4 w-4" />}>

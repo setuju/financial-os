@@ -12,15 +12,15 @@ import {
 } from 'lucide-react';
 import { distributeSurplus, type PayoutResponse } from '@/lib/api';
 
-const IDR_PER_USD = 15000;
 const MIN_PAYOUT_USD = 0.01;
 const SURPLUS_PERCENTAGE = 0.1;
 const SANDBOX_EMAIL = 'sb-wyxsu53660889@personal.example.com';
 
-const rupiahFormatter = new Intl.NumberFormat('id-ID', {
+const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 type Phase = 'idle' | 'confirming' | 'loading' | 'success' | 'error';
@@ -30,10 +30,10 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
   const [result, setResult] = useState<PayoutResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const contributionIDR = Math.max(0, currentSurplus * SURPLUS_PERCENTAGE);
+  const contributionUSD = Math.max(0, currentSurplus * SURPLUS_PERCENTAGE);
   const amountUSD = Math.max(
     MIN_PAYOUT_USD,
-    Math.round((contributionIDR / IDR_PER_USD) * 100) / 100,
+    Math.round(contributionUSD * 100) / 100,
   );
   const isSurplusNegative = currentSurplus <= 0;
 
@@ -52,16 +52,16 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
   };
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-line bg-surface-raised p-6 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Heart className="h-5 w-5 text-rose-500" />
-        <h2 className="text-xl font-semibold text-zinc-900">
+        <h2 className="text-xl font-semibold text-ink">
           Ethical Surplus Distribution
         </h2>
       </div>
 
-      <div className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+      <div className="mb-6 rounded-lg border border-line bg-surface-sunken p-4">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-faint">
           Verified Current Surplus
         </p>
         <p
@@ -69,12 +69,12 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
             isSurplusNegative ? 'text-rose-600' : 'text-emerald-600'
           }`}
         >
-          {rupiahFormatter.format(currentSurplus)}
+          {usd.format(currentSurplus)}
         </p>
       </div>
 
       {isSurplusNegative ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-warning-soft p-4">
           <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
           <p className="text-sm text-amber-800">
             You do not have a positive surplus to distribute. Record more income or
@@ -83,32 +83,28 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
         </div>
       ) : phase === 'idle' ? (
         <>
-          <p className="mb-4 text-sm text-zinc-600">
+          <p className="mb-4 text-sm text-ink-soft">
             We&apos;ll distribute{' '}
-            <strong className="font-mono text-zinc-900">
-              {rupiahFormatter.format(contributionIDR)}
+            <strong className="font-mono text-ink">
+              {usd.format(amountUSD)}
             </strong>{' '}
-            (≈{' '}
-            <strong className="font-mono text-zinc-900">
-              ${amountUSD.toFixed(2)} USD
-            </strong>{' '}
-            — 10% of your surplus) to a verified impact receiver via PayPal.
+            (10% of your surplus) to a verified impact receiver via PayPal.
           </p>
           <button
             type="button"
             onClick={() => setPhase('confirming')}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0070ba] px-4 py-3 font-medium text-white shadow-sm transition-colors hover:bg-[#005ea6]"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
           >
             <Send className="h-4 w-4" />
-            Distribute ${amountUSD.toFixed(2)} USD
+            Distribute {usd.format(amountUSD)}
           </button>
         </>
       ) : phase === 'confirming' ? (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="mb-3 text-sm text-blue-900">
-            <ShieldCheck className="mr-1 inline h-4 w-4" />
-            <strong>Confirm distribution:</strong> Send ${amountUSD.toFixed(2)} USD to{' '}
-            <code className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs">
+        <div className="rounded-lg border border-accent bg-accent-soft p-4">
+          <p className="mb-3 text-sm text-ink">
+            <ShieldCheck className="mr-1 inline h-4 w-4 text-accent" />
+            <strong>Confirm distribution:</strong> Send {usd.format(amountUSD)} to{' '}
+            <code className="rounded bg-surface-raised px-1.5 py-0.5 font-mono text-xs">
               {SANDBOX_EMAIL}
             </code>
             ?
@@ -125,7 +121,7 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
             <button
               type="button"
               onClick={() => setPhase('idle')}
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              className="rounded-lg border border-line bg-surface-raised px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface-sunken"
             >
               Cancel
             </button>
@@ -135,13 +131,13 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
         <button
           type="button"
           disabled
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0070ba] px-4 py-3 font-medium text-white opacity-70"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 font-medium text-white opacity-70"
         >
           <Loader2 className="h-4 w-4 animate-spin" />
           Processing PayPal payout…
         </button>
       ) : phase === 'success' && result ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+        <div className="rounded-lg border border-emerald-200 bg-success-soft p-4">
           <div className="mb-2 flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             <h3 className="font-semibold text-emerald-900">Payout Successful</h3>
@@ -165,7 +161,7 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
           </p>
         </div>
       ) : phase === 'error' ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+        <div className="rounded-lg border border-rose-200 bg-danger-soft p-4">
           <div className="mb-2 flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-rose-600" />
             <h3 className="font-semibold text-rose-900">Payout failed</h3>
@@ -174,7 +170,7 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
           <button
             type="button"
             onClick={() => setPhase('idle')}
-            className="mt-3 rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+            className="mt-3 rounded-lg border border-rose-300 bg-surface-raised px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
           >
             Try again
           </button>

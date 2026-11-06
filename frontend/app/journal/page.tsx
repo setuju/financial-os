@@ -8,10 +8,11 @@ import Card from '@/components/ui/Card';
 
 export const dynamic = 'force-dynamic';
 
-const rupiah = new Intl.NumberFormat('id-ID', {
+const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 const dateFmt = new Intl.DateTimeFormat('en-US', {
@@ -100,7 +101,7 @@ export default async function Journal() {
                 Total in
               </p>
               <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-emerald-600">
-                {rupiah.format(totalIn)}
+                {usd.format(totalIn)}
               </p>
             </Card>
             <Card className="p-4">
@@ -108,7 +109,7 @@ export default async function Journal() {
                 Total out
               </p>
               <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-rose-600">
-                {rupiah.format(totalOut)}
+                {usd.format(totalOut)}
               </p>
             </Card>
           </div>
@@ -151,7 +152,7 @@ export default async function Journal() {
                           }`}
                         >
                           {isIncome ? '+' : '−'}{' '}
-                          {rupiah.format(Number(tx.amount))}
+                          {usd.format(Number(tx.amount))}
                         </td>
                       </tr>
                     );
@@ -189,7 +190,7 @@ export default async function Journal() {
                         }`}
                       >
                         {isIncome ? '+' : '−'}{' '}
-                        {rupiah.format(Number(tx.amount))}
+                        {usd.format(Number(tx.amount))}
                       </div>
                     </div>
                   </li>
