@@ -1,5 +1,10 @@
 import Link from 'next/link';
+import { BookOpen, Plus, AlertCircle } from 'lucide-react';
 import { getTransactions } from '@/lib/api';
+import PageHeader from '@/components/ui/PageHeader';
+import Badge from '@/components/ui/Badge';
+import EmptyState from '@/components/ui/EmptyState';
+import Card from '@/components/ui/Card';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,106 +14,196 @@ const rupiah = new Intl.NumberFormat('id-ID', {
   maximumFractionDigits: 0,
 });
 
-const dateFmt = new Intl.DateTimeFormat('id-ID', {
+const dateFmt = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
 });
 
+type BadgeVariant = 'success' | 'danger' | 'warning' | 'info' | 'neutral';
+
+const CATEGORY_VARIANTS: Record<string, BadgeVariant> = {
+  food: 'warning',
+  transport: 'info',
+  bills: 'danger',
+  shopping: 'warning',
+  health: 'danger',
+  income: 'success',
+  other: 'neutral',
+};
+
 export default async function Journal() {
   const transactions = await getTransactions(50);
 
+  const totalIn = transactions
+    ? transactions
+        .filter((t) => t.type === 'income')
+        .reduce((s, t) => s + Number(t.amount), 0)
+    : 0;
+  const totalOut = transactions
+    ? transactions
+        .filter((t) => t.type === 'expense')
+        .reduce((s, t) => s + Number(t.amount), 0)
+    : 0;
+
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="mb-1 text-3xl font-bold">Journal</h1>
-            <p className="text-sm text-gray-600">
-              All transactions parsed from natural-language input.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <PageHeader
+        title="Journal"
+        description="Every transaction parsed from natural-language input, with raw text preserved for audit."
+        actions={
+          <Link
+            href="/journal/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
+          >
+            <Plus className="h-4 w-4" />
+            New transaction
+          </Link>
+        }
+      />
+
+      {transactions === null ? (
+        <EmptyState
+          icon={<AlertCircle className="h-12 w-12 text-rose-500" />}
+          title="Backend unreachable"
+          description="Cannot load transactions. The backend may be starting up — Render free tier can take up to 50 seconds on first request. Refresh in a moment."
+        />
+      ) : transactions.length === 0 ? (
+        <EmptyState
+          icon={<BookOpen className="h-12 w-12" />}
+          title="No transactions yet"
+          description={
+            'Record your first transaction using natural language — try "saya jajan 20ribu" or "tadi dapat bonus 500rb".'
+          }
+          action={
             <Link
               href="/journal/new"
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
             >
-              + New
+              <Plus className="h-4 w-4" />
+              Record your first transaction
             </Link>
-            <Link href="/" className="text-sm text-blue-600 hover:underline">
-              ← Dashboard
-            </Link>
+          }
+        />
+      ) : (
+        <>
+          <div className="mb-6 grid gap-3 sm:grid-cols-3">
+            <Card className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Visible transactions
+              </p>
+              <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-ink">
+                {transactions.length}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Total in
+              </p>
+              <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-emerald-600">
+                {rupiah.format(totalIn)}
+              </p>
+            </Card>
+            <Card className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Total out
+              </p>
+              <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-rose-600">
+                {rupiah.format(totalOut)}
+              </p>
+            </Card>
           </div>
-        </div>
 
-        {transactions === null ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-            <h2 className="mb-2 text-lg font-semibold text-red-900">Backend unreachable</h2>
-            <p className="text-sm text-red-800">
-              Cannot load transactions. Make sure backend is running at{' '}
-              <code>http://localhost:3001</code>.
-            </p>
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center">
-            <h2 className="mb-2 text-lg font-semibold">No transactions yet</h2>
-            <p className="text-sm text-gray-600">
-              POST to{' '}
-              <code className="rounded bg-gray-100 px-1.5 py-0.5">
-                /transactions
-              </code>{' '}
-              with body{' '}
-              <code className="rounded bg-gray-100 px-1.5 py-0.5">
-                {`{"text":"saya jajan 20ribu"}`}
-              </code>
-              .
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-600">
-                <tr>
-                  <th className="px-4 py-3">When</th>
-                  <th className="px-4 py-3">Description</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {transactions.map((tx) => {
-                  const isIncome = tx.type === 'income';
-                  return (
-                    <tr key={tx.id} className="hover:bg-gray-50">
-                      <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                        {dateFmt.format(new Date(tx.occurred_at))}
-                      </td>
-                      <td className="px-4 py-3">{tx.raw_text}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                          {tx.category}
-                        </span>
-                      </td>
-                      <td
-                        className={`whitespace-nowrap px-4 py-3 text-right font-mono ${
-                          isIncome ? 'text-green-700' : 'text-red-700'
+          <Card className="overflow-hidden p-0">
+            <div className="hidden md:block">
+              <table className="w-full text-sm">
+                <thead className="bg-surface-sunken text-left text-xs uppercase tracking-wider text-ink-faint">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">When</th>
+                    <th className="px-4 py-3 font-medium">Description</th>
+                    <th className="px-4 py-3 font-medium">Category</th>
+                    <th className="px-4 py-3 text-right font-medium">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {transactions.map((tx) => {
+                    const isIncome = tx.type === 'income';
+                    return (
+                      <tr
+                        key={tx.id}
+                        className="transition-colors hover:bg-surface"
+                      >
+                        <td className="whitespace-nowrap px-4 py-3.5 text-ink-soft">
+                          {dateFmt.format(new Date(tx.occurred_at))}
+                        </td>
+                        <td className="px-4 py-3.5 text-ink">{tx.raw_text}</td>
+                        <td className="px-4 py-3.5">
+                          <Badge
+                            variant={
+                              CATEGORY_VARIANTS[tx.category] ?? 'neutral'
+                            }
+                          >
+                            {tx.category}
+                          </Badge>
+                        </td>
+                        <td
+                          className={`whitespace-nowrap px-4 py-3.5 text-right font-mono font-medium tabular-nums ${
+                            isIncome ? 'text-emerald-600' : 'text-rose-600'
+                          }`}
+                        >
+                          {isIncome ? '+' : '−'}{' '}
+                          {rupiah.format(Number(tx.amount))}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <ul className="divide-y divide-line md:hidden">
+              {transactions.map((tx) => {
+                const isIncome = tx.type === 'income';
+                return (
+                  <li key={tx.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">
+                          {tx.raw_text}
+                        </p>
+                        <p className="mt-1 text-xs text-ink-faint">
+                          {dateFmt.format(new Date(tx.occurred_at))}
+                        </p>
+                        <div className="mt-2">
+                          <Badge
+                            variant={
+                              CATEGORY_VARIANTS[tx.category] ?? 'neutral'
+                            }
+                          >
+                            {tx.category}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div
+                        className={`whitespace-nowrap font-mono text-sm font-medium tabular-nums ${
+                          isIncome ? 'text-emerald-600' : 'text-rose-600'
                         }`}
                       >
-                        {isIncome ? '+' : '−'} {rupiah.format(tx.amount)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                        {isIncome ? '+' : '−'}{' '}
+                        {rupiah.format(Number(tx.amount))}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
 
-        <p className="mt-6 text-xs text-gray-500">
-          {transactions === null
-            ? 'Status: unreachable'
-            : `Showing ${transactions.length} transaction${transactions.length === 1 ? '' : 's'} (newest first).`}
-        </p>
-      </div>
-    </main>
+          <p className="mt-6 text-xs text-ink-faint">
+            Showing {transactions.length} transaction
+            {transactions.length === 1 ? '' : 's'} (newest first).
+          </p>
+        </>
+      )}
+    </div>
   );
 }
