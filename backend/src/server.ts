@@ -8,6 +8,8 @@ import healthRoutes from './routes/health';
 import surplusRoutes from './routes/surplus';
 import impactRoutes from './routes/impact';
 import transactionsRoutes from './routes/transactions';
+import reportsRoutes from './routes/reports';
+import goalsRoutes from './routes/goals';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -20,5 +22,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   await app.register(surplusRoutes);
   await app.register(impactRoutes);
   await app.register(transactionsRoutes);
+  await app.register(reportsRoutes);
+  await app.register(goalsRoutes);
   return app;
 }
