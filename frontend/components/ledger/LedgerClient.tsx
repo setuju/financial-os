@@ -16,6 +16,7 @@ import FilterBar, { type ViewMode, type DatePreset } from './FilterBar';
 import LedgerGrid from './LedgerGrid';
 import LedgerNotebook from './LedgerNotebook';
 import SummaryStats from './SummaryStats';
+import ExportLedgerPdfButton from './ExportLedgerPdfButton';
 
 function computeRange(preset: DatePreset, customFrom: string, customTo: string): { from: string; to: string } {
   const today = new Date();
@@ -115,6 +116,19 @@ export default function LedgerClient() {
       <PageHeader
         title="Ledger"
         description="Every transaction, filtered and grouped. Switch between grid and notebook views."
+        actions={
+          data && data.buckets.length > 0 ? (
+            <ExportLedgerPdfButton
+              buckets={data.buckets}
+              totals={data.totals}
+              from={range.from}
+              to={range.to}
+              groupBy={groupBy}
+              type={type}
+              includeProjections={includeProjections}
+            />
+          ) : undefined
+        }
       />
 
       <FilterBar
