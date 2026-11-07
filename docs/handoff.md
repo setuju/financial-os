@@ -274,3 +274,162 @@ Aplikasi **100% fungsional** dan sudah live di Cloud. Seluruh fitur inti (Minggu
 1. **UI/UX Polish**: Mempercantik halaman utama, journal, impact, dan horizon. Menambahkan *empty states*, *loading skeletons*, dan transisi.
 2. **Video Demo**: Merekam demo < 3 menit.
 3. **Devpost Submission**: Mengisi formulir dan menjadikan repo GitHub **Publik**.
+
+---
+
+## Sesi 10 Close (2026-11-07)
+
+**HEAD**: `4a80de5` (main, sync origin/main)
+**Deadline submission**: 12 Nov 2026, 12:00 PT (~5 hari)
+
+### State Live (Verified)
+
+| Layer | URL |
+|---|---|
+| Frontend | https://financial-os-nu.vercel.app |
+| Backend | https://financial-os-api-lykz.onrender.com |
+| Database | Neon (ap-southeast-1) |
+| Cache | Upstash Redis (ap-southeast-1) |
+| Search | Elastic Cloud (ap-southeast-1) |
+
+### Fitur Baru Sesi 10
+
+**Frontend**
+- `/ledger` — Grid + Notebook, 36 filter combos (view × type × group × range × proj), PDF
+- `/journal` — PDF export button (2-page A4, summary + table)
+- `/journal/new` — Voice input (Web Speech API, `en-US`) + AmountEditor (inline edit for voice misfires)
+- `/` Dashboard — USD stats (bukan IDR)
+- Semua format pakai `Intl.NumberFormat('en-US', {currency:'USD'})`
+
+**Backend**
+- `POST /reports/summary` — aggregate bucket (day/week/month/year × type × projections)
+- `GET /goals`, `POST /goals` — goals table + API
+- `POST /assistant/chat`, `GET /assistant/info` — scoped AI assistant
+- Migration 004 — `goals` table + `is_projection` on `transactions`
+- `scripts/seed-demo.ts` — 90d hist + 60d proj + 3 goals (USD)
+- CORS `@fastify/cors@9` (Fastify 4 compatible)
+- Parser v2 — USD-first, negation + intent rejection (`negated_input`, `planned_input`)
+
+**Infrastructure**
+- `frontend/app/api/proxy/[...path]/route.ts` — Node proxy for client components
+- `render.yaml` — blueprint documentation (sync:false all env vars)
+- `pnpm-workspace.yaml` — `core-js: true` (boolean, not placeholder)
+
+### Model AI Assistant (Final)
+
+- **Model**: `google/gemini-3.8-flash` (pinned, Sep 2026, $0.75/$3.75 per M tokens)
+- **Provider**: OpenRouter
+- **Env**: `OPENROUTER_API_KEY` set, `ASSISTANT_MODEL` **tidak di-set** (fallback default)
+- **Guard**: kalau `ASSISTANT_MODEL` tidak mengandung `/`, fallback ke default + warn log
+- **Canary**: `FOS-ASSISTANT-v1.0-20261107-a7f3c9-DO-NOT-LEAK` (rotasi saat prompt update)
+
+### Fitur Deferred (Sesi 11+)
+
+| Fitur | Effort | Prioritas |
+|---|---|---|
+| Assistant widget (floating "?") | 30 min | Medium |
+| OCR receipt (Gemini Vision) | 3.5 jam | Opsional |
+| Login/auth + admin panel | 3-4 jam | Defer |
+| Elasticsearch indexing UI | 1 jam | Defer |
+| AG Grid | N/A | Skip (custom grid used) |
+| KERNEL fallback | 4-6 jam | Defer ke docs mention |
+| Time-to-Value (Zapier) | 2-3 jam | Defer |
+| Keep-alive GitHub Action | 5 min | **Rekomendasi Kuat** untuk demo |
+
+### Environment Notes (Kritis untuk Sesi 11)
+
+**Cold-start (Render free tier)**
+- Spin-down setelah 15 menit idle
+- Cold start ~50 detik; test pertama setelah idle bisa timeout 30s
+- Ledger auto-retry 3×4s (max ~72s)
+- **Pre-warm sebelum demo**: buka `https://financial-os-api-lykz.onrender.com/health`, tunggu 50s
+- **Rekomendasi**: GitHub Action keep-alive cron `*/5` (belum di-set)
+
+**Vercel**
+- Build ~30-47s per deploy
+- `pnpm-workspace.yaml` harus `core-js: true` (bukan string placeholder)
+- `lib/api.ts` branching: server direct `API_URL`, client via `/api/proxy`
+
+**DNS WSL2**
+- `systemd-resolved` upstream kadang broken → `gh auth status` false positive "token invalid"
+- Recovery: `nslookup <host> 8.8.8.8` sukses tapi `getent` gagal = konfirmasi DNS issue
+- Fix: `sudo systemctl restart systemd-resolved` atau set static DNS
+
+**Render Auto-Deploy**
+- Toggle di **Settings → Auto-Deploy → "On Commit"** (bukan blueprint auto-adopt)
+- Env var changes: pilih **"Save, rebuild, and deploy"** (bukan "Save only")
+
+**Parser behavior (contract)**
+- Rejects: no amount, zero amount, plan (`want to`, `planning to`, `hopefully`), cancellation (`dont want`, `change my mind`, `cancel that`)
+- Error reasons: `no_amount`, `invalid_input`, `zero_amount`, `negated_input`, `planned_input`, `network_error`
+- Tests: 40/40 pass (vitest)
+
+### Rules Changes (Sesi 10)
+
+Lihat `docs/rules.md` R14-R18:
+- **R14**: Model pin — explicit `provider/model`, no aliases in env
+- **R15**: Peer dependency matrix — check host framework version
+- **R16**: `cat >>` idempotency — grep marker first
+- **R17**: Client-side env — proxy route, not `NEXT_PUBLIC_` leak
+- **R18**: Render env — "Save, rebuild, and deploy"
+
+### Commits Sesi 10 (Ringkas)
+
+```
+4a80de5 fix(assistant): pin model to google/gemini-3.8-flash + guard env
+45fd8d2 feat(backend): scoped in-app AI assistant (prompt + endpoint)
+7b66a99 fix(parser): reject negation + intent, USD-first amount parsing
+bb2235c fix(frontend): pnpm-workspace core-js value boolean not placeholder
+e42919b feat(frontend/journal): inline amount editor for voice/text input
+1c96681 chore(frontend): allow core-js build script in pnpm-workspace
+a828964 feat(frontend/ledger): PDF export from /ledger
+d8a515b feat(frontend): PDF export from /journal
+8e7f054 feat(frontend): voice input via Web Speech API on /journal/new
+1da5b70 fix(frontend): proxy API route so client components hit backend
+a969c19 fix(backend): downgrade @fastify/cors 11 -> 9 (Fastify 4 compat)
+b2f091d chore(deploy): add render.yaml blueprint (exported from dashboard)
+a78342d fix(backend): add CORS for Vercel origin
+aa53655 fix(frontend/ledger): cold-start retry + warmup UX
+29cc938 fix(frontend/lib): remove duplicate getReportSummary + getGoals
+104aa90 fix(frontend): sweep IDR -> USD formatting across all pages
+ab6ef0d feat(frontend): ledger page with grid + notebook views and filters
+ef23741 feat(frontend): ledger page with grid + notebook views and filters
+e7d7aad feat(backend): ledger foundation (goals, projections, reports, seed)
+faded08 fix(frontend/horizon): proper Phase G (strip wrapper, min-w-0)
+d8e7d2b fix(frontend/horizon): constrain Bryntum Gantt to container width
+283e022 feat(frontend): redesign dashboard with stat cards + quick actions
+0695ee5 feat(frontend): redesign journal with token styling + mobile cards
+814d30f feat(frontend): redesign new transaction form with pending state
+96a7eb9 feat(frontend/layout): NavBar + AppShell + wire into layout.tsx
+42efc62 feat(frontend/ui): Button, Card, Badge, StatCard, PageHeader, EmptyState, Skeleton, Spinner
+aa4c95f chore(frontend): design tokens
+548903a fix(frontend/lib): add fetch timeouts
+b0ba7ba fix(frontend): correct impact payout currency + 2-step confirm
+7394269 chore(frontend): sync pnpm workspace config for bryntum v8
+```
+
+### Preconditions Sesi 11
+
+1. `git status` clean, HEAD = commit terakhir Sesi 10 (atau Sesi 11 nanti)
+2. **Gh auth**: `gh auth status` = `setuju`, DNS healthy (`getent hosts api.github.com` resolve)
+3. **Render auto-deploy** aktif (Settings → Auto-Deploy → "On Commit")
+4. `OPENROUTER_API_KEY` di Render env, `ASSISTANT_MODEL` **tidak ada** (fallback default)
+5. Browser: Chrome/Edge desktop (Voice) atau mobile (Voice mobile-friendly)
+6. **Warm backend** sebelum test: curl `/health` sekali, tunggu 50s
+
+### Next Steps (Sesi 11, prioritas wajib — deadline 12 Nov 12:00 PT)
+
+**WAJIB**
+1. **Assistant widget** (30 min) — floating "?" + panel, wire `/assistant/chat` via proxy
+2. **Keep-alive GitHub Action** (5 min) — cegah cold-start saat demo
+3. **Video script + record** (3-4 jam) — 2:30 alur
+4. **Devpost form draft** (1 jam) — deskripsi, screenshot, URL, tech list
+5. **Repo public + LICENSE check** (15 min)
+6. **Final submission checklist** (30 min)
+
+**OPSIONAL**
+7. OCR receipt (3.5 jam)
+8. Login MVP (3-4 jam)
+
+**TIDAK DIKERJAKAN**
+- Elasticsearch indexing UI, AG Grid, KERNEL, Time-to-Value — defer ke README/docs
