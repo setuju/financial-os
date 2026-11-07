@@ -2,4 +2,4 @@ allowBuilds:
   '@bryntum/gantt-enterprise': true
   '@bryntum/gantt-enterprise-lib': true
   '@bryntum/core-enterprise': true
-  core-js: set this to true or false
+  core-js: true
