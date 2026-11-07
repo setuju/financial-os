@@ -131,3 +131,144 @@ describe('parseTransaction — error handling', () => {
     if (r.ok) expect(r.tx.occurredAt).toEqual(FIXED_NOW);
   });
 });
+
+// ---- USD amount format (new, added Sesi 10) ----
+
+describe('parseTransaction — USD amount format', () => {
+  it('parses "250.000" as 250.00 (single dot = decimal, USD)', () => {
+    const r = parseTransaction('spent 250.000', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(250);
+  });
+
+  it('parses explicit "$20" as 20', () => {
+    const r = parseTransaction('spent $20 on coffee', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(20);
+  });
+
+  it('parses "$120.50" as 120.5', () => {
+    const r = parseTransaction('paid $120.50 for utilities', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(120.5);
+  });
+
+  it('parses "$1,500" as 1500 (US comma)', () => {
+    const r = parseTransaction('rent $1,500', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(1500);
+  });
+
+  it('parses "$ 20" (space after $) as 20', () => {
+    const r = parseTransaction('coffee $ 20', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(20);
+  });
+
+  it('still parses "1.250.000" as 1250000 (multi-dot = IDR thousand)', () => {
+    const r = parseTransaction('bayar listrik 1.250.000', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(1250000);
+  });
+
+  it('still parses "20.5rb" as 20500 (suffix decimal)', () => {
+    const r = parseTransaction('jajan 20.5rb', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(20500);
+  });
+});
+
+// ---- Negation detection (new, added Sesi 10) ----
+
+describe('parseTransaction — negation rejected', () => {
+  it('rejects "i dont want to buy the car $250000"', () => {
+    const r = parseTransaction('i dont want to buy the car $250000', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('negated_input');
+  });
+
+  it('rejects "...i change my mind"', () => {
+    const r = parseTransaction('i bought car 250000 change my mind', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('negated_input');
+  });
+
+  it('rejects "cancel that 20 coffee"', () => {
+    const r = parseTransaction('cancel that 20 coffee', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('negated_input');
+  });
+
+  it('rejects "never mind 50 dollars"', () => {
+    const r = parseTransaction('never mind 50 dollars', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('negated_input');
+  });
+});
+
+// ---- Intent/plan detection (new, added Sesi 10) ----
+
+describe('parseTransaction — intent/plan rejected', () => {
+  it('rejects "i want to buy new car 250000"', () => {
+    const r = parseTransaction('i want to buy new car 250000', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('planned_input');
+  });
+
+  it('rejects "planning to save $500"', () => {
+    const r = parseTransaction('planning to save $500', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('planned_input');
+  });
+
+  it('rejects "hopefully i can pay 1000"', () => {
+    const r = parseTransaction('hopefully i can pay 1000', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('planned_input');
+  });
+
+  it('rejects "going to buy 20 coffee tomorrow"', () => {
+    const r = parseTransaction('going to buy 20 coffee tomorrow', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('planned_input');
+  });
+
+  it('rejects "i dont want to buy the car 250000, hopefully later"', () => {
+    const r = parseTransaction('i dont want to buy the car 250000, hopefully later', FIXED_NOW);
+    expect(r.ok).toBe(false);
+    // Negation checked first, so wins over intent
+    if (!r.ok) expect(r.reason).toBe('negated_input');
+  });
+});
+
+// ---- Normal transactions still work ----
+
+describe('parseTransaction — normal flow unaffected', () => {
+  it('accepts "spent 20 on coffee"', () => {
+    const r = parseTransaction('spent 20 on coffee', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.amount).toBe(20);
+  });
+
+  it('accepts "received 500 bonus"', () => {
+    const r = parseTransaction('received 500 bonus', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.type).toBe('income');
+  });
+
+  it('accepts "paid 120 utilities"', () => {
+    const r = parseTransaction('paid 120 utilities', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.tx.category).toBe('utilities');
+  });
+
+  it('accepts "$20 for coffee" (no verb, defaults expense)', () => {
+    const r = parseTransaction('$20 for coffee', FIXED_NOW);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.tx.amount).toBe(20);
+      expect(r.tx.type).toBe('expense');
+      expect(r.tx.category).toBe('food');
+    }
+  });
+});

@@ -63,7 +63,7 @@ export async function getTransactions(limit = 50): Promise<Transaction[] | null>
 
 export type CreateTransactionResult =
   | { ok: true; transaction: Transaction }
-  | { ok: false; error: 'no_amount' | 'invalid_input' | 'zero_amount' | 'network_error' };
+  | { ok: false; error: 'no_amount' | 'invalid_input' | 'zero_amount' | 'negated_input' | 'planned_input' | 'network_error' };
 
 export async function createTransaction(text: string): Promise<CreateTransactionResult> {
   try {
@@ -80,7 +80,7 @@ export async function createTransaction(text: string): Promise<CreateTransaction
     }
     if (res.status === 400) {
       const data = (await res.json()) as { error?: string };
-      const allowed = ['no_amount', 'invalid_input', 'zero_amount'] as const;
+      const allowed = ['no_amount', 'invalid_input', 'zero_amount', 'negated_input', 'planned_input'] as const;
       const err = (allowed as readonly string[]).includes(data.error ?? '')
         ? (data.error as typeof allowed[number])
         : 'invalid_input';
