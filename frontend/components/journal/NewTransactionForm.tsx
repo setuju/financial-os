@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { submitTransaction } from '@/app/journal/new/actions';
 import VoiceButton from './VoiceButton';
 import SubmitButton from './SubmitButton';
+import AmountEditor from './AmountEditor';
 
 const EXAMPLES = [
   'spent 20 dollars on coffee this morning',
@@ -40,6 +41,8 @@ export default function NewTransactionForm() {
         />
         <VoiceButton onTranscript={setText} />
       </div>
+
+      <AmountEditor text={text} onChange={setText} />
 
       <div className="mb-5 rounded-lg bg-surface-sunken p-3">
         <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
