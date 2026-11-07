@@ -138,3 +138,137 @@
 **Apa yang terjadi**: Backend crash saat menyala karena `config.ts` memanggil `required('ELASTIC_URL')`, tetapi variabel tersebut belum dimasukkan ke dashboard Render.
 **Koreksi**: Tambahkan `ELASTIC_URL` dan `ELASTIC_API_KEY` ke menu Environment di Render.
 **Pelajaran**: Setiap kali menambahkan `required('...')` baru di `config.ts`, segera catat di handoff agar tidak lupa dimasukkan ke environment variables platform cloud.
+
+## Kesalahan 25: `@fastify/cors@11` Incompatible with Fastify 4 — Production Down
+
+**Apa yang terjadi**: `pnpm add @fastify/cors` (default latest = v11.4.1) untuk fix CORS. Server crash startup: `FST_ERR_PLUGIN_VERSION_MISMATCH: @fastify/cors - expected '5.x' fastify version, '4.29.1' is installed`. Backend **down ~5 menit**, semua fitur frontend broken.
+
+**Dampak**: Production outage 5 menit, semua endpoint fail.
+
+**Koreksi**:
+- Matrix compatibility: `@fastify/cors` v9 → Fastify 4, v10/v11 → Fastify 5.
+- Pin: `pnpm add @fastify/cors@^9` untuk Fastify 4 project.
+- Verify startup di Render logs sebelum assume fix works.
+
+**Pelajaran**: Peer-dependent plugins wajib pin major version matching host framework. Jangan `pnpm add` tanpa specify version saat plugin punya fastify peer dep.
+
+## Kesalahan 26: `cat >>` Not Idempotent — Duplicate Exports in lib/api.ts
+
+**Apa yang terjadi**: Bubble G2 pakai `cat >> lib/api.ts` untuk append types. Bubble jalan 2× (paste partial + retry), block ter-append 2× → `getReportSummary` + `getGoals` defined twice. Vercel build fail: "name X is defined multiple times". Fix pakai marker split di commit `29cc938`.
+
+**Dampak**: Build fail ~2 menit, debug 10 menit.
+
+**Koreksi**:
+- Check marker: `if ! grep -q '// ---- Reports ----' file; then cat >> ...; fi`
+- Atau `cat >` full content (idempotent by overwrite)
+- Verify exports count after append: `grep -c "export async function $name"`
+
+**Pelajaran**: `cat >>` tidak idempotent. File writes harus safe di-run 2×.
+
+## Kesalahan 27: `process.env.API_URL` Undefined di Client Components — Feature Broken
+
+**Apa yang terjadi**: `lib/api.ts` pakai `const API_URL = process.env.API_URL ?? 'http://localhost:3001'`. Server components work (`/`, `/journal`, `/impact` initial load). Client components (`LedgerClient`, `SurplusOracleCard`, `DistributeButton`) fetch ke `localhost:3001` dari browser → connection refused. Curl test konfirmasi CORS headers present — bukan CORS issue, tapi env boundary.
+
+**Dampak**: Ledger, Save prediction, Distribute button semua broken. 20+ menit diagnosis (user assumed CORS).
+
+**Koreksi**:
+- Next.js hanya inline `NEXT_PUBLIC_*` ke client bundle. `process.env.API_URL` = `undefined` di client.
+- Fix: Next.js API proxy route `/api/proxy/[...path]/route.ts` — client fetch same-origin, server route forward ke Render.
+- `lib/api.ts` branch: `typeof window === 'undefined' ? API_URL : '/api/proxy'`
+
+**Pelajaran**: Next.js strict env boundary. Server-only env vars butuh proxy route untuk client access.
+
+## Kesalahan 28: `pnpm-workspace.yaml` Placeholder String `set this to true or false`
+
+**Apa yang terjadi**: Setelah `pnpm add jspdf`, pnpm auto-modify `pnpm-workspace.yaml`. Value ditulis sebagai string `set this to true or false` (placeholder), bukan boolean. Commit `1c96681` mungkin bikin Vercel error. Fix di `bb2235c` (change to `core-js: true`).
+
+**Dampak**: Potential Vercel build fail, diagnosa 10 menit.
+
+**Koreksi**:
+- Sebelum commit: `grep "set this to true" file && fail`
+- Atau `pnpm approve-builds` (interactive) atau edit manual
+- Always inspect diff pada `pnpm-workspace.yaml` sebelum commit
+
+**Pelajaran**: pnpm auto-modify files on `add`. Placeholder strings harus di-reject.
+
+## Kesalahan 29: Model ID Without Provider Prefix Rejected by OpenRouter
+
+**Apa yang terjadi**: Set `ASSISTANT_MODEL=gemini-flash-latest` di Render (missing `google/` or `~google/`). Tilde di-strip saat save. Model ID rejected by OpenRouter (400 model not found), translate ke 502 upstream_error. Semua chat fail.
+
+**Dampak**: Assistant endpoint hidup tapi tidak bisa chat ~20 menit. Fix di `4a80de5` (pin `google/gemini-3.8-flash` + guard env).
+
+**Koreksi**:
+- Pin explicit version di code: `DEFAULT_MODEL = 'google/gemini-3.8-flash'`
+- Guard env: `if (envModel.includes('/')) return envModel; return DEFAULT_MODEL`
+- Response error include `reason` + `model` for debugging
+
+**Pelajaran**: Model IDs butuh `provider/model` format. Alias (`~`) tidak aman di env vars — bisa di-strip. Pin explicit di code, env var optional.
+
+## Kesalahan 30: Assumed Paths — `backend/scripts/` dan `saturumah.net`
+
+**Apa yang terjadi**: Dua asumsi salah:
+1. Bubble G1 tulis `backend/scripts/seed-demo.ts` — folder tidak ada (migrate.ts ada di `src/scripts/`). `cat >` silent fail, commit skipped.
+2. Bubble pakai `cd ~/saturumah.net || cd ~/saturumah/paypal` — kedua ada, tapi `saturumah.net` adalah **repo lain** (`setuju/saturumah.net`). Write file ke repo yang salah.
+
+**Dampak**: 1 iterasi recovery (~5 menit per issue), no data loss.
+
+**Koreksi**:
+- Verify directory: `[ -d backend/src/scripts ] || mkdir -p backend/src/scripts`
+- Verify after write: `[ -f "$file" ] || exit 1`
+- Hard path only: `cd ~/saturumah/paypal || exit 1` — no `||` fallback
+- Verify remote: `case "$(git config --get remote.origin.url)" in *financial-os*) ;; *) exit 1;; esac`
+
+**Pelajaran**: Directory structure wajib verify (bukan assume). `||` fallback untuk navigation dangerous.
+
+## Kesalahan 31: WSL2 DNS Broken → `gh auth` False "Token Invalid"
+
+**Apa yang terjadi**: `gh auth status` reported token invalid. User buka GitHub di browser — fine. Root cause: WSL2 `systemd-resolved` upstream tidak forward DNS. `nslookup api.github.com 8.8.8.8` sukses, tapi `getent hosts` gagal. `gh auth status` interpretasi network fail sebagai token invalid (misleading).
+
+**Dampak**: 15+ menit troubleshooting, push blocked.
+
+**Koreksi**:
+- DNS check dulu: `getent hosts api.github.com` + `curl -I https://api.github.com`
+- Kalau DNS fail: `sudo systemctl restart systemd-resolved`, atau set static DNS
+- `nslookup <host> 8.8.8.8` sukses tapi `getent` gagal = definitive DNS stub issue
+
+**Pelajaran**: "Token invalid" dari `gh` bisa false positive saat network issue. Verify network layer dulu sebelum cred layer.
+
+## Kesalahan 32: Render Env "Save Only" Doesn't Trigger Deploy
+
+**Apa yang terjadi**: Add `OPENROUTER_API_KEY` di Render Environment, klik "Save Changes" default. Setelah deploy selesai, `/assistant/info` tetap `configured:false`. Root cause: save default = "Save only" (no deploy trigger). Env tersimpan tapi belum aktif.
+
+**Dampak**: 1 manual deploy iteration (~3 menit).
+
+**Koreksi**:
+- Klik dropdown setelah "Save Changes" → **"Save, rebuild, and deploy"**
+- Atau setelah save: **Manual Deploy** → "Deploy latest commit"
+- Verify via `/assistant/info` → `configured:true`
+
+**Pelajaran**: Render env changes punya 3 save opsi. Always pick "Save, rebuild, and deploy".
+
+## Kesalahan 33: Deprecated Model `gemini-1.5-flash` in Default Config
+
+**Apa yang terjadi**: `DEFAULT_MODEL = 'google/gemini-flash-1.5'` (dari Sesi 9). Sep 2026 deprecated, tapi tidak di-update. User catch setelah cek dashboard. Fix `4a80de5` → `google/gemini-3.8-flash`.
+
+**Dampak**: Model invalid → chat fail.
+
+**Koreksi**:
+- Pin `google/gemini-3.8-flash` (Sep 2026, $0.75/$3.75 per M tokens)
+- Review deprecation quarterly
+- Add model review to roadmap/session checklist
+
+**Pelajaran**: Default model di code harus pinned + active + reviewed. Deprecated models break endpoints silently (no auto-upgrade).
+
+## Kesalahan 34: Cold-Start False Negative — Test Too Early After Push
+
+**Apa yang terjadi**: Push `45fd8d2` (assistant endpoint), curl `/assistant/info` immediately → 404. Assumed route not registered. 5 menit kemudian test ulang → 200. First test 36 seconds too early (Render build ~2-3 menit).
+
+**Dampak**: 5 menit false alarm, potential wrong diagnosis path.
+
+**Koreksi**:
+- Wait 3 minutes setelah push sebelum test
+- Atau check Render Deploys tab / Events tab for "Deploy live"
+- Atau use `/health` uptime field: `if uptime < 120s` = just deployed, wait
+- Auto-retry with backoff untuk demo scripts
+
+**Pelajaran**: "It's not working" setelah push — check deploy status first. Deploy latency 2-3 min = normal, bukan bug.

@@ -128,3 +128,56 @@ with_setuju() {
 - WSL2 memiliki RAM terbatas dan proses build Next.js/Webpack dapat memicu hang atau *Out of Memory* (OOM).
 - Cukup jalankan `pnpm exec tsc --noEmit` (Typecheck) sebelum commit.
 - Biarkan **Vercel** (untuk frontend) dan **Render** (untuk backend) yang melakukan *build* produksi via pipeline CI/CD.
+
+## R14 — Model Pin (No Aliases in Env)
+
+Untuk integrasi AI (OpenRouter, OpenAI, Anthropic, dll):
+- Default model di **code** wajib **pinned explicit version** (`google/gemini-3.8-flash`, bukan `gemini-flash-latest`)
+- **JANGAN** pakai alias (`~google/gemini-flash-latest`) di env vars — tilde bisa di-strip oleh UI/CLI, menyebabkan model ID invalid
+- **Guard**: kalau `process.env.MODEL_ID` tidak mengandung `/`, fallback ke default di code + log warning
+- Review model deprecation status **quarterly**
+
+## R15 — Peer Dependency Matrix
+
+Sebelum `pnpm add <plugin>` yang punya peer dep ke host framework:
+1. Cek matrix compatibility (e.g., `@fastify/cors` v9 → Fastify 4, v11 → Fastify 5)
+2. Cek `package.json` host framework version actual
+3. **Pin major version** yang compatible (`@fastify/cors@^9`, bukan `@fastify/cors`)
+4. Verify startup di staging/Render logs sebelum assume works
+5. Kalau error `FST_ERR_PLUGIN_VERSION_MISMATCH`, immediately downgrade
+
+## R16 — Idempotent File Writes
+
+`cat >>` tidak idempotent — bubble yang di-run 2× duplicate content. Untuk write file:
+- **Prefer** `cat >` (overwrite, idempotent by nature)
+- Untuk **append** (types, entries): grep marker existence dulu
+  ```bash
+  if ! grep -q '// ---- Reports ----' file; then
+    cat >> file <<'EOF'
+  ...
+  EOF
+  fi
+  ```
+- Verify after write: `grep -c "export async function $name" file` harus 1 (bukan 2+)
+
+## R17 — Next.js Client Env — Proxy Pattern
+
+Next.js **hanya inline `NEXT_PUBLIC_*`** ke client bundle. `process.env.SERVER_URL` = `undefined` di client components.
+
+Untuk client components yang butuh backend access:
+- **JANGAN** expose backend URL via `NEXT_PUBLIC_API_URL` (bocor + CORS complexity)
+- **GUNAKAN** proxy route `/app/api/proxy/[...path]/route.ts`:
+  - Client fetch ke `/api/proxy/*` (same-origin)
+  - Next.js route handler forward ke backend dengan env var server-only
+  - Zero CORS untuk browser, zero env leak
+- `lib/api.ts` branch: `const IS_SERVER = typeof window === 'undefined'; const API_URL = IS_SERVER ? process.env.API_URL : '/api/proxy';`
+
+## R18 — Render Env "Save, rebuild, and deploy"
+
+Setiap add/update env var di Render dashboard:
+- Setelah klik "Save Changes", dropdown muncul 3 opsi:
+  - ✅ **"Save, rebuild, and deploy"** — PICK THIS (build baru + env baru)
+  - ⚠️ "Save and deploy" — redeploy build existing + env baru (bisa stale code)
+  - ❌ "Save only" — env tersimpan tapi **tidak deploy** (env belum aktif)
+- Verify setelah deploy: curl endpoint yang baca env (e.g., `/assistant/info` → `configured:true`)
+- Kalau masih stale setelah 3 menit: **Manual Deploy → "Clear build cache & deploy"**
