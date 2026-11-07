@@ -56,12 +56,19 @@ Env vars (set in Render dashboard):
 | Var | Purpose | Default |
 |---|---|---|
 | `OPENROUTER_API_KEY` | OpenRouter auth | (required) |
-| `ASSISTANT_MODEL` | Model id | `google/gemini-flash-1.5` |
+| `ASSISTANT_MODEL` | Model id (must contain `provider/`) | `google/gemini-3.8-flash` |
 
-Cheap alternatives if the default is too restrictive:
+Current default: **`google/gemini-3.8-flash`** (pinned, Sep 2026, 1M context, $0.75/$3.75 per M tokens).
+
+Alternatives (must include `provider/` prefix):
+- `~google/gemini-flash-latest` — auto-tracks newest Flash. Note: `~` may be stripped by some UIs; safer to pin.
 - `anthropic/claude-3.5-haiku` — stricter instruction following
 - `openai/gpt-4o-mini` — balanced
 - `meta-llama/llama-3.1-8b-instruct` — cheapest
+
+**Env var guard**: if `ASSISTANT_MODEL` does not contain a `/`, the server
+falls back to `DEFAULT_MODEL` and logs a warning. This prevents outages from
+env vars that lost their `provider/` prefix (e.g. `gemini-flash-latest`).
 
 ## Testing
 

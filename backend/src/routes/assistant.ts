@@ -2,10 +2,27 @@ import type { FastifyPluginAsync } from 'fastify';
 import { ASSISTANT_PROMPT, ASSISTANT_CANARY, ASSISTANT_PROMPT_VERSION } from '../agents/assistant.prompt.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'google/gemini-flash-1.5';
+const DEFAULT_MODEL = 'google/gemini-3.8-flash';
 const MAX_HISTORY = 6;
 const MAX_OUTPUT_TOKENS = 400;
 const REQUEST_TIMEOUT_MS = 30_000;
+
+// Resolve effective model id:
+// - If env ASSISTANT_MODEL contains '/' (valid OpenRouter format), use it.
+// - Otherwise fall back to DEFAULT_MODEL. This guards against env vars that
+//   lost their provider prefix (e.g. 'gemini-flash-latest' without '~google/').
+function resolveModel(): string {
+  const envModel = (process.env.ASSISTANT_MODEL ?? '').trim();
+  if (envModel.includes('/')) return envModel;
+  if (envModel.length > 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[assistant] ignoring ASSISTANT_MODEL='${envModel}' (missing provider/ prefix); using ${DEFAULT_MODEL}`,
+    );
+  }
+  return DEFAULT_MODEL;
+}
+
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -68,7 +85,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
         { role: 'user' as const, content: message },
       ];
 
-      const model = process.env.ASSISTANT_MODEL ?? DEFAULT_MODEL;
+      const model = resolveModel();
 
       try {
         const res = await fetch(OPENROUTER_URL, {
@@ -91,10 +108,23 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
         if (!res.ok) {
           const text = await res.text().catch(() => '');
           fastify.log.error(
-            { status: res.status, body: text.slice(0, 500) },
+            { status: res.status, body: text.slice(0, 500), model },
             'OpenRouter request failed',
           );
-          return reply.code(502).send({ error: 'upstream_error' });
+          // Surface a short reason to the client for debugging.
+          // Never leak the key or full body.
+          let reason = 'openrouter rejected request';
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed?.error?.message) reason = String(parsed.error.message).slice(0, 200);
+          } catch {
+            /* body was not JSON */
+          }
+          return reply.code(502).send({
+            error: 'upstream_error',
+            reason,
+            model,
+          });
         }
 
         const data = (await res.json()) as {
@@ -125,7 +155,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/assistant/info', async () => ({
     version: ASSISTANT_PROMPT_VERSION,
     configured: Boolean(process.env.OPENROUTER_API_KEY),
-    model: process.env.ASSISTANT_MODEL ?? DEFAULT_MODEL,
+    model: resolveModel(),
     // Do NOT return canary or prompt content here.
   }));
 };
