@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { getHealth } from '@/lib/api';
 import NavBar from './NavBar';
+import AssistantWidget from '@/components/assistant/AssistantWidget';
 
 type HealthStatus = 'ok' | 'degraded' | 'offline';
 
@@ -16,6 +17,7 @@ export default async function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-surface">
       <NavBar status={status} />
       <main>{children}</main>
+      <AssistantWidget />
     </div>
   );
 }
