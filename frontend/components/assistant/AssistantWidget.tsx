@@ -9,6 +9,25 @@ type ChatResp = { reply?: string; model?: string; version?: string; error?: stri
 const MAX_INPUT = 1000;
 const MAX_HISTORY = 6;
 
+function renderRich(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const re = /`([^`]+)`|\*\*([^*]+)\*\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(<span key={key++}>{text.slice(last, m.index)}</span>);
+    if (m[1] !== undefined) {
+      nodes.push(<code key={key++} className="rounded bg-surface px-1 py-0.5 font-mono text-[0.85em] text-accent">{m[1]}</code>);
+    } else if (m[2] !== undefined) {
+      nodes.push(<strong key={key++} className="font-semibold">{m[2]}</strong>);
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(<span key={key++}>{text.slice(last)}</span>);
+  return nodes;
+}
+
 export default function AssistantWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -151,7 +170,7 @@ export default function AssistantWidget() {
                       : 'bg-surface-sunken text-ink'
                   }`}
                 >
-                  {m.content}
+                  {m.role === 'assistant' ? renderRich(m.content) : m.content}
                 </div>
               </div>
             ))}

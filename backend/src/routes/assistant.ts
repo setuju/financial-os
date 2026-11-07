@@ -4,7 +4,7 @@ import { ASSISTANT_PROMPT, ASSISTANT_CANARY, ASSISTANT_PROMPT_VERSION } from '..
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'google/gemini-3.8-flash';
 const MAX_HISTORY = 6;
-const MAX_OUTPUT_TOKENS = 400;
+const MAX_OUTPUT_TOKENS = 600;
 const REQUEST_TIMEOUT_MS = 30_000;
 
 // Resolve effective model id:
@@ -72,9 +72,6 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
 
       const { message, history = [] } = req.body;
 
-      const messages: ChatMessage[] = [
-        { role: 'assistant', content: ASSISTANT_PROMPT }, // treated as system-equivalent via prefix
-      ];
       // OpenRouter expects {role:'system'} — we prepend the prompt as system
       const openrouterMessages = [
         { role: 'system' as const, content: ASSISTANT_PROMPT },
