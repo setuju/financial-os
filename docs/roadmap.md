@@ -21,7 +21,7 @@
 ### Minggu 2 — Anti-Budget Core (Wajib Selesai)
 - [x] Bangun parser bahasa alami (rule-based) untuk kalimat seperti "saya baru jajan 20ribu; tadi dapat hadiah 15ribu".
 - [x] Simpan transaksi ke PostgreSQL.
-- [ ] Indeks ke **Elastic** (deferred ke Sesi 6).
+- [~] Indeks ke **Elastic** (deployed, UI deferred ke Sesi 11).
 - [x] Tampilkan jurnal (HTML table; **AG Grid deferred** — build hang, akan di-retry).
 
 ### Minggu 3 — Surplus Oracle & PayPal Integration
@@ -55,3 +55,34 @@
 
 ## Backlog / Optional (Jika Waktu Tersisa)
 - [ ] **Scan Receipt (OCR)**: Upload foto struk → AI Vision (Gemini API) ekstrak teks → masuk ke parser → simpan sebagai transaksi. Memanfaatkan Neon Object Storage (`assets` bucket) dan `GEMINI_API_KEY`.
+
+
+## Sesi 10 Status Summary (2026-11-07)
+
+### Completed Beyond Original Roadmap
+- ✅ **Ledger page** — Grid + Notebook, 36 filter combos, PDF export
+- ✅ **Voice input** — Web Speech API
+- ✅ **Amount editor** — Inline edit for voice misfires
+- ✅ **PDF export** — Journal + Ledger
+- ✅ **AI Assistant** — Scoped, canary-protected, Gemini 3.8 Flash
+- ✅ **USD migration** — All display in USD, seed data USD
+
+### Deferred (Rekomendasi untuk Sesi 11)
+| Fitur | Effort | Priority |
+|---|---|---|
+| Assistant widget (floating "?" UI) | 30 min | Medium |
+| Keep-alive GitHub Action | 5 min | **High** |
+| OCR receipt (Gemini Vision) | 3.5 jam | Optional |
+| Login/auth + admin | 3-4 jam | Defer |
+| Elasticsearch full-text search UI | 1 jam | Defer |
+| KERNEL fallback | 4-6 jam | Defer to docs |
+| Time-to-Value (Zapier) | 2-3 jam | Defer |
+
+### Submission Readiness (Deadline 12 Nov 12:00 PT)
+- ✅ Functional demo (not mockup)
+- ✅ Meaningful PayPal integration (Payouts)
+- ✅ AI essential (parser, voice, assistant — 3 touchpoints)
+- ⏸ Video <3 min — **CRITICAL, belum direkam**
+- ⏸ Devpost form draft — **CRITICAL**
+- ⏸ Repo public + LICENSE — quick toggle
+- ⏸ Assistant widget — nice-to-have untuk video demo

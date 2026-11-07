@@ -51,3 +51,35 @@ Financial OS includes a scoped in-app AI helper for users.
 **Model**: OpenRouter (`google/gemini-flash-1.5` default, override via `ASSISTANT_MODEL`). Requires `OPENROUTER_API_KEY` in env.
 
 **Anti-leak**: prompt embeds a versioned canary string. Output is scanned for the canary before returning; if found, response 500s and logs alert.
+
+
+## Ledger Data Model (Sesi 10)
+
+### Tables
+- `transactions` — 9 columns (id, user_id, raw_text, amount NUMERIC(15,2), type, category, occurred_at TIMESTAMPTZ, source, created_at) + `is_projection BOOLEAN DEFAULT false`
+- `goals` — id, user_id, name, target_amount, monthly_saving, interest_rate, loan_term_months, start_date, duration_months, progress_percent, created_at
+
+### Indexes
+- `idx_transactions_occurred_at` (existing)
+- `idx_transactions_category`, `idx_transactions_type` (existing)
+- `idx_transactions_is_projection` (new Sesi 10)
+- `idx_goals_start_date` (new Sesi 10)
+
+### Endpoints
+- `GET /reports/summary?from&to&groupBy&type&includeProjections` — aggregated buckets via `date_trunc`
+- `GET /goals` — list all goals
+- `POST /goals` — create goal (validated body)
+
+### Frontend Proxy Route
+`frontend/app/api/proxy/[...path]/route.ts` — Node.js route handler that forwards method/headers/body/query to `API_URL` (server-only env). Solves Next.js client-side env var boundary: browser fetches `/api/proxy/*` (same-origin, no CORS), server route forwards to Render.
+
+## AI Assistant (Sesi 10, Extended)
+
+See `backend/src/agents/README.md` for full threat model, model config, testing.
+
+- **Files**: `backend/src/agents/assistant.prompt.ts` (prompt + canary), `backend/src/routes/assistant.ts` (endpoints)
+- **Model**: `google/gemini-3.8-flash` via OpenRouter, `ASSISTANT_MODEL` env optional override (must contain `/`)
+- **Endpoints**: `POST /assistant/chat` (rate-limited schema, 1000 char input cap, 6 message history cap, 30s timeout, 400 max_tokens), `GET /assistant/info` (version + configured flag)
+- **Canary**: `FOS-ASSISTANT-v1.0-20261107-a7f3c9-DO-NOT-LEAK` — response scanned, 500 + log alert if leaked
+- **Guardrails**: refuse off-topic, jailbreak, prompt disclosure, financial advice; 1-2 sentence refusal format; offer app alternative
+- **Knowledge base**: 5 pages, key concepts, 10+ FAQ entries, ~11KB prompt
