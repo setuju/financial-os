@@ -45,3 +45,10 @@ Thumbs.db
 *.swo
 .neon
 *:Zone.Identifier
+
+# Receipts / OCR (never commit)
+receipt*.png
+receipt*.jpg
+receipt*.jpeg
+*.receipt.png
+/tmp/receipt*

@@ -12,6 +12,7 @@ import transactionsRoutes from './routes/transactions';
 import reportsRoutes from './routes/reports';
 import goalsRoutes from './routes/goals';
 import assistantRoutes from './routes/assistant';
+import receiptsRoutes from './routes/receipts';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -38,5 +39,6 @@ export async function buildServer(): Promise<FastifyInstance> {
   await app.register(reportsRoutes);
   await app.register(goalsRoutes);
   await app.register(assistantRoutes);
+  await app.register(receiptsRoutes);
   return app;
 }

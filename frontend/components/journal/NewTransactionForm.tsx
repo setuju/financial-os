@@ -6,6 +6,7 @@ import { submitTransaction } from '@/app/journal/new/actions';
 import VoiceButton from './VoiceButton';
 import SubmitButton from './SubmitButton';
 import AmountEditor from './AmountEditor';
+import ReceiptScanButton from './ReceiptScanButton';
 
 const EXAMPLES = [
   'spent 20 dollars on coffee this morning',
@@ -40,7 +41,14 @@ export default function NewTransactionForm() {
           className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
         <VoiceButton onTranscript={setText} />
+        <ReceiptScanButton onExtracted={setText} />
       </div>
+
+      <p className="mb-5 text-xs text-ink-faint">
+        Receipt scan sends the image to Google Gemini for text extraction. The
+        image is not stored on our servers. Review the extracted text before
+        submitting.
+      </p>
 
       <AmountEditor text={text} onChange={setText} />
 
