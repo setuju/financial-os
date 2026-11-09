@@ -52,3 +52,12 @@ receipt*.jpg
 receipt*.jpeg
 *.receipt.png
 /tmp/receipt*
+
+# Receipt images (OCR test files — never commit)
+*.receipt.png
+*.receipt.jpg
+/receipt*.png
+/receipt*.jpg
+/receipt*.jpeg
+/receipt*.webp
+uploads/

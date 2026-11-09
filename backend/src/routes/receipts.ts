@@ -1,146 +1,219 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { parseTransaction } from '../surplus/parser.js';
 
-const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'qwen/qwen3.8-27b';
+const OCR_SPACE_URL = 'https://api.ocr.space/parse/image';
+const MAX_BASE64_LENGTH = 3_000_000; // ~3MB base64 (~2.2MB image)
+const UPSTREAM_TIMEOUT_MS = 30_000;
 
-const PROMPT = [
-  'Read this receipt image. Output EXACTLY ONE English sentence describing the purchase.',
-  'Format: "spent <amount> dollars on <items> at <merchant>" (use "paid" if it is a bill).',
-  'Use the TOTAL amount. Example: "spent 9 dollars on coffee and croissant at Kopi Kenangan".',
-  'Do NOT output anything else — no explanation, no markdown, no asterisks, no quotes, no preamble.',
-  'Only the sentence.',
-].join(' ');
-
-const MAX_IMAGE_B64 = 4_000_000; // ~3MB binary
-const REQUEST_TIMEOUT_MS = 45_000;
+const VISION_PROMPT =
+  'Extract from this receipt: what was bought and the total amount paid. ' +
+  'Output ONE short natural-language sentence like: "spent 9 dollars on coffee at Kopi Kenangan". ' +
+  'Rules: (1) Use "spent" for purchases, "paid" for bills. ' +
+  '(2) Use "dollars" as currency word (normalize even if receipt shows IDR). ' +
+  '(3) Include merchant name if visible. ' +
+  '(4) No preamble, no explanation, no formatting — ONLY the sentence.';
 
 interface OcrBody {
-  image: string;
+  image: string; // data URL or raw base64
+  mimeType?: string;
 }
 
-interface GeminiResp {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
-    finishReason?: string;
-  }>;
-  usageMetadata?: {
-    promptTokenCount?: number;
-    candidatesTokenCount?: number;
-    thoughtsTokenCount?: number;
+interface ParsedImage {
+  base64: string;
+  mimeType: string;
+}
+
+function parseImage(body: OcrBody): ParsedImage | null {
+  let image = (body.image ?? '').trim();
+  if (!image) return null;
+  let mime = body.mimeType || 'image/jpeg';
+
+  const dataUrlRe = /^data:([^;]+);base64,(.+)$/i;
+  const m = image.match(dataUrlRe);
+  if (m) {
+    mime = m[1];
+    image = m[2];
+  }
+
+  if (image.length < 100 || image.length > MAX_BASE64_LENGTH) return null;
+  if (!/^image\/(png|jpeg|jpg|webp)$/i.test(mime)) mime = 'image/jpeg';
+
+  return { base64: image, mimeType: mime };
+}
+
+async function callGroq(img: ParsedImage, apiKey: string): Promise<string> {
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: VISION_PROMPT },
+            {
+              type: 'image_url',
+              image_url: { url: `data:${img.mimeType};base64,${img.base64}` },
+            },
+          ],
+        },
+      ],
+      temperature: 1,
+      top_p: 1,
+      max_completion_tokens: 200,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`groq_${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
   };
+  const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
+  if (!reply) throw new Error('groq_empty_reply');
+  return reply;
+}
+
+function extractTotalAndMerchant(rawText: string): { total: number | null; merchant: string } {
+  const lines = rawText
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const merchant = (lines[0] ?? '').slice(0, 60);
+
+  let total: number | null = null;
+  for (const line of lines) {
+    if (/total/i.test(line)) {
+      const m = line.match(/(\d+(?:[.,]\d+)?)/);
+      if (m) {
+        const num = parseFloat(m[1].replace(',', '.'));
+        if (Number.isFinite(num) && num > 0) {
+          total = num;
+          break;
+        }
+      }
+    }
+  }
+
+  if (total === null) {
+    const all = rawText.match(/\d+(?:[.,]\d+)?/g) ?? [];
+    const nums = all
+      .map((s) => parseFloat(s.replace(',', '.')))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    if (nums.length) total = Math.max(...nums);
+  }
+
+  return { total, merchant };
+}
+
+async function callOcrSpace(img: ParsedImage, apiKey: string): Promise<string> {
+  const form = new FormData();
+  form.append('base64Image', `data:${img.mimeType};base64,${img.base64}`);
+  form.append('language', 'eng');
+  form.append('isOverlayRequired', 'false');
+  form.append('OCREngine', '2');
+  form.append('scale', 'true');
+
+  const res = await fetch(OCR_SPACE_URL, {
+    method: 'POST',
+    headers: { apikey: apiKey },
+    body: form,
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`ocrspace_${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as {
+    IsErroredOnProcessing?: boolean;
+    ErrorMessage?: string | string[];
+    ParsedResults?: Array<{ ParsedText?: string }>;
+  };
+
+  if (data.IsErroredOnProcessing) {
+    const msg = Array.isArray(data.ErrorMessage)
+      ? data.ErrorMessage.join('; ')
+      : data.ErrorMessage;
+    throw new Error(`ocrspace_errored: ${msg ?? 'unknown'}`);
+  }
+
+  const raw = data.ParsedResults?.map((r) => r.ParsedText ?? '').join('\n') ?? '';
+  if (!raw.trim()) throw new Error('ocrspace_empty');
+
+  const { total, merchant } = extractTotalAndMerchant(raw);
+  if (!total) throw new Error('ocrspace_no_total');
+
+  const merchantPart = merchant ? ` at ${merchant}` : '';
+  return `spent ${total} dollars${merchantPart}`;
 }
 
 const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: OcrBody }>(
     '/receipts/ocr',
     {
-      bodyLimit: MAX_IMAGE_B64 + 1_000,
       schema: {
         body: {
           type: 'object',
           required: ['image'],
           properties: {
-            image: { type: 'string', minLength: 100, maxLength: MAX_IMAGE_B64 },
+            image: { type: 'string', minLength: 100, maxLength: MAX_BASE64_LENGTH },
+            mimeType: { type: 'string' },
           },
         },
       },
     },
     async (req, reply) => {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
+      const groqKey = process.env.GROQ_API_KEY;
+      const ocrSpaceKey = process.env.OCR_SPACE_KEY;
+
+      if (!groqKey && !ocrSpaceKey) {
         return reply.code(503).send({
-          ok: false,
           error: 'ocr_unconfigured',
-          message: 'GEMINI_API_KEY is not set on the backend.',
+          message: 'Neither GROQ_API_KEY nor OCR_SPACE_KEY is set.',
         });
       }
 
-      const raw = req.body.image;
-      const m = raw.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/);
-      if (!m) {
-        return reply.code(400).send({ ok: false, error: 'invalid_image_format' });
-      }
-      const mime = m[1] === 'image/jpg' ? 'image/jpeg' : m[1];
-      const b64 = m[2];
-
-      const payload = {
-        contents: [
-          {
-            parts: [
-              { text: PROMPT },
-              { inline_data: { mime_type: mime, data: b64 } },
-            ],
-          },
-        ],
-        generationConfig: { maxOutputTokens: 800, temperature: 0.1 },
-      };
-
-      let res: Response;
-      try {
-        res = await fetch(GEMINI_URL, {
-          method: 'POST',
-          headers: {
-            'x-goog-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      const img = parseImage(req.body);
+      if (!img) {
+        return reply.code(422).send({
+          error: 'receipt_unreadable',
+          message: 'Invalid or too-large image payload.',
         });
-      } catch (err) {
-        fastify.log.error({ err }, 'OCR fetch failed');
-        return reply.code(502).send({ ok: false, error: 'ocr_upstream_error' });
       }
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        fastify.log.error(
-          { status: res.status, body: txt.slice(0, 500) },
-          'Gemini OCR non-200',
-        );
-        return reply.code(502).send({ ok: false, error: 'ocr_upstream_error' });
+      const attempts: Array<{ provider: string; fn: () => Promise<string> }> = [];
+      if (groqKey) attempts.push({ provider: 'groq', fn: () => callGroq(img, groqKey) });
+      if (ocrSpaceKey) attempts.push({ provider: 'ocrspace', fn: () => callOcrSpace(img, ocrSpaceKey) });
+
+      const errors: string[] = [];
+      for (const a of attempts) {
+        try {
+          const extractedText = await a.fn();
+          return { ok: true, extractedText, provider: a.provider };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          fastify.log.warn({ provider: a.provider, err: msg }, 'ocr provider failed');
+          errors.push(`${a.provider}: ${msg}`);
+        }
       }
 
-      let data: GeminiResp;
-      try {
-        data = (await res.json()) as GeminiResp;
-      } catch {
-        return reply.code(502).send({ ok: false, error: 'ocr_upstream_error' });
-      }
-
-      const parts = data.candidates?.[0]?.content?.parts ?? [];
-      const extractedText = parts
-        .filter((p) => typeof p.text === 'string')
-        .map((p) => p.text as string)
-        .join('')
-        .trim();
-
-      if (!extractedText) {
-        return reply.code(422).send({ ok: false, error: 'receipt_unreadable' });
-      }
-
-      // Try to parse using existing anti-budget parser
-      const parsed = parseTransaction(extractedText);
-      if (parsed.ok) {
-        return {
-          ok: true,
-          extractedText,
-          parsed: {
-            amount: parsed.tx.amount,
-            type: parsed.tx.type,
-            category: parsed.tx.category,
-          },
-        };
-      }
-
-      // Parser refused (e.g. "spent 9.00 dollars on..." might parse cleanly,
-      // but if not, still return raw text so user can edit manually)
-      return {
-        ok: true,
-        extractedText,
-        parsed: null,
-        note: 'Text extracted; parser could not structure it. Edit and submit manually.',
-      };
+      return reply.code(502).send({
+        error: 'ocr_upstream_error',
+        reason: errors.join(' | ').slice(0, 500),
+      });
     },
   );
 };

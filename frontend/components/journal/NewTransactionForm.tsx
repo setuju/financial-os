@@ -52,6 +52,8 @@ export default function NewTransactionForm() {
         submitting.
       </p>
 
+      <ReceiptScanButton onExtracted={setText} />
+
       <AmountEditor text={text} onChange={setText} />
 
       <div className="mb-5">
