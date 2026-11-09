@@ -27,7 +27,7 @@ export default function NewTransactionForm() {
         What happened?
       </label>
 
-      <div className="mb-5 flex gap-2">
+      <div className="mb-5 space-y-2 sm:flex sm:gap-2 sm:space-y-0">
         <input
           type="text"
           name="text"
@@ -38,10 +38,12 @@ export default function NewTransactionForm() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="spent 20 dollars on coffee this morning"
-          className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 sm:flex-1"
         />
-        <VoiceButton onTranscript={setText} />
-        <ReceiptScanButton onExtracted={setText} />
+        <div className="flex justify-end gap-2 sm:contents">
+          <VoiceButton onTranscript={setText} />
+          <ReceiptScanButton onExtracted={setText} />
+        </div>
       </div>
 
       <p className="mb-5 text-xs text-ink-faint">

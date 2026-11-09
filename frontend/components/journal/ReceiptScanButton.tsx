@@ -55,6 +55,10 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
 
   async function handleFile(file: File) {
     setError(null);
+    if (file.size > 20 * 1024 * 1024) {
+      setError('Image too large (max 20 MB). Try a smaller photo.');
+      return;
+    }
     setLoading(true);
     try {
       const dataUrl = await resizeToDataUrl(file);
@@ -95,7 +99,6 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         ref={inputRef}
         type="file"
         accept="image/png,image/jpeg,image/webp"
-        capture="environment"
         onChange={onChange}
         className="hidden"
       />
@@ -105,14 +108,14 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         disabled={loading}
         aria-label="Scan receipt"
         title="Scan receipt (photo or file)"
-        className="flex h-full items-center gap-1.5 rounded-lg border border-line-strong bg-surface-raised px-3 text-sm font-medium text-ink transition-colors hover:bg-surface-sunken disabled:opacity-60"
+        className="flex items-center gap-1.5 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-sm font-medium text-ink transition-colors hover:bg-surface-sunken disabled:opacity-60 sm:h-full sm:py-0 sm:px-3"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <Camera className="h-4 w-4" />
         )}
-        <span className="hidden sm:inline">{loading ? 'Reading…' : 'Scan'}</span>
+        <span>{loading ? 'Reading…' : 'Scan'}</span>
       </button>
       {error && (
         <div className="mt-2 flex items-start gap-1.5 text-xs text-danger">
