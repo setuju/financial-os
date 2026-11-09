@@ -35,17 +35,11 @@ async function resizeToDataUrl(file: File): Promise<string> {
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('no_canvas_ctx'));
-        return;
-      }
+      if (!ctx) { reject(new Error('no_canvas_ctx')); return; }
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
     };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('image_load_failed'));
-    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image_load_failed')); };
     img.src = url;
   });
 }
@@ -70,22 +64,15 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
       });
       const data = (await res.json().catch(() => ({}))) as OcrResponse;
       if (!res.ok || !data.extractedText) {
-        if (data.error === 'ocr_unconfigured') {
-          setError('Receipt scanning is not configured on the backend.');
-        } else if (data.error === 'receipt_unreadable') {
-          setError('Could not read that image. Try a clearer photo.');
-        } else {
-          setError('Could not extract text from receipt. Please try again.');
-        }
+        if (data.error === 'ocr_unconfigured') setError('Receipt scanning is not configured on the backend.');
+        else if (data.error === 'receipt_unreadable') setError('Could not read that image. Try a clearer photo.');
+        else setError('Could not extract text from receipt. Please try again.');
         return;
       }
       onExtracted(data.extractedText);
     } catch (err) {
-      if (err instanceof Error && err.name === 'TimeoutError') {
-        setError('Scan timed out. Backend may be waking up — try again.');
-      } else {
-        setError('Network error during scan.');
-      }
+      if (err instanceof Error && err.name === 'TimeoutError') setError('Scan timed out. Backend may be waking up — try again.');
+      else setError('Network error during scan.');
     } finally {
       setLoading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -93,35 +80,22 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
   }
 
   return (
-    <div className="mb-5">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFile}
-        className="hidden"
-      />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={loading}
-        className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface-raised px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        ) : (
-          <Camera className="h-4 w-4" aria-hidden />
-        )}
-        {loading ? 'Scanning receipt…' : 'Scan receipt'}
-      </button>
-      <p className="mt-2 text-xs text-ink-faint">
-        Your receipt image is sent to a vision model for text extraction. It is not stored on our servers. Review the extracted text before saving.
-      </p>
+    <div className="mb-3">
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" onChange={handleFile} className="hidden" />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface-raised px-2.5 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:bg-surface-sunken hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> : <Camera className="h-3.5 w-3.5" aria-hidden />}
+          {loading ? 'Scanning receipt…' : 'Scan receipt'}
+        </button>
+        <span className="text-xs text-ink-faint">or attach a photo — vision AI extracts the text (not stored)</span>
+      </div>
       {error && (
-        <p className="mt-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <p className="mt-2 rounded-md border border-danger/30 bg-danger-soft px-2.5 py-1.5 text-xs text-danger">{error}</p>
       )}
     </div>
   );
