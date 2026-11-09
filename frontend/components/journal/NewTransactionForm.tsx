@@ -54,6 +54,10 @@ export default function NewTransactionForm() {
 
       <AmountEditor text={text} onChange={setText} />
 
+      <div className="mb-5">
+        <SubmitButton />
+      </div>
+
       <div className="mb-5 rounded-lg bg-surface-sunken p-3">
         <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
           <Sparkles className="h-3.5 w-3.5" />
@@ -70,8 +74,6 @@ export default function NewTransactionForm() {
           ))}
         </ul>
       </div>
-
-      <SubmitButton />
 
       <p className="mt-4 text-center text-xs text-ink-faint">
         Your raw input is stored verbatim alongside the parsed transaction —
