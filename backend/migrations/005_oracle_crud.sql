@@ -1,0 +1,3 @@
+ALTER TABLE surplus_oracles
+  ADD COLUMN IF NOT EXISTS period VARCHAR(50) DEFAULT 'next_week',
+  ADD COLUMN IF NOT EXISTS reason TEXT;

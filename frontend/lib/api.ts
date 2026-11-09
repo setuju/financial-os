@@ -158,9 +158,9 @@ export type SurplusMetrics = {
 
 export type SurplusPrediction = {
   id: string;
-  predicted_amount: string;
-  actual_amount: string | null;
-  status: 'pending' | 'resolved';
+  predicted_amount: number;
+  period: string;
+  reason: string;
   created_at: string;
 };
 
@@ -179,21 +179,19 @@ export async function getSurplus(): Promise<SurplusResponse | null> {
   }
 }
 
-export async function predictSurplus(predictedAmount: number): Promise<SurplusPrediction | null> {
+export async function predictSurplus(predictedAmount: number, period: string, reason: string): Promise<SurplusPrediction | null> {
   try {
     const res = await fetch(`${API_URL}/surplus/predict`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ predictedAmount }),
+      body: JSON.stringify({ predictedAmount, period, reason }),
       cache: 'no-store',
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { prediction: SurplusPrediction };
+    const data = await res.json();
     return data.prediction;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 // ---- Reports ----
@@ -269,4 +267,38 @@ export async function getGoals(): Promise<Goal[] | null> {
   } catch {
     return null;
   }
+}
+
+export async function getPredictions(): Promise<{ predictions: SurplusPrediction[] } | null> {
+  try {
+    const res = await fetch(`${API_URL}/surplus/predictions`, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+export async function updateSurplusPrediction(id: string, predictedAmount: number, period: string, reason: string): Promise<SurplusPrediction | null> {
+  try {
+    const res = await fetch(`${API_URL}/surplus/predict/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ predictedAmount, period, reason }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.prediction;
+  } catch { return null; }
+}
+
+export async function deleteSurplusPrediction(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/surplus/predict/${id}`, {
+      method: 'DELETE',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
+    });
+    return res.ok;
+  } catch { return false; }
 }
