@@ -1,0 +1,347 @@
+{
+  "info": {
+    "name": "Financial OS API",
+    "description": "Auto-generated from backend/src/routes/*.ts. Default baseUrl = production; switch to localUrl for local dev.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://financial-os-api-lykz.onrender.com"
+    },
+    {
+      "key": "localUrl",
+      "value": "http://localhost:3001"
+    }
+  ],
+  "item": [
+    {
+      "name": "Transactions",
+      "description": "Anti-Budget parser",
+      "item": [
+        {
+          "name": "POST /transactions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"spent 20 on coffee\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /transactions/search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "coffee"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "description": "Aggregated buckets",
+      "item": [
+        {
+          "name": "GET /reports/summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-08-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-11-10"
+                },
+                {
+                  "key": "groupBy",
+                  "value": "month"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Goals",
+      "description": "Financial Horizon source",
+      "item": [
+        {
+          "name": "GET /goals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "goals"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /goals",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "goals"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Emergency Fund\",\n  \"target_amount\": 5000,\n  \"monthly_saving\": 500,\n  \"interest_rate\": 2.5,\n  \"loan_term_months\": 12,\n  \"start_date\": \"2026-11-01\",\n  \"duration_months\": 12\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Surplus",
+      "description": "Surplus Oracle",
+      "item": [
+        {
+          "name": "GET /surplus/current",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/surplus/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "surplus",
+                "current"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /surplus/predict",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/surplus/predict",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "surplus",
+                "predict"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Impact",
+      "description": "PayPal Payouts (sandbox)",
+      "item": [
+        {
+          "name": "POST /impact/payout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/impact/payout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "impact",
+                "payout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assistant",
+      "description": "Scoped AI chat (Gemini Flash)",
+      "item": [
+        {
+          "name": "POST /assistant/chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "chat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"how do I add a transaction?\",\n  \"history\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /assistant/info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "info"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Receipts",
+      "description": "Gemini Vision OCR",
+      "item": [
+        {
+          "name": "POST /receipts/ocr",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/receipts/ocr",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "receipts",
+                "ocr"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"data:image/png;base64,<PASTE_BASE64_HERE>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

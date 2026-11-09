@@ -204,3 +204,13 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 **Built for PayPal AI Hackathon 2026** · Solo developer (jack / setuju) · [penulis@live.com](mailto:penulis@live.com)
+
+## 📬 API Testing (Postman)
+
+Import to Postman:
+1. **Import** → `docs/postman/financial-os.postman_collection.json`
+2. **Import** → `docs/postman/financial-os.postman_environment.json`
+3. Select environment **"Financial OS — Production"**
+4. Collection defaults to production (`{{baseUrl}}`). Switch to `{{localUrl}}` for local dev.
+
+**Cold-start:** first request after 15 min idle ~50s (Render free). Subsequent: 100–300ms.
