@@ -34,7 +34,10 @@ const CATEGORY_VARIANTS: Record<string, BadgeVariant> = {
 };
 
 export default async function Journal() {
-  const transactions = await getTransactions(50);
+  const allTx = await getTransactions(50);
+  const transactions = (allTx ?? []).filter(
+    (t) => !(t as unknown as { is_projection?: boolean }).is_projection,
+  );
 
   const totalIn = transactions
     ? transactions
