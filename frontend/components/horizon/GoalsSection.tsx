@@ -80,12 +80,12 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
-          target_amount: Number(form.target_amount),
-          monthly_saving: Number(form.monthly_saving || 0),
-          interest_rate: Number(form.interest_rate || 0),
-          loan_term_months: Number(form.loan_term_months || 0),
-          start_date: new Date().toISOString().slice(0, 10),
-          duration_months: Number(form.duration_months || 12),
+          targetAmount: Number(form.target_amount),
+          monthlySaving: Number(form.monthly_saving || 0),
+          interestRate: Number(form.interest_rate || 0),
+          loanTermMonths: Number(form.loan_term_months || 0),
+          startDate: new Date().toISOString().slice(0, 10),
+          durationMonths: Number(form.duration_months || 12),
         }),
         signal: AbortSignal.timeout(15_000),
       });
@@ -284,7 +284,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
         <div className="grid gap-3 md:grid-cols-2">
           {goals.map((goal) => {
             const isDeleting = deletingId === goal.id;
-            const expected = `hapus "${goal.name}"`;
+            const expected = `delete "${goal.name}"`;
             const matched = confirmText === expected;
             return (
               <div
