@@ -113,15 +113,31 @@ export type PayoutResponse = {
   };
 };
 
+
+export type ImpactReceiver = {
+  id: string;
+  name: string;
+  category: string;
+  email: string;
+};
+
+export async function getImpactReceivers(): Promise<{ receivers: ImpactReceiver[] } | null> {
+  try {
+    const res = await fetch(`${API_URL}/impact/receivers`, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
 export async function distributeSurplus(
-  receiverEmail: string,
+  receiverId: string,
   amount: number,
   currency: string = 'USD'
 ): Promise<PayoutResponse> {
   const res = await fetch(`${API_URL}/impact/payout`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ receiverEmail, amount, currency }),
+    body: JSON.stringify({ receiverId, amount, currency }),
     cache: 'no-store',
     signal: AbortSignal.timeout(30000),
   });
