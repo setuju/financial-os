@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, X, AlertCircle, Loader2, Target } from 'lucide-react';
 
@@ -53,6 +53,18 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
     loan_term_months: '0',
     duration_months: '12',
   });
+
+  // auto-compute duration from target / monthly_saving
+  useEffect(() => {
+    const t = Number(form.target_amount);
+    const m = Number(form.monthly_saving);
+    if (Number.isFinite(t) && Number.isFinite(m) && t > 0 && m > 0) {
+      const computed = Math.ceil(t / m);
+      if (String(computed) !== form.duration_months) {
+        setForm((f) => ({ ...f, duration_months: String(computed) }));
+      }
+    }
+  }, [form.target_amount, form.monthly_saving]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -206,8 +218,9 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-soft">
-                Duration (months)
+              <label className="mb-1 flex items-center justify-between text-xs font-medium text-ink-soft">
+                <span>Duration (months)</span>
+                <span className="text-ink-faint">auto: {Math.ceil((Number(form.target_amount)||0) / (Number(form.monthly_saving)||1))}</span>
               </label>
               <input
                 type="number"
