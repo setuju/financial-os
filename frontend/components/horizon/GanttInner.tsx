@@ -7,6 +7,7 @@ import type { GanttConfig, TaskModel } from '@bryntum/gantt-enterprise';
 
 import '@bryntum/gantt-enterprise/gantt.css';
 import '@bryntum/core-enterprise/svalbard.css';
+import type { Goal } from './GoalsSection';
 
 interface CustomTask extends TaskModel {
   targetAmount: number;
@@ -15,7 +16,13 @@ interface CustomTask extends TaskModel {
   loanTerm: number;
 }
 
-export default function GanttInner({ licenseKey }: { licenseKey: string }) {
+export default function GanttInner({
+  licenseKey,
+  goals,
+}: {
+  licenseKey: string;
+  goals: Goal[];
+}) {
   const [config, setConfig] = useState<GanttConfig | null>(null);
   const ganttRef = useRef<BryntumGantt>(null);
 
@@ -26,60 +33,71 @@ export default function GanttInner({ licenseKey }: { licenseKey: string }) {
   }
 
   useEffect(() => {
-    const today = new Date();
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const data: Partial<CustomTask>[] = goals.map((g) => ({
+      id: g.id as unknown as number,
+      name: g.name,
+      startDate: new Date(g.start_date),
+      duration: Number(g.duration_months) || 1,
+      durationUnit: 'month',
+      percentDone: Number(g.progress_percent) || 0,
+      targetAmount: Number(g.target_amount),
+      monthlySaving: Number(g.monthly_saving),
+      interestRate: Number(g.interest_rate),
+      loanTerm: Number(g.loan_term_months),
+    }));
 
-    const data: Partial<CustomTask>[] = [
-      {
-        id: 1,
-        name: 'Emergency Fund (Target: $10,000)',
-        startDate: today,
-        duration: 12,
-        durationUnit: 'month',
-        percentDone: 25,
-        targetAmount: 10000,
-        monthlySaving: 833,
-        interestRate: 2.5,
-        loanTerm: 0,
-      },
-      {
-        id: 2,
-        name: 'New Car Down Payment (Target: $5,000)',
-        startDate: nextMonth,
-        duration: 10,
-        durationUnit: 'month',
-        percentDone: 10,
-        targetAmount: 5000,
-        monthlySaving: 500,
-        interestRate: 0,
-        loanTerm: 36,
-      },
-    ];
+    const now = Date.now();
+    let minStart = now;
+    let maxEnd = now + 1000 * 60 * 60 * 24 * 30;
+    if (data.length > 0) {
+      const starts: number[] = [];
+      const ends: number[] = [];
+      for (const t of data) {
+        const sd = t.startDate as unknown as Date;
+        const s = new Date(sd).getTime();
+        if (!Number.isNaN(s)) {
+          starts.push(s);
+          const dur = Number(t.duration) || 1;
+          const e = new Date(sd);
+          e.setMonth(e.getMonth() + dur);
+          ends.push(e.getTime());
+        }
+      }
+      if (starts.length > 0) {
+        minStart = Math.min(...starts);
+        maxEnd = Math.max(...ends);
+      }
+    }
 
     setConfig({
-      columns: [
-        { type: 'name', width: 250, text: 'Financial Goal' },
-        { type: 'startdate', text: 'Start', width: 100 },
-        { type: 'duration', text: 'Duration', width: 100 },
-        { type: 'percentdone', text: 'Progress', width: 100 },
-        { field: 'targetAmount', text: 'Target ($)', width: 110, editor: 'number' },
-        { field: 'monthlySaving', text: 'Monthly ($)', width: 110, editor: 'number' },
-        { field: 'interestRate', text: 'Interest (%)', width: 110, editor: 'number' },
-      ],
+      columns: [],
       tasks: data as CustomTask[],
+      viewPreset: 'monthAndYear',
+      startDate: new Date(minStart),
+      endDate: new Date(maxEnd),
+      barMargin: 14,
+      rowHeight: 48,
       features: {
-        criticalPaths: { disabled: false },
+        criticalPaths: { disabled: true },
         projectLines: { disabled: false },
         labels: { left: { field: 'name' } },
       },
     });
-  }, []);
+  }, [goals]);
 
   if (!config) {
     return (
       <div className="flex h-full w-full items-center justify-center gap-2">
         <Loader2 className="h-5 w-5 animate-spin text-ink-soft" />
-        <p className="text-sm text-ink-soft">Loading Financial Horizon...</p>
+        <p className="text-sm text-ink-soft">Loading Gantt chart...</p>
+      </div>
+    );
+  }
+
+  if (goals.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center text-sm text-ink-soft">
+        Add goals above to see the timeline.
       </div>
     );
   }
