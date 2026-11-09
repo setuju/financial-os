@@ -161,7 +161,7 @@ export default function SurplusOracleCard({ initialPredictions }: Props) {
             <div key={p.id} className="flex items-center justify-between rounded-lg border border-line p-3 bg-surface-raised">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-lg font-semibold text-emerald-600">${Number(p.predicted_amount).toFixed(2)}</span>
+                  <span className="font-mono text-lg font-semibold text-emerald-600">{usd.format(Number(p.predicted_amount))}</span>
                   <span className="text-xs font-medium uppercase text-ink-soft bg-surface-sunken px-2 py-0.5 rounded">
                     {PERIODS.find(per => per.value === p.period)?.label || p.period}
                   </span>
