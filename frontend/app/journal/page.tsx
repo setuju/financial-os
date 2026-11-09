@@ -35,8 +35,11 @@ const CATEGORY_VARIANTS: Record<string, BadgeVariant> = {
 
 export default async function Journal() {
   const allTx = await getTransactions(50);
+  const now = new Date();
   const transactions = (allTx ?? []).filter(
-    (t) => !(t as unknown as { is_projection?: boolean }).is_projection,
+    (t) =>
+      !(t as unknown as { is_projection?: boolean }).is_projection &&
+      new Date(t.occurred_at) <= now,
   );
 
   const totalIn = transactions

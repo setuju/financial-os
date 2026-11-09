@@ -35,6 +35,7 @@ export type Transaction = {
   category: string;
   occurred_at: string;  // ISO 8601
   source: 'rule' | 'llm';
+  is_projection?: boolean;
   created_at: string;   // ISO 8601
 };
 
