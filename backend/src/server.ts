@@ -21,8 +21,11 @@ export async function buildServer(): Promise<FastifyInstance> {
   await app.register(cors, {
     origin: [
       'https://financial-os-nu.vercel.app',
+      'https://financial.saturumah.net',
+      'https://financial-api.saturumah.net',
       'http://localhost:3000',
       /\.vercel\.app$/,
+      /\.saturumah\.net$/,
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: false,
