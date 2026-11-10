@@ -206,7 +206,14 @@ export type SummaryBucket = {
   expense: number;
   net: number;
   isProjection: boolean;
+  opening?: number;
+  closing?: number;
+  status?: 'actual' | 'projected' | 'mixed';
+  actualCount?: number;
+  projectionCount?: number;
 };
+
+export type ReportBucket = SummaryBucket;
 
 export type SummaryResponse = {
   buckets: SummaryBucket[];

@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
-import { getSummary, type GroupBy, type TypeFilter } from '../repositories/reports.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -8,13 +7,30 @@ declare module 'fastify' {
   }
 }
 
+type GroupBy = 'day' | 'week' | 'month' | 'year';
+type TxnType = 'income' | 'expense';
+
 interface SummaryQuery {
   from: string;
   to: string;
   groupBy?: GroupBy;
-  type?: TypeFilter;
+  type?: TxnType;
   includeProjections?: string;
 }
+
+interface Bucket {
+  period: string;
+  income: number;
+  expense: number;
+  net: number;
+  opening: number;
+  closing: number;
+  status: 'actual' | 'projected' | 'mixed';
+  actualCount: number;
+  projectionCount: number;
+}
+
+const VALID_GROUPS: GroupBy[] = ['day', 'week', 'month', 'year'];
 
 const reportsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Querystring: SummaryQuery }>(
@@ -25,38 +41,92 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
           type: 'object',
           required: ['from', 'to'],
           properties: {
-            from: { type: 'string', format: 'date' },
-            to: { type: 'string', format: 'date' },
-            groupBy: { type: 'string', enum: ['day', 'week', 'month', 'year'], default: 'day' },
-            type: { type: 'string', enum: ['income', 'expense', 'all'], default: 'all' },
+            from: { type: 'string' },
+            to: { type: 'string' },
+            groupBy: { type: 'string', enum: VALID_GROUPS, default: 'month' },
+            type: { type: 'string', enum: ['income', 'expense'] },
             includeProjections: { type: 'string' },
           },
         },
       },
     },
-    async (req, reply) => {
+    async (req) => {
       const { from, to } = req.query;
-      const groupBy: GroupBy = req.query.groupBy ?? 'day';
-      const type: TypeFilter = req.query.type ?? 'all';
+      const groupBy = (req.query.groupBy ?? 'month') as GroupBy;
+      const typeFilter = req.query.type;
       const includeProjections = req.query.includeProjections === 'true';
 
-      const fromD = new Date(`${from}T00:00:00.000Z`);
-      const toD = new Date(`${to}T23:59:59.999Z`);
-      if (isNaN(fromD.getTime()) || isNaN(toD.getTime())) {
-        return reply.code(400).send({ error: 'invalid_date_range' });
-      }
-      if (fromD > toD) {
-        return reply.code(400).send({ error: 'from_after_to' });
-      }
+      const projClause = includeProjections ? '' : 'AND is_projection = false';
+      const typeClause = typeFilter
+        ? `AND type = '${typeFilter === 'income' ? 'income' : 'expense'}'`
+        : '';
 
-      const result = await getSummary(fastify.pg, {
-        from: fromD,
-        to: toD,
-        groupBy,
-        type,
-        includeProjections,
+      // 1) Opening = net sum of all tx BEFORE `from`
+      const beforeRes = await fastify.pg.query(
+        `SELECT COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE -amount END), 0) AS opening
+         FROM transactions
+         WHERE occurred_at < $1 ${projClause} ${typeClause}`,
+        [from],
+      );
+      let opening = Number(beforeRes.rows[0].opening);
+
+      // 2) Buckets with per-bucket actual/projection counts
+      const bucketRes = await fastify.pg.query(
+        `SELECT
+           DATE_TRUNC($3, occurred_at) AS period,
+           COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE 0 END), 0) AS income,
+           COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS expense,
+           COUNT(*) FILTER (WHERE is_projection = false)::int AS actual_count,
+           COUNT(*) FILTER (WHERE is_projection = true)::int  AS projection_count
+         FROM transactions
+         WHERE occurred_at >= $1 AND occurred_at < $2 ${projClause} ${typeClause}
+         GROUP BY 1
+         ORDER BY 1 ASC`,
+        [from, to, groupBy],
+      );
+
+      const buckets: Bucket[] = bucketRes.rows.map((r) => {
+        const income = Number(r.income);
+        const expense = Number(r.expense);
+        const net = income - expense;
+        const bucketOpening = opening;
+        const closing = bucketOpening + net;
+        opening = closing;
+        const ac = Number(r.actual_count);
+        const pc = Number(r.projection_count);
+        let status: 'actual' | 'projected' | 'mixed' = 'actual';
+        if (ac > 0 && pc > 0) status = 'mixed';
+        else if (pc > 0 && ac === 0) status = 'projected';
+        return {
+          period: r.period instanceof Date ? r.period.toISOString() : String(r.period),
+          income,
+          expense,
+          net,
+          opening: bucketOpening,
+          closing,
+          status,
+          actualCount: ac,
+          projectionCount: pc,
+        };
       });
-      return result;
+
+      // 3) Totals — use same opening as the very first bucket, not the accumulated one
+      const totalIncome = buckets.reduce((s, b) => s + b.income, 0);
+      const totalExpense = buckets.reduce((s, b) => s + b.expense, 0);
+      const totalNet = totalIncome - totalExpense;
+      const openingOfFirst = buckets.length > 0 ? buckets[0].opening : opening;
+      const closingOfLast = buckets.length > 0 ? buckets[buckets.length - 1].closing : opening;
+
+      return {
+        buckets,
+        totals: {
+          income: totalIncome,
+          expense: totalExpense,
+          net: totalNet,
+          opening: openingOfFirst,
+          closing: closingOfLast,
+        },
+      };
     },
   );
 };

@@ -13,7 +13,7 @@ import {
   type ReportType,
 } from '@/lib/api';
 import FilterBar, { type ViewMode, type DatePreset } from './FilterBar';
-import LedgerGrid from './LedgerGrid';
+import LedgerGrid, { StatusLegend } from './LedgerGrid';
 import LedgerNotebook from './LedgerNotebook';
 import SummaryStats from './SummaryStats';
 import ExportLedgerPdfButton from './ExportLedgerPdfButton';
@@ -113,6 +113,14 @@ export default function LedgerClient() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mb-4 flex justify-end">
+        <a
+          href="/journal/new"
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
+        >
+          + New transaction
+        </a>
+      </div>
       <PageHeader
         title="Ledger"
         description="Every transaction, filtered and grouped. Switch between grid and notebook views."
@@ -173,7 +181,18 @@ export default function LedgerClient() {
       ) : (
         <>
           <SummaryStats totals={data.totals} />
-          {view === 'grid' ? <LedgerGrid buckets={data.buckets} /> : <LedgerNotebook buckets={data.buckets} />}
+          {view === 'grid' ? (
+            <>
+              <LedgerGrid
+                buckets={data.buckets}
+                groupBy={groupBy}
+                showBalances={groupBy === 'month' || groupBy === 'year'}
+              />
+              <StatusLegend buckets={data.buckets} />
+            </>
+          ) : (
+            <LedgerNotebook buckets={data.buckets} />
+          )}
         </>
       )}
     </div>
