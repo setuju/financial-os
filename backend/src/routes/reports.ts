@@ -8,7 +8,7 @@ declare module 'fastify' {
 }
 
 type GroupBy = 'day' | 'week' | 'month' | 'year';
-type TxnType = 'income' | 'expense';
+type TxnType = 'income' | 'expense' | 'all';
 
 interface SummaryQuery {
   from: string;
@@ -44,7 +44,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
             from: { type: 'string' },
             to: { type: 'string' },
             groupBy: { type: 'string', enum: VALID_GROUPS, default: 'month' },
-            type: { type: 'string', enum: ['income', 'expense'] },
+            type: { type: 'string', enum: ['income', 'expense', 'all'], default: 'all' },
             includeProjections: { type: 'string' },
           },
         },
@@ -57,7 +57,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       const includeProjections = req.query.includeProjections === 'true';
 
       const projClause = includeProjections ? '' : 'AND is_projection = false';
-      const typeClause = typeFilter
+      const typeClause = typeFilter && typeFilter !== 'all'
         ? `AND type = '${typeFilter === 'income' ? 'income' : 'expense'}'`
         : '';
 
