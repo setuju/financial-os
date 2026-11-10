@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Trash2, AlertCircle, Loader2, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import type { SummaryBucket as ReportBucket } from '@/lib/api';
 
 const usd = new Intl.NumberFormat('en-US', {
@@ -135,10 +133,6 @@ export default function LedgerGrid({ buckets, groupBy, showBalances }: Props) {
 export function StatusLegend({ buckets }: { buckets: ReportBucket[] }) {
   const effectiveStatus = (b: ReportBucket): 'actual' | 'projected' | 'mixed' =>
     b.status ?? (b.isProjection ? 'projected' : 'actual');
-  const hasActual = buckets.some((b) => {
-    const s = effectiveStatus(b);
-    return s === 'actual' || s === 'mixed';
-  });
   const hasProjected = buckets.some((b) => {
     const s = effectiveStatus(b);
     return s === 'projected' || s === 'mixed';

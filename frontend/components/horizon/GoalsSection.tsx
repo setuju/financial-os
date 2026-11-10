@@ -64,6 +64,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
         setForm((f) => ({ ...f, duration_months: String(computed) }));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.target_amount, form.monthly_saving]);
 
   async function handleAdd(e: React.FormEvent) {
