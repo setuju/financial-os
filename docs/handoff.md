@@ -433,3 +433,85 @@ b0ba7ba fix(frontend): correct impact payout currency + 2-step confirm
 
 **TIDAK DIKERJAKAN**
 - Elasticsearch indexing UI, AG Grid, KERNEL, Time-to-Value — defer ke README/docs
+
+## Sesi 11 Close (2026-11-10)
+
+**HEAD**: `2fc1f21`
+**Deadline**: 12 Nov 2026 12:00 PT (~2 hari)
+
+### Live URLs
+
+| Layer | URL |
+|---|---|
+| Frontend | https://financial.saturumah.net |
+| Backend | https://financial-api.saturumah.net |
+| DB | Neon `ep-green-glitter` ap-southeast-1 |
+| Cache | Upstash Redis |
+| Search | Elastic Cloud |
+| Repo | https://github.com/setuju/financial-os — **masih PRIVATE** |
+
+### Features shipped Sesi 11
+
+**OCR receipt** — Gemini 3 Flash Preview (native endpoint)
+- `POST /receipts/ocr` reuses `parseTransaction`
+- `x-goog-api-key` header (never in URL)
+- Client canvas resize 1600px, 20MB guard
+
+**Impact v2** — semester-based surplus model
+- Migration 006: `surplus_periods` table with opening/closing cascade
+- `/impact/surplus`: verified (last month) + in_progress (current) + history strip
+- `/impact/payouts` GET (list, soft-deleted hidden) + DELETE (money stays out)
+- `/impact/horizon-commitment` GET (next month bills)
+- Frontend: 2 cards + history + warning banner + donation log + 2-step confirm
+
+**Horizon v2** — goal management
+- `DELETE /goals/:id` (typed confirm `delete "<name>"`)
+- `GoalsSection`: cards + progress + auto-duration (`ceil(target/monthly)`)
+- `GanttInner`: columns:[], `zoomToFit`, viewPreset monthAndYear
+
+**Ledger v2** — clarity
+- `/reports/summary`: opening/closing/status per bucket (actual/projected/mixed)
+- `/transactions/:id` DELETE (hard delete for typos)
+- `LedgerGrid`: OPENING/CLOSING cols (month/year), status legend
+- `StatusLegend`: ACTUAL/PROJECTED/MIXED explanation + no-projection hint
+
+**Journal** — pagination + CRUD
+- Client-side pagination 20/50/100/all + prev/next
+- Delete per-row (2-step inline)
+- Edit per-row → `EditTransactionDialog` → `PUT /transactions/:id` re-parses `raw_text`
+
+**PDF** — polish
+- Ledger + Journal: row numbering (`#`), explicit column widths
+- Ledger: Opening/Closing for month/year, **no Status column**
+- Header ASCII (not `→`/`·`)
+
+**Assistant** — markdown-lite
+- `renderRich()` backtick → code chip, `**bold**` → strong
+- max_tokens 400 → 600 (thinking headroom)
+
+**CORS** — saturumah.net domains added
+**Keep-alive** — UptimeRobot ping every 5 min (user set up)
+
+### Seed — US persona
+
+**Sam Rivera** · Web Server Administrator @ PayPal (San Jose, CA)
+- Jul-Nov 2026 · semi-monthly (15th + last day) · $3,800 net per paycheck
+- US merchants: Trader Joe's, Whole Foods, Shell, Chevron, Amazon, Netflix, Spotify, Verizon, Comcast, State Farm, Chipotle, Starbucks, Doordash, Uber, Target, CVS, Safeway, Best Buy
+- 3 goals: Emergency Fund $10k, Hawaii Vacation $3k, MacBook Pro $2.5k
+- 2 oracles: next_month $2500, next_week $600
+
+### Deploy notes
+
+- Render free tier ~50s cold start — pre-warm via `curl /health`
+- Auto-deploy OFF — manual deploy via dashboard
+- Vercel auto-deploy on push (~40-80s)
+
+### Pending (Sesi 12)
+
+- **Video <3 min** — CRITICAL, belum rekam
+- **Devpost submit** — draft at `docs/devpost-draft.md`
+- **Repo public** — belum di-toggle
+- Oracle move to Horizon + celebration animation (in progress)
+
+---
+

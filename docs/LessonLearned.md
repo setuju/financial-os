@@ -272,3 +272,44 @@
 - Auto-retry with backoff untuk demo scripts
 
 **Pelajaran**: "It's not working" setelah push — check deploy status first. Deploy latency 2-3 min = normal, bukan bug.
+
+## Kesalahan 35: `tsx` Runtime Tolerates Unused Var, `tsc --noEmit` Does Not
+**Apa**: \`const messages\` dead code di \`assistant.ts\`. Render (tsx) OK, tsc strict reject.
+**Koreksi**: jalankan \`tsc --noEmit\` di backend setiap sesi, bukan hanya frontend.
+
+## Kesalahan 36: API Key Leak via `?key=` URL Query Param
+**Apa**: Gemini test pakai \`curl "?key=$KEY"\`. Error merender URL → key tercetak di terminal + chat.
+**Koreksi**: header auth (\`x-goog-api-key\`) atau \`curl -K\` dengan \`chmod 600\`. Never in URL.
+
+## Kesalahan 37: OpenRouter Model IDs ≠ Google AI Studio Native Names
+**Apa**: \`google/gemini-3.8-flash\` (OpenRouter) tidak valid di AI Studio. Native: \`gemini-3-flash-preview\`, dll. OpenAI-compat endpoint AI Studio juga broken (400 shape, bukan error object).
+**Koreksi**: pakai **native** \`/v1beta/models/<model>:generateContent\`. Cek list dulu: \`GET /v1beta/models?key=\`.
+
+## Kesalahan 38: `set -e` Kills Discovery Scripts
+**Apa**: Fungsi \`verify()\` return 1 untuk "not found" pattern. \`set -e\` abort 9 cek berikutnya.
+**Koreksi**: discovery/verification pass **tanpa** \`set -e\`. Gate dengan \`|| true\` atau return 0 selalu.
+
+## Kesalahan 39: Route Extractor Regex Fails on Multi-Line Generics
+**Apa**: Regex \`fastify\\.(get|post)\\(\` gagal match \`fastify.get<{ Body }>(\` yang multi-line → false negative diagnosis.
+**Koreksi**: pakai \`grep -nE "fastify\\.(get|post|put|patch|delete)"\` (kasar tapi reliable). Atau baca file langsung.
+
+## Kesalahan 40: Extending TS Interface Without SQL Update
+**Apa**: \`CreatePayoutInput.sourcePeriod?: string\` ditambah tapi SQL INSERT masih 6 kolom → column tidak pernah ditulis, silent bug.
+**Koreksi**: setiap interface change wajib grep pemakaian field di SQL/query + test.
+
+## Kesalahan 41: Push Before tsc Gate (Vercel ESLint Strict)
+**Apa**: Push commit dengan tsc FAILED → Vercel build fail karena ESLint strict unused vars (\`useState\`, \`useRouter\`, dll).
+**Koreksi**: **exit 0 kalau tsc != 0**. Jangan push. Kalau timeout, grep-verify dulu, baru push.
+
+## Kesalahan 42: Rewrite Endpoint Without Preserving Contract
+**Apa**: Rewrite \`reports.ts\` schema enum \`['income','expense']\` — tidak include \`'all'\` yang dikirim frontend default. 400 FST_ERR_VALIDATION di semua request.
+**Koreksi**: rewrite endpoint wajib cross-check frontend caller params (grep \`getReportSummary\`). Default value harus included di enum.
+
+## Kesalahan 43: Blind Multi-File Patch → 3 Iterations Wasted
+**Apa**: Patch \`LedgerClient\`, \`LedgerGrid\`, \`api.ts\` tanpa recon full file. Regex mismatch, `boolean;,`, `groupBy` prop missing — 3 iterasi.
+**Koreksi**: **rekon dulu, patch kemudian**. Cost recon 30 detik vs debug 15 menit.
+
+## Kesalahan 44: `updateTransaction` Import Missed in Phase 2
+**Apa**: Bubble Phase 2 inject PUT route (dengan \`updateTransaction\`) tapi logic import check salah — import tidak ditambahkan. TS2552 Cannot find name.
+**Koreksi**: setiap patch yang inject kode dengan reference baru wajib verify import. Grep setelah patch: \`grep -c "^import.*<name>"\`.
+
