@@ -295,3 +295,17 @@ PDF invoice OCR · User accounts + multi-tenant · Elasticsearch UI · Time-to-V
 ---
 
 **Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)** · Solo developer · [penulis@live.com](mailto:penulis@live.com)
+
+## 🔐 Multi-Tenant Demo (In Progress)
+
+Financial OS is being upgraded from **single-user demo** to **multi-tenant demo**:
+
+- Each visitor signs up with a **name** → gets a generated **5-character password**
+- Data (transactions, goals, payouts) is **isolated per session**
+- **Admin** session (`admin` / `financial-os`) sees the seeded baseline
+- Demo reset via `/reset` (rate-limited) — no data loss for other users
+- **Status**: plan at [`docs/multitenant-plan.md`](docs/multitenant-plan.md), implementation in progress
+
+Until multi-tenant ships:
+- Current mode is **shared demo** — all visitors see the same data
+- Any visitor can reset via `https://financial.saturumah.net/reset`

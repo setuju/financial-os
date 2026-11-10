@@ -104,3 +104,42 @@
 - ⏸ Devpost form draft — **CRITICAL**
 - ⏸ Repo public + LICENSE — quick toggle
 - ⏸ Assistant widget — nice-to-have untuk video demo
+
+
+---
+
+## Sesi 12 — Multi-Tenant Migration (In Progress)
+
+**Decision**: 2026-11-10 (user request)
+**Status**: Recon + backup done. Plan in `docs/multitenant-plan.md`.
+
+### Motivation
+
+Multi-user demo — 5+ judges accessing simultaneously would corrupt shared data.
+Sessions isolate data per user; admin session owns the seeded baseline.
+
+### Phases
+
+| # | Phase | Time | Gate |
+|---|---|---|---|
+| 1 | Migration 007: demo_sessions + session_id columns + backfill | 15 mnt | tsc + backfill verify |
+| 2 | demo-sessions repo (register / verify / ensureAdmin) | 10 mnt | unit test |
+| 3 | Wire session_id into 14 repo functions | 25 mnt | admin data intact |
+| 4 | Extract session header in 25 routes | 20 mnt | 200 probes |
+| 5 | Seed refactor + admin reset scoped | 15 mnt | register → empty |
+| 6 | Frontend signup/login + name + password display | 20 mnt | e2e flow |
+| 7 | E2E isolation test (user A ≠ user B) | 15 mnt | zero data leak |
+
+**Hard cap: 4.5 hours.** Any bubble >30 min stuck → abort + revert to reset-button-only.
+
+### Backup + rollback
+
+- SQL: \`/home/jack/saturumah-backups/neon-*.sql\`
+- Git tag: \`pre-multitenant-2026-11-10\`
+- Restore docs in \`handoff.md\`
+
+### Post-submit (deferred)
+
+- URL rotation (Neon roles)
+- Second admin account
+- User data export / GDPR-style delete
