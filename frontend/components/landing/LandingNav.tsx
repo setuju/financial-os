@@ -10,8 +10,8 @@ export default function LandingNav() {
           <span>Financial OS</span>
         </Link>
         <nav className="flex items-center gap-4 text-sm">
-          <Link href="/privacy" className="hidden text-ink-soft hover:text-ink sm:inline">Privacy</Link>
-          <Link href="/terms" className="hidden text-ink-soft hover:text-ink sm:inline">Terms</Link>
+          <Link href="/privacy" className="hidden text-ink-soft hover:text-ink sm:inline" title="Privacy policy \u2014 what we process, third-party providers">Privacy</Link>
+          <Link href="/terms" className="hidden text-ink-soft hover:text-ink sm:inline" title="Terms of service \u2014 sandbox-only, no financial advice">Terms</Link>
           <Link
             href="/login"
             className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover"

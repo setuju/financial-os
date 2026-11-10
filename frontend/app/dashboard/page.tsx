@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { serverGetSurplus as getSurplus } from '@/lib/api-server';
 import StatCard from '@/components/ui/StatCard';
+import OnboardingBanner from '@/components/layout/OnboardingBanner';
 import EmptyState from '@/components/ui/EmptyState';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,12 @@ export default async function Home() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      {surplusData &&
+        surplusData.metrics.totalIncome === 0 &&
+        surplusData.metrics.totalExpense === 0 && (
+          <OnboardingBanner />
+        )}
+
       <div className="mb-10">
         <h1 className="text-4xl font-semibold tracking-tight text-ink">
           Financial OS

@@ -52,6 +52,14 @@ const LINKS = [
   { href: '/horizon', label: 'Horizon', icon: Target },
 ];
 
+const LINK_TIPS: Record<string, string> = {
+  Dashboard: 'Overview: total income/expense/surplus + quick actions',
+  Journal: 'Every transaction \u2014 add, edit, delete, PDF export',
+  Ledger: 'Grid/notebook view, 36 filters, monthly opening/closing',
+  Impact: 'Distribute verified surplus via PayPal Payouts sandbox',
+  Horizon: 'Long-term goals + Oracle predictions on Gantt timeline',
+};
+
 const STATUS_MAP = {
   ok: { label: 'Healthy', dot: 'bg-emerald-500', text: 'text-emerald-700' },
   degraded: { label: 'Degraded', dot: 'bg-amber-500', text: 'text-amber-700' },
@@ -87,6 +95,7 @@ export default function NavBar({ status }: { status: HealthStatus }) {
               <Link
                 key={href}
                 href={href}
+                        title={LINK_TIPS[label]}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
                     ? 'bg-accent-soft text-accent'

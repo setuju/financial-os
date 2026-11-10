@@ -87,7 +87,7 @@ export default function SignupForm() {
         <button
           type="button"
           onClick={() => {
-            router.push('/dashboard');
+            router.push('/features');
             router.refresh();
           }}
           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-accent-hover"
