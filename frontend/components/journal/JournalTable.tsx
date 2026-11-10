@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2, X, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Trash2, X, Check, AlertCircle, Loader2, Pencil } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';
 import type { Transaction } from '@/lib/api';
+import EditTransactionDialog from './EditTransactionDialog';
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -43,6 +44,7 @@ export default function JournalTable({ transactions }: Props) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const total = transactions.length;
   const effectiveSize = pageSize === 'all' ? Math.max(total, 1) : pageSize;
@@ -159,15 +161,25 @@ export default function JournalTable({ transactions }: Props) {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmId(tx.id)}
-                          aria-label="Delete transaction"
-                          className="rounded p-1 text-ink-faint hover:bg-danger-soft hover:text-danger"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditingTx(tx)}
+                            aria-label="Edit transaction"
+                            className="rounded p-1 text-ink-faint hover:bg-accent-soft hover:text-accent"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmId(tx.id)}
+                            aria-label="Delete transaction"
+                            className="rounded p-1 text-ink-faint hover:bg-danger-soft hover:text-danger"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+)}
                     </td>
                   </tr>
                 );
@@ -230,15 +242,25 @@ export default function JournalTable({ transactions }: Props) {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmId(tx.id)}
-                        aria-label="Delete transaction"
-                        className="rounded p-1 text-ink-faint hover:bg-danger-soft hover:text-danger"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingTx(tx)}
+                          aria-label="Edit transaction"
+                          className="rounded p-1 text-ink-faint hover:bg-accent-soft hover:text-accent"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmId(tx.id)}
+                          aria-label="Delete transaction"
+                          className="rounded p-1 text-ink-faint hover:bg-danger-soft hover:text-danger"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+)}
                   </div>
                 </div>
               </li>
@@ -300,6 +322,12 @@ export default function JournalTable({ transactions }: Props) {
           )}
         </div>
       </div>
+      {editingTx && (
+        <EditTransactionDialog
+          tx={editingTx}
+          onClose={() => setEditingTx(null)}
+        />
+      )}
     </div>
   );
 }
