@@ -4,7 +4,8 @@ import StatCard from '@/components/ui/StatCard';
 import Card from '@/components/ui/Card';
 import GanttWrapper from '@/components/horizon/GanttWrapper';
 import GoalsSection, { type Goal } from '@/components/horizon/GoalsSection';
-import { getGoals } from '@/lib/api';
+import { getGoals, getPredictions } from '@/lib/api';
+import SurplusOracleCard from '@/components/SurplusOracleCard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -29,7 +30,11 @@ export default async function HorizonPage() {
   const licenseKey = process.env.BRYNTUM_LICENSE_KEY ?? '';
 
   // Normalize to GoalsSection's Goal shape regardless of api.ts's Goal type
-  const raw = (await getGoals()) ?? [];
+  const [goalsRes, predsData] = await Promise.all([
+    getGoals(),
+    getPredictions(),
+  ]);
+  const raw = goalsRes ?? [];
   const rawGoals = raw as unknown as Array<Record<string, unknown>>;
   const goals: Goal[] = rawGoals.map((g) => ({
     id: String(g.id ?? ''),
@@ -72,6 +77,10 @@ export default async function HorizonPage() {
       </div>
 
       <GoalsSection goals={goals} />
+
+      <div className="mt-8">
+        <SurplusOracleCard initialPredictions={predsData?.predictions || []} />
+      </div>
 
       <div className="mt-8">
         <h2 className="mb-3 text-sm font-semibold text-ink">Timeline</h2>

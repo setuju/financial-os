@@ -8,8 +8,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { getSurplus } from '@/lib/api';
-import SurplusOracleCard from '@/components/SurplusOracleCard';
-import { getPredictions } from '@/lib/api';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -23,7 +21,7 @@ const usd = new Intl.NumberFormat('en-US', {
 });
 
 export default async function Home() {
-  const [surplusData, predsData] = await Promise.all([getSurplus(), getPredictions()]);
+  const surplusData = await getSurplus();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -63,10 +61,6 @@ export default async function Home() {
               icon={<Sparkles className="h-4 w-4" />}
               tone={surplusData.metrics.currentSurplus >= 0 ? 'success' : 'danger'}
             />
-          </div>
-
-          <div className="mb-8">
-            <SurplusOracleCard initialPredictions={predsData?.predictions || []} />
           </div>
 
           <div className="mb-10">

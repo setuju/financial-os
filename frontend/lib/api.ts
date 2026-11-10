@@ -378,3 +378,23 @@ export async function getHorizonCommitment(): Promise<HorizonCommitment | null> 
     return null;
   }
 }
+
+
+export async function markSurplusPredictionAchieved(
+  id: string,
+): Promise<SurplusPrediction | null> {
+  try {
+    const res = await fetch(
+      `${API_URL}/surplus/predictions/${encodeURIComponent(id)}/achieve`,
+      {
+        method: 'POST',
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { prediction?: SurplusPrediction };
+    return data.prediction ?? null;
+  } catch {
+    return null;
+  }
+}

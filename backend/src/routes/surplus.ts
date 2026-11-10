@@ -6,7 +6,8 @@ import {
   getLatestPrediction,
   listPredictions,
   updatePrediction,
-  deletePrediction
+  deletePrediction,
+  markPredictionAchieved
 } from '../repositories/surplus.js';
 
 declare module 'fastify' {
@@ -94,6 +95,27 @@ const surplusRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(204).send();
     }
   );
+
+  fastify.post<{ Params: { id: string } }>(
+    '/surplus/predictions/:id/achieve',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', minLength: 1 } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const prediction = await markPredictionAchieved(fastify.pg, req.params.id);
+      if (!prediction) {
+        return reply.code(404).send({ error: 'not_found_or_already_achieved' });
+      }
+      return { prediction };
+    },
+  );
+
 };
 
 export default surplusRoutes;

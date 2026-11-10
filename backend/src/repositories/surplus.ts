@@ -64,3 +64,16 @@ export async function deletePrediction(pool: pg.Pool, id: string) {
   );
   return result.rows.length > 0;
 }
+
+
+export async function markPredictionAchieved(pool: pg.Pool, id: string) {
+  const result = await pool.query(
+    `UPDATE surplus_oracles
+     SET status = 'resolved', resolved_at = NOW(), achieved_at = NOW(),
+         actual_amount = predicted_amount
+     WHERE id = $1 AND status != 'resolved'
+     RETURNING *`,
+    [id],
+  );
+  return result.rows[0] || null;
+}
