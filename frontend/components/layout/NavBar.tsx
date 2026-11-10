@@ -10,6 +10,7 @@ import {
   Target,
   Table,
 } from 'lucide-react';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 type HealthStatus = 'ok' | 'degraded' | 'offline';
 
@@ -63,11 +64,14 @@ export default function NavBar({ status }: { status: HealthStatus }) {
           })}
         </nav>
 
-        <div
-          className={`flex items-center gap-1.5 text-xs font-medium ${s.text}`}
-        >
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div
+            className={`flex items-center gap-1.5 text-xs font-medium ${s.text}`}
+          >
           <span className={`h-2 w-2 rounded-full ${s.dot}`} />
-          <span className="hidden sm:inline">{s.label}</span>
+            <span className="hidden sm:inline">{s.label}</span>
+          </div>
         </div>
       </div>
     </header>

@@ -26,7 +26,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+              <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}else{var m=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',m?'dark':'light');}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
+          }}
+        />
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AppShell>{children}</AppShell>
       </body>

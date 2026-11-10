@@ -1,49 +1,50 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: ['class', '[data-theme="dark"]'],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
         surface: {
-          DEFAULT: "#fafafa",
-          raised: "#ffffff",
-          sunken: "#f4f4f5",
+          DEFAULT: 'rgb(var(--surface-default) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
+          sunken: 'rgb(var(--surface-sunken) / <alpha-value>)',
         },
         line: {
-          DEFAULT: "#e4e4e7",
-          strong: "#d4d4d8",
+          DEFAULT: 'rgb(var(--line) / <alpha-value>)',
+          strong: 'rgb(var(--line-strong) / <alpha-value>)',
         },
         ink: {
-          DEFAULT: "#18181b",
-          soft: "#52525b",
-          faint: "#a1a1aa",
+          DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
+          soft: 'rgb(var(--ink-soft) / <alpha-value>)',
+          faint: 'rgb(var(--ink-faint) / <alpha-value>)',
         },
         accent: {
-          DEFAULT: "#0070ba",
-          hover: "#005ea6",
-          soft: "#e6f2fa",
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          hover: 'rgb(var(--accent-hover) / <alpha-value>)',
+          soft: 'rgb(var(--accent-soft) / <alpha-value>)',
         },
         success: {
-          DEFAULT: "#059669",
-          soft: "#d1fae5",
+          DEFAULT: 'rgb(var(--success) / <alpha-value>)',
+          soft: 'rgb(var(--success-soft) / <alpha-value>)',
         },
         danger: {
-          DEFAULT: "#e11d48",
-          soft: "#ffe4e6",
+          DEFAULT: 'rgb(var(--danger) / <alpha-value>)',
+          soft: 'rgb(var(--danger-soft) / <alpha-value>)',
         },
         warning: {
-          DEFAULT: "#d97706",
-          soft: "#fef3c7",
+          DEFAULT: 'rgb(var(--warning) / <alpha-value>)',
+          soft: 'rgb(var(--warning-soft) / <alpha-value>)',
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
       },
     },
   },
