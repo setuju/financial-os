@@ -41,6 +41,14 @@ import goalsRoutes from './routes/goals';
 import assistantRoutes from './routes/assistant';
 import receiptsRoutes from './routes/receipts';
 import { ensureAdminSession } from './repositories/demo-sessions.js';
+import { verifySession } from './repositories/demo-sessions.js';
+import { ADMIN_UUID } from './repositories/demo-sessions.js';
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    sessionId: string;
+  }
+}
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -61,6 +69,20 @@ export async function buildServer(): Promise<FastifyInstance> {
   });
 
   await app.register(dbPlugin);
+
+  // B3: attachSession hook — req.sessionId from X-Session-Id header (fallback ADMIN_UUID)
+  app.decorateRequest('sessionId', '');
+  app.addHook('preHandler', async (req) => {
+    const hdr = req.headers['x-session-id'];
+    if (typeof hdr === 'string' && hdr.length > 0) {
+      const s = await verifySession(app.pg, hdr);
+      if (s) {
+        req.sessionId = s.id;
+        return;
+      }
+    }
+    req.sessionId = ADMIN_UUID;
+  });
   await app.register(elasticPlugin);
   await app.register(redisPlugin);
   await app.register(healthRoutes);

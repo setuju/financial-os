@@ -52,9 +52,6 @@ interface PayoutBody {
 }
 
 const impactRoutes: FastifyPluginAsync = async (fastify) => {
-  // B2: hardcoded admin — B3 replaces with session extraction
-  const sid = '00000000-0000-0000-0000-000000000001';
-
   fastify.get('/impact/receivers', async () => {
     return { receivers: VETTED_RECEIVERS };
   });
@@ -63,6 +60,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Querystring: { include_deleted?: string; limit?: string } }>(
     '/impact/payouts',
     async (req) => {
+      const sid = req.sessionId;
       const includeDeleted = req.query.include_deleted === 'true';
       const limit = req.query.limit ? Number(req.query.limit) : 50;
       const payouts = await listPayouts(fastify.pg, sid, { includeDeleted, limit });
@@ -83,6 +81,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const ok = await softDeletePayout(fastify.pg, sid, req.params.id);
       if (!ok) return reply.code(404).send({ error: 'not_found' });
       return { ok: true, deletedId: req.params.id };
@@ -90,7 +89,8 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // Horizon commitment for next month (warning on impact page)
-  fastify.get('/impact/horizon-commitment', async () => {
+  fastify.get('/impact/horizon-commitment', async (req) => {
+    const sid = req.sessionId;
     const next = new Date();
     next.setUTCMonth(next.getUTCMonth() + 1);
     const nextMonth = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-01`;
@@ -132,6 +132,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const {
         receiverId, amount, currency = 'USD', note = 'Financial OS Impact',
         sourcePeriod,
@@ -215,7 +216,8 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // Surplus v2: verified (last month) + in-progress (current) + history (6 months)
-  fastify.get('/impact/surplus', async () => {
+  fastify.get('/impact/surplus', async (req) => {
+    const sid = req.sessionId;
     const last = lastMonth();
     const cur = currentMonth();
 

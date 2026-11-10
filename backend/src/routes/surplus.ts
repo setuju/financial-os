@@ -52,16 +52,15 @@ interface PredictBody {
 const VALID_PERIODS = ['next_week', 'next_month', 'this_year', 'next_year'];
 
 const surplusRoutes: FastifyPluginAsync = async (fastify) => {
-  // B2: hardcoded admin — B3 replaces with session extraction
-  const sid = '00000000-0000-0000-0000-000000000001';
-
-  fastify.get('/surplus/current', async () => {
+  fastify.get('/surplus/current', async (req) => {
+    const sid = req.sessionId;
     const metrics = await calculateSurplus(fastify.pg, sid);
     const prediction = await getLatestPrediction(fastify.pg, sid);
     return { metrics, prediction };
   });
 
-  fastify.get('/surplus/predictions', async () => {
+  fastify.get('/surplus/predictions', async (req) => {
+    const sid = req.sessionId;
     const predictions = await listPredictions(fastify.pg, sid);
     return { predictions };
   });
@@ -82,6 +81,7 @@ const surplusRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const { predictedAmount, period, reason = '' } = req.body;
       const prediction = await createPrediction(fastify.pg, sid, { predictedAmount, period, reason });
       return reply.code(201).send({ prediction });
@@ -105,6 +105,7 @@ const surplusRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const { predictedAmount, period, reason = '' } = req.body;
       const prediction = await updatePrediction(fastify.pg, sid, req.params.id, { predictedAmount, period, reason });
       if (!prediction) return reply.code(404).send({ error: 'not_found' });
@@ -120,6 +121,7 @@ const surplusRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const success = await deletePrediction(fastify.pg, sid, req.params.id);
       if (!success) return reply.code(404).send({ error: 'not_found' });
       return reply.code(204).send();
@@ -138,6 +140,7 @@ const surplusRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const prediction = await markPredictionAchieved(fastify.pg, sid, req.params.id);
       if (!prediction) {
         return reply.code(404).send({ error: 'not_found_or_already_achieved' });

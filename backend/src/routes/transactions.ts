@@ -30,7 +30,6 @@ import type pg from 'pg';
 import { parseTransaction } from '../surplus/parser.js';
 import { updateTransaction } from '../repositories/transactions.js';
 import { insertTransaction, listTransactions } from '../repositories/transactions.js';
-import { ADMIN_UUID } from '../repositories/demo-sessions.js';
 
 import type { Client as ElasticClient } from '@elastic/elasticsearch';
 
@@ -68,6 +67,7 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const { text, userId } = req.body;
 
       const parsed = parseTransaction(text);
@@ -78,7 +78,7 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      const transaction = await insertTransaction(fastify.pg, ADMIN_UUID, {
+      const transaction = await insertTransaction(fastify.pg, sid, {
         userId: userId ?? null,
         parsed: parsed.tx,
       });
@@ -135,12 +135,13 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get<{ Querystring: ListQuery }>(
     '/transactions',
     async (req) => {
+      const sid = req.sessionId;
       const rawLimit = parseInt(req.query.limit ?? '50', 10);
       const rawOffset = parseInt(req.query.offset ?? '0', 10);
       const limit = Math.min(Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 50, 200);
       const offset = Math.max(Number.isFinite(rawOffset) && rawOffset > 0 ? rawOffset : 0, 0);
 
-      const transactions = await listTransactions(fastify.pg, ADMIN_UUID, { limit, offset });
+      const transactions = await listTransactions(fastify.pg, sid, { limit, offset });
 
       return {
         transactions,
@@ -163,11 +164,12 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const { id } = req.params;
       try {
         const result = await fastify.pg.query(
           'DELETE FROM transactions WHERE id = $1 AND session_id = $2 RETURNING id',
-              [id, ADMIN_UUID],
+              [id, sid],
         );
         if ((result.rowCount ?? 0) === 0) {
           return reply.code(404).send({ error: 'not_found' });
@@ -200,13 +202,14 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
+      const sid = req.sessionId;
       const { id } = req.params;
       const { raw_text } = req.body;
       const parsed = parseTransaction(raw_text);
       if (!parsed.ok) {
         return reply.code(400).send({ error: parsed.reason, rawText: raw_text });
       }
-      const updated = await updateTransaction(fastify.pg, ADMIN_UUID, id, {
+      const updated = await updateTransaction(fastify.pg, sid, id, {
         rawText: raw_text,
         amount: parsed.tx.amount,
         type: parsed.tx.type,

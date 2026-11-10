@@ -78,6 +78,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req) => {
+      const sid = req.sessionId;
       const { from, to } = req.query;
       const groupBy = (req.query.groupBy ?? 'month') as GroupBy;
       const typeFilter = req.query.type;
@@ -92,24 +93,24 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       const beforeRes = await fastify.pg.query(
         `SELECT COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE -amount END), 0) AS opening
          FROM transactions
-         WHERE occurred_at < $1 ${projClause} ${typeClause}`,
-        [from],
+         WHERE occurred_at < $1 AND session_id = $2 ${projClause} ${typeClause}`,
+        [from, sid],
       );
       let opening = Number(beforeRes.rows[0].opening);
 
       // 2) Buckets with per-bucket actual/projection counts
       const bucketRes = await fastify.pg.query(
         `SELECT
-           DATE_TRUNC($3, occurred_at) AS period,
+           DATE_TRUNC($4, occurred_at) AS period,
            COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE 0 END), 0) AS income,
            COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS expense,
            COUNT(*) FILTER (WHERE is_projection = false)::int AS actual_count,
            COUNT(*) FILTER (WHERE is_projection = true)::int  AS projection_count
          FROM transactions
-         WHERE occurred_at >= $1 AND occurred_at < $2 ${projClause} ${typeClause}
+         WHERE occurred_at >= $1 AND occurred_at < $2 AND session_id = $3 ${projClause} ${typeClause}
          GROUP BY 1
          ORDER BY 1 ASC`,
-        [from, to, groupBy],
+        [from, to, sid, groupBy],
       );
 
       const buckets: Bucket[] = bucketRes.rows.map((r) => {
