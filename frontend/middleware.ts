@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PAGES = new Set([
-  '/', '/login', '/privacy', '/terms', '/legal', '/security', '/support',
+  '/', '/login', '/signup', '/reset', '/privacy', '/terms', '/legal', '/security', '/support',
 ]);
-const PUBLIC_API = new Set(['/api/login', '/api/logout']);
+const PUBLIC_API = new Set(['/api/login', '/api/logout', '/api/signup']);
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -16,7 +16,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const authed = req.cookies.get('fos_auth')?.value === 'ok';
+  const authed = Boolean(req.cookies.get('fos_session_id')?.value);
   if (authed) return NextResponse.next();
 
   if (pathname.startsWith('/api/')) {

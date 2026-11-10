@@ -20,7 +20,7 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: 1, title: 'Sign in with demo password', desc: 'One shared password (displayed on login page) prevents bot traffic. No account, no email, no PII.' },
+  { n: 1, title: 'Sign in or create a session', desc: 'Type any name — we generate a 5-char password. No email, no PII. Each session sees only its own data.' },
   { n: 2, title: 'Record transactions — type or speak', desc: 'Try "spent 20 on coffee" or "bayar listrik 1.250.000". Parser extracts amount, category, type.' },
   { n: 3, title: 'Plan goals in Horizon', desc: "Add long-term goals with monthly savings. Horizon bills subtract from each month's surplus before distribution." },
   { n: 4, title: 'Distribute verified surplus', desc: "Only last month's closing surplus is distributable. Route up to 10% to vetted causes via PayPal Payouts sandbox." },

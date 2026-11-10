@@ -27,6 +27,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -59,6 +60,12 @@ const STATUS_MAP = {
 export default function NavBar({ status }: { status: HealthStatus }) {
   const pathname = usePathname();
   const s = STATUS_MAP[status];
+  const [name, setName] = useState<string>('');
+
+  useEffect(() => {
+    const m = document.cookie.match(/(?:^|; )fos_name=([^;]+)/);
+    if (m) setName(decodeURIComponent(m[1]));
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface-raised/95 backdrop-blur">

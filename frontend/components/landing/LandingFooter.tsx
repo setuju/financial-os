@@ -37,6 +37,7 @@ export default function LandingFooter() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Support</h4>
             <ul className="mt-3 space-y-2 text-sm">
+              <li><Link href="/reset" className="text-ink-soft hover:text-ink">Reset demo</Link></li>
               <li><Link href="/security" className="text-ink-soft hover:text-ink">Security &amp; Privacy</Link></li>
               <li><Link href="/support" className="text-ink-soft hover:text-ink">Support &amp; Disputes</Link></li>
               <li>
