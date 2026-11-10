@@ -1,216 +1,279 @@
 # Financial OS
 
-**Financial OS** is a personal finance app built for **PayPal AI Hackathon 2026**. Type money in natural language (English or Bahasa Indonesia), track ethical surplus, and distribute 10% of verified surplus to vetted causes via PayPal Payouts. **Sandbox only — no real money moves.**
+**Natural-language finance with ethical surplus distribution.**
 
-## 🚀 Live Demo
+Type money like you text — `"spent 20 on coffee"` or `"bayar listrik 1.250.000"` — and let the parser do the work. Track ethical surplus, plan long-term goals, and route a slice to vetted causes via PayPal Payouts. **Sandbox only. No real money moves.**
 
-- **Frontend**: https://financial-os-nu.vercel.app
-- **Backend API**: https://financial-os-api-lykz.onrender.com
-- **Health check**: https://financial-os-api-lykz.onrender.com/health
+[![Live Demo](https://img.shields.io/badge/demo-financial.saturumah.net-0070ba?style=flat-square)](https://financial.saturumah.net)
+[![API](https://img.shields.io/badge/api-financial--api.saturumah.net-059669?style=flat-square)](https://financial-api.saturumah.net/health)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Hackathon](https://img.shields.io/badge/PayPal%20AI%20Hackathon-2026-ffb700?style=flat-square)](https://paypalaihackathon.devpost.com/)
 
-**First visit after idle**: Render free tier cold-start ~50 seconds. Backend warms up on first request. Wait a moment, then refresh.
+**Live:** [financial.saturumah.net](https://financial.saturumah.net) · **API:** [financial-api.saturumah.net](https://financial-api.saturumah.net/health)
 
-## 💡 Core Concepts
+> **First visit after 15 min idle** may take ~50s (Render free tier). Subsequent: 100–300ms.
 
-**Anti-Budget** — Skip forms. Type or speak `"spent 20 on coffee"` or `"bayar listrik 1.250.000"`. The parser extracts amount (USD or IDR), type (income/expense), and category. Rejects plans (`"i want to buy X"`) and cancellations (`"never mind X"`) with helpful errors.
+---
 
-**Ethical Surplus** — Income minus expenses minus obligations. Only what's safely left after real needs is available for impact. Never touches principal savings.
+## Table of Contents
 
-**Surplus Oracle** — Predict next week's surplus. Later compared to actual. Accurate predictions earn impact credit.
+- [Why this exists](#why-this-exists)
+- [Core concepts](#core-concepts)
+- [Features](#features)
+- [Sponsor tools](#sponsor-tools)
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Environment variables](#environment-variables)
+- [API reference](#api-reference)
+- [Testing](#testing)
+- [Ethics & security](#ethics--security)
+- [Roadmap](#roadmap)
+- [License](#license)
 
-**Impact Wallet** — Distribute 10% of verified surplus to a vetted cause via PayPal Payouts. Two-step confirmation. Sandbox only.
+---
 
-**Financial Horizon** — Visualize long-term goals (emergency fund, house down payment) with target amounts, monthly savings, interest rates, and loan terms. Powered by Bryntum Gantt 8.
+## Why this exists
 
-## ✨ Features
+Most finance apps treat every dollar left as "disposable". Financial OS introduces **Ethical Surplus** — surplus calculated *after* obligations (rent, bills, savings goals), never touching principal. Users predict next month's surplus, plan long-term goals, and route 10% to vetted causes via PayPal Payouts. Every allocation requires explicit two-step confirmation.
+
+**No auto-donate. No guilt trip. No touching your rent money.**
+
+---
+
+## Core concepts
+
+**Anti-Budget Parser** — Natural-language input, English or Bahasa Indonesia. Rejects plans ("i want to buy a bike") and cancellations ("never mind") — journal reflects reality, not intentions.
+
+**Ethical Surplus** — Only surplus after obligations can be distributed. Cascade formula, month-to-month:
+```
+closing = opening + income - expense - horizon_bills - donations
+```
+Each month's closing becomes next month's opening.
+
+**Surplus Oracle** — Predict next week/month surplus. Track what you're saving for. When achieved, mark it done — celebration included.
+
+**Financial Horizon** — Long-term goals on Bryntum Gantt timeline. Horizon bills subtracted from each month's surplus before distributable.
+
+**Impact Wallet** — Verified surplus from last month routed to vetted causes via PayPal Payouts. Two-step confirm. Sandbox-only. Log preserves audit trail after soft-delete.
+
+**Scoped AI Assistant** — Floating "?" panel explains app features. Refuses coding, advice, jailbreaks, off-topic. Canary-protected prompt.
+
+---
+
+## Features
 
 ### Input
-- **Natural language parser** — English + Bahasa Indonesia, USD-first, IDR backward-compat. Rejects plans and cancellations.
-- **Voice input** — Web Speech API. Click mic, speak. Works on Chrome/Edge desktop and mobile.
-- **Amount editor** — After typing or speaking, if a number is detected, inline card shows `"Detected amount: $20.00 [✏️]"`. Click pencil to fix ASR misfires. Only first number is replaced.
-- **OCR receipt** — Planned (Gemini Vision).
+- **Natural language parser** — EN + Bahasa Indonesia, USD-first
+- **Voice input** — Web Speech API
+- **Amount editor** — inline correction for ASR misfires
+- **OCR receipt scan** — Gemini Vision → auto-fill
 
-### Journal
-- Latest 50 transactions, newest first
-- Mini stats: count · total in · total out
-- **PDF export** — Download formatted A4 report with summary + table
+### Tracking
+- **Journal** — pagination (20/50/100/all), edit, delete, PDF export
+- **Ledger** — Grid/Notebook, 36 filters, Opening/Closing cascade, PDF
+- **Projections** — forecast rows with `PROJECTED` badge
 
-### Ledger
-- **Grid view** (Excel-style) ↔ **Notebook view** (clean list)
-- **36 filter combinations**: view × type (All/Income/Expense) × group (Day/Week/Month/Year) × range (7d/30d/this month/last month/this year/all time/custom) × projections (on/off)
-- **PDF export** — Filter context embedded in PDF header
-- All filters instant (client-side state, URL sync)
+### Planning
+- **Goals** — add/edit/delete, auto-duration, progress bars
+- **Horizon Gantt** — month/year scale, zoom-to-fit, financial fields
+- **Oracle** — predict, edit, achieve, celebrate
 
 ### Impact
-- Surplus Oracle form (predict next week)
-- Ethical Surplus Distribution card (10% suggestion)
-- Two-step confirmation (inline, not modal)
-- PayPal Payouts sandbox: batch ID + receiver + amount on success
-- Trust badges: PayPal Sandbox · Human-in-the-loop · Never touches principal
+- **Verified** (last month) + **In-Progress** (current) cards
+- **6-month history** strip
+- **Next-month Horizon warning**
+- **Donation log** with soft-delete
+- **PayPal Payouts** two-step confirm
 
-### Horizon
-- Bryntum Gantt 8 Enterprise
-- Custom task fields: `targetAmount`, `monthlySaving`, `interestRate`, `loanTerm`
-- Progress bars per goal
-- Critical paths, dependency lines
+### AI (4 modalities)
+- **Text** — parser
+- **Voice** — Web Speech API
+- **Vision** — OCR (Gemini 3 Flash)
+- **Chat** — scoped assistant
 
-### AI Assistant (Scoped)
-- **Endpoint**: `POST /assistant/chat`, `GET /assistant/info`
-- Explains app features, input syntax, filters, exports, troubleshooting
-- **Refuses**: general coding, off-topic, financial advice, jailbreaks
-- **Canary-protected** — prompt has versioned canary string; output scanned for leaks
-- **Model**: `google/gemini-3.8-flash` via OpenRouter
+### UI
+- **Dark mode** — CSS variables, 300ms smooth inversion
+- **Wallet favicon** — SVG, PayPal blue
+- **Responsive** — mobile-first, cards on mobile / table on desktop
 
-## 🛠 Tech Stack
+---
 
-### Frontend
-- **Next.js 14.2** — App Router, Server Components, Server Actions
-- **TypeScript** strict
-- **Tailwind CSS 3.4** — custom design tokens (surface, line, ink, accent, success, danger, warning)
-- **lucide-react** — icon system
-- **jspdf + jspdf-autotable** — client-side PDF export (dynamic import)
-- **@bryntum/gantt-react-enterprise 8.0** — Financial Horizon
-- **Web Speech API** — voice input (browser-native, zero cost)
+## Sponsor tools
 
-### Backend
-- **Fastify 4** — high-performance Node framework
-- **TypeScript** strict ESM
-- **@fastify/cors@9** — CORS (v9 for Fastify 4 compat)
-- **PostgreSQL** (Neon Serverless, ap-southeast-1)
-- **ioredis** — Redis cache (Upstash Serverless)
-- **@elastic/elasticsearch** — search index (Elastic Cloud)
-
-### Infrastructure
-- **Vercel** — frontend hosting
-- **Render** — backend hosting (free tier, auto-deploy on commit)
-- **Neon** — serverless PostgreSQL
-- **Upstash** — serverless Redis
-- **Elastic Cloud** — managed Elasticsearch
-- **Docker Compose** — local dev (PostgreSQL 16.15-alpine, Redis 7.0.15-alpine)
-
-## 🤝 Sponsor Tools Integration
-
-| Tool | Used For | Status |
+| Tool | Used for | Status |
 |---|---|---|
 | **PayPal Payouts** | Impact Wallet distribution (sandbox) | ✅ Live |
-| **APIMatic** | Generated TypeScript SDK from OpenAPI spec (`backend/src/paypal/sdk/`) | ✅ Live |
-| **Bryntum Gantt** | Financial Horizon visualization (v8 Enterprise) | ✅ Live |
-| **Elastic Cloud** | Transaction search index | ✅ Deployed (UI indexing deferred) |
-| **OpenRouter** | AI Assistant (Gemini 3.8 Flash) | ✅ Live |
-| **Astropods** | Agent orchestration | 📄 Referenced in docs |
-| **AG Grid** | Tabular display | ⏸ Deferred (custom CSS grid used) |
+| **APIMatic** | Generated TypeScript SDK from OpenAPI | ✅ Live |
+| **Bryntum Gantt 8** | Financial Horizon | ✅ Live |
+| **Elastic Cloud** | Transaction search index | ✅ Deployed |
+| **OpenRouter** | AI Assistant | ✅ Live |
+| **Google AI Studio** | OCR receipt | ✅ Live |
+| **Postman** | API testing collection | ✅ In repo |
+| **AG Grid** | Tabular display | ⏸ Deferred (custom CSS grid) |
 | **KERNEL** | Computer-use fallback | ⏸ Deferred |
-| **Zapier** | Time-to-Value trigger | ⏸ Deferred |
-| **Postman** | API testing collection | ⏸ Deferred |
+| **Zapier** | Time-to-Value | ⏸ Deferred |
 
-## 📦 Quick Start (Local)
+---
+
+## Tech stack
+
+**Frontend** — Next.js 14.2 (App Router) · TypeScript strict · Tailwind CSS 3.4 (CSS variables) · lucide-react · jspdf · @bryntum/gantt-react-enterprise 8
+
+**Backend** — Fastify 4 · TypeScript strict ESM · PostgreSQL 16 (Neon) · ioredis (Upstash) · Elastic Cloud · PayPal Payouts API · OpenRouter · Google AI Studio
+
+**Infra** — Vercel (frontend) · Render (backend, free tier) · Neon (Postgres, ap-southeast-1) · Upstash (Redis) · Cloudflare (DNS)
+
+---
+
+## Architecture
+
+```
+Browser
+  │
+  ├── Server Components ──▶ Backend (direct, API_URL)
+  │
+  └── Client Components ──▶ /api/proxy/* ──▶ Backend
+                          (Vercel Node)         │
+                                                ├── PostgreSQL (Neon)
+                                                ├── Redis (Upstash)
+                                                ├── Elastic Cloud
+                                                ├── PayPal Payouts
+                                                ├── OpenRouter
+                                                └── Google AI Studio
+```
+
+**Why proxy route**: Next.js only inlines `NEXT_PUBLIC_*` into client bundle. `/api/proxy/*` runs on Vercel server (has `API_URL`), forwards to Render. Zero CORS, zero env leak.
+
+---
+
+## Quick start
 
 ```bash
 git clone https://github.com/setuju/financial-os.git
 cd financial-os
 
-# 1. Infra (Docker)
-cp infra/.env.example infra/.env   # fill credentials
+# 1. Infra
+cp infra/.env.example infra/.env
 docker compose -f infra/docker-compose.yml --env-file infra/.env up -d
 
 # 2. Backend
 cd backend
 pnpm install
 pnpm migrate
-pnpm seed                          # optional: seed demo data
-                                   # (requires SEED_CONFIRM=yes-wipe-demo-data)
-pnpm dev                           # port 3001
+SEED_CONFIRM=yes-wipe-demo-data pnpm seed   # optional: demo data
+pnpm dev                                    # :3001
 
-# 3. Frontend (new terminal)
+# 3. Frontend
 cd frontend
 pnpm install
-pnpm dev                           # port 3000
+pnpm dev                                    # :3000
 ```
-
-Or use cloud services directly. Set in env:
-`DATABASE_URL`, `REDIS_URL`, `ELASTIC_URL`, `ELASTIC_API_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE`, `OPENROUTER_API_KEY`.
-
-## 🏗 Architecture
-
-```
-User (browser)
-  │
-  ├── Server Components (Next.js) ── direct fetch ──▶ Backend
-  │                                                    │
-  └── Client Components ── /api/proxy/* ──▶ Backend ◀──┤
-                            (Node proxy)               │
-                                                       ├── PostgreSQL (Neon)
-                                                       ├── Redis (Upstash)
-                                                       ├── Elastic Cloud
-                                                       ├── PayPal Payouts API
-                                                       └── OpenRouter (Gemini 3.8 Flash)
-```
-
-**Why proxy route**: Next.js only inlines `NEXT_PUBLIC_*` env vars into client bundle. For client components that need backend access, `/api/proxy/*` runs on Vercel server (has `API_URL`), forwards to Render. Zero CORS for browser, zero env leak.
-
-## 🧪 Testing
-
-Backend parser: **40/40 tests pass** (vitest).
-
-```bash
-cd backend && pnpm test
-```
-
-Coverage:
-- IDR amount formats (`20rb`, `1.5jt`, `1.250.000`)
-- USD amount formats (`$20`, `$120.50`, `$1,500`, `250.000` → $250)
-- Type detection (income/expense verbs, EN + ID)
-- Category detection (7 categories, EN + ID keywords)
-- Negation rejection ("dont want", "cancel that", "never mind")
-- Intent rejection ("want to", "planning to", "hopefully")
-- Error handling (empty, no amount, zero amount)
-- Backward compat: normal transactions still work
-
-## 🔒 Ethics & Security
-
-- **PayPal Sandbox only** — no real money moves
-- **Human-in-the-loop** — every payout requires explicit confirmation
-- **Principal untouched** — 10% calculated from surplus, never from savings
-- **Verbatim input stored** — every transaction preserves raw user text for audit
-- **Parser rejects plans/cancellations** — no accidental record of "want to buy" as completed
-- **AI Assistant guardrails** — scoped to app only, refuses off-topic/jailbreak, canary-protected prompt
-- **No personal data** — transactions have `user_id: null` (single-user demo, no auth in v1)
-
-## 🗺 Roadmap
-
-### Completed ✅
-- Natural language parser (EN + ID, USD)
-- Journal + PDF export
-- Ledger (Grid/Notebook, filters, PDF)
-- Voice input + AmountEditor
-- Surplus Oracle
-- PayPal Payouts (sandbox, APIMatic SDK)
-- Financial Horizon (Bryntum Gantt 8)
-- AI Assistant (Gemini 3.8 Flash, scoped)
-- USD-first data model
-
-### Planned (v2) ⏸
-- OCR receipt (Gemini Vision)
-- User accounts + admin panel
-- Elasticsearch full-text search UI
-- Time-to-Value ledger (Zapier trigger)
-- Mobile app (React Native)
-- Real PayPal live mode
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE).
 
 ---
 
-**Built for PayPal AI Hackathon 2026** · Solo developer (jack / setuju) · [penulis@live.com](mailto:penulis@live.com)
+## Environment variables
 
-## 📬 API Testing (Postman)
+### Backend (Render)
 
-Import to Postman:
-1. **Import** → `docs/postman/financial-os.postman_collection.json`
-2. **Import** → `docs/postman/financial-os.postman_environment.json`
-3. Select environment **"Financial OS — Production"**
-4. Collection defaults to production (`{{baseUrl}}`). Switch to `{{localUrl}}` for local dev.
+| Variable | Notes |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `REDIS_URL` | Upstash `rediss://...` |
+| `ELASTIC_URL` + `ELASTIC_API_KEY` | Elastic Cloud |
+| `PAYPAL_CLIENT_ID` + `PAYPAL_CLIENT_SECRET` | PayPal sandbox |
+| `PAYPAL_MODE` | `sandbox` |
+| `OPENROUTER_API_KEY` | AI Assistant |
+| `GEMINI_API_KEY` | OCR receipt |
 
-**Cold-start:** first request after 15 min idle ~50s (Render free). Subsequent: 100–300ms.
+### Frontend (Vercel)
+
+| Variable | Value |
+|---|---|
+| `API_URL` | Backend base URL |
+| `BRYNTUM_LICENSE_KEY` | Bryntum trial key |
+
+---
+
+## API reference
+
+Base: `https://financial-api.saturumah.net`
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/health` | PG + Redis + uptime |
+| `GET` | `/transactions?limit&offset` | List |
+| `POST` | `/transactions` | Create (natural language) |
+| `PUT` | `/transactions/:id` | Update (re-parse) |
+| `DELETE` | `/transactions/:id` | Delete |
+| `GET` | `/transactions/search?q=` | Elasticsearch |
+| `GET` | `/reports/summary` | Aggregated buckets |
+| `GET` | `/goals` | List |
+| `POST` | `/goals` | Create (camelCase body) |
+| `DELETE` | `/goals/:id` | Delete |
+| `GET` | `/surplus/current` | Income/expense/surplus |
+| `GET` | `/surplus/predictions` | Oracle list |
+| `POST` | `/surplus/predict` | Create prediction |
+| `PUT` | `/surplus/predict/:id` | Update |
+| `DELETE` | `/surplus/predict/:id` | Delete |
+| `POST` | `/surplus/predictions/:id/achieve` | Mark achieved |
+| `GET` | `/impact/receivers` | Vetted recipients |
+| `GET` | `/impact/surplus` | Verified + in-progress + history |
+| `GET` | `/impact/payouts` | Donation log |
+| `DELETE` | `/impact/payouts/:id` | Soft-delete |
+| `GET` | `/impact/horizon-commitment` | Next month bills |
+| `POST` | `/impact/payout` | PayPal Payouts (sandbox) |
+| `POST` | `/receipts/ocr` | Gemini Vision |
+| `GET` | `/assistant/info` | Config |
+| `POST` | `/assistant/chat` | Scoped AI chat |
+
+**Postman:** `docs/postman/financial-os.postman_collection.json`
+
+---
+
+## Testing
+
+```bash
+# Unit tests (parser)
+cd backend && pnpm test              # 40/40 pass
+
+# Type check
+cd backend && pnpm typecheck
+cd frontend && pnpm typecheck
+```
+
+Coverage: IDR/USD formats, negation/intent rejection, category detection, error paths.
+
+---
+
+## Ethics & security
+
+- **Sandbox only** — no real money moves
+- **Human-in-the-loop** — every payout requires two-step confirmation
+- **Principal untouched** — surplus after obligations only
+- **Verbatim raw text** preserved for audit
+- **Parser rejects plans/cancellations**
+- **Soft-delete preserves audit trail**
+- **Scoped AI, canary-protected prompt**
+- **No secrets in source** — env vars only
+- **No `dangerouslySetInnerHTML`** — all React nodes
+
+---
+
+## Roadmap
+
+### Shipped ✅
+Natural-language parser · Journal + PDF + pagination + edit/delete · Ledger (Grid/Notebook, 36 filters, Opening/Closing) · Voice + amount editor · **OCR receipt** · Surplus Oracle (predict, achieve, celebrate) · **Impact Wallet** (verified/in-progress/history, donation log, soft-delete) · Financial Horizon (Bryntum 8) · **AI Assistant** (scoped, canary) · **Dark mode** · USD-first
+
+### Planned (v2) ⏸
+PDF invoice OCR · User accounts + multi-tenant · Elasticsearch UI · Time-to-Value (Zapier) · Mobile app · PayPal live mode
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026 Jack (setuju)
+
+---
+
+**Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)** · Solo developer · [penulis@live.com](mailto:penulis@live.com)
