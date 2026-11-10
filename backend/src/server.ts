@@ -41,6 +41,7 @@ import goalsRoutes from './routes/goals';
 import assistantRoutes from './routes/assistant';
 import receiptsRoutes from './routes/receipts';
 import demoRoutes from './routes/admin';
+import rootRoutes from './routes/root';
 import { ensureAdminSession } from './repositories/demo-sessions.js';
 import { verifySession } from './repositories/demo-sessions.js';
 import { ADMIN_UUID } from './repositories/demo-sessions.js';
@@ -69,6 +70,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     maxAge: 86400,
   });
 
+  await app.register(rootRoutes);
   await app.register(dbPlugin);
 
   // B3: attachSession hook — req.sessionId from X-Session-Id header (fallback ADMIN_UUID)
