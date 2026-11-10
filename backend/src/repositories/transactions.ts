@@ -85,12 +85,13 @@ function mapRow(row: RawRow): TransactionRow {
 
 export async function insertTransaction(
   pool: pg.Pool,
+  sessionId: string,
   input: InsertInput,
 ): Promise<TransactionRow> {
   const { parsed, userId = null } = input;
   const result = await pool.query<RawRow>(
-    `INSERT INTO transactions (user_id, raw_text, amount, type, category, occurred_at, source)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO transactions (user_id, raw_text, amount, type, category, occurred_at, source, session_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id, user_id, raw_text, amount, type, category, occurred_at, source, created_at`,
     [
       userId,
@@ -100,6 +101,7 @@ export async function insertTransaction(
       parsed.category,
       parsed.occurredAt,
       parsed.source,
+      sessionId,
     ],
   );
   return mapRow(result.rows[0]);
@@ -107,14 +109,16 @@ export async function insertTransaction(
 
 export async function listTransactions(
   pool: pg.Pool,
+  sessionId: string,
   opts: ListOptions,
 ): Promise<TransactionRow[]> {
   const result = await pool.query<RawRow>(
     `SELECT id, user_id, raw_text, amount, type, category, occurred_at, source, created_at
      FROM transactions
+     WHERE session_id = $1
      ORDER BY occurred_at DESC, created_at DESC
-     LIMIT $1 OFFSET $2`,
-    [opts.limit, opts.offset],
+     LIMIT $2 OFFSET $3`,
+    [sessionId, opts.limit, opts.offset],
   );
   return result.rows.map(mapRow);
 }
@@ -129,15 +133,16 @@ export interface UpdateTransactionInput {
 
 export async function updateTransaction(
   pool: pg.Pool,
+  sessionId: string,
   id: string,
   input: UpdateTransactionInput,
 ): Promise<unknown | null> {
   const result = await pool.query(
     `UPDATE transactions
      SET raw_text = $1, amount = $2, type = $3, category = $4, source = 'rule'
-     WHERE id = $5
+     WHERE id = $5 AND session_id = $6
      RETURNING *`,
-    [input.rawText, input.amount, input.type, input.category, id],
+    [input.rawText, input.amount, input.type, input.category, id, sessionId],
   );
   return result.rows[0] ?? null;
 }

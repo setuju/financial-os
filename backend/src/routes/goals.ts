@@ -47,8 +47,11 @@ interface CreateGoalBody {
 }
 
 const goalsRoutes: FastifyPluginAsync = async (fastify) => {
+  // B2: hardcoded admin — B3 replaces with session extraction
+  const sid = '00000000-0000-0000-0000-000000000001';
+
   fastify.get('/goals', async () => {
-    const goals = await listGoals(fastify.pg);
+    const goals = await listGoals(fastify.pg, sid);
     return { goals };
   });
 
@@ -74,7 +77,7 @@ const goalsRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (req, reply) => {
       const b = req.body;
-      const goal = await createGoal(fastify.pg, {
+      const goal = await createGoal(fastify.pg, sid, {
         name: b.name,
         targetAmount: b.targetAmount,
         monthlySaving: b.monthlySaving,
@@ -103,8 +106,8 @@ const goalsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = req.params;
       try {
         const result = await fastify.pg.query(
-          'DELETE FROM goals WHERE id = $1 RETURNING id',
-          [id],
+          'DELETE FROM goals WHERE id = $1 AND session_id = $2 RETURNING id',
+                [id, sid],
         );
         if (result.rowCount === 0) {
           return reply.code(404).send({ error: 'not_found' });

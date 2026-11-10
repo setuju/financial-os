@@ -62,6 +62,7 @@ function monthEnd(monthStart: string): Date {
  */
 async function computeMonthMetrics(
   pool: pg.Pool,
+  sessionId: string,
   month: string,
 ): Promise<{ income: number; expense: number; horizon: number; donations: number }> {
   const start = month;
@@ -73,23 +74,25 @@ async function computeMonthMetrics(
        COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS expense
      FROM transactions
      WHERE is_projection = false
-       AND occurred_at >= $1 AND occurred_at < $2`,
-    [start, end],
+       AND occurred_at >= $1 AND occurred_at < $2
+       AND session_id = $3`,
+    [start, end, sessionId],
   );
 
   const goalsResult = await pool.query(
     `SELECT COALESCE(SUM(monthly_saving), 0) AS horizon
      FROM goals
-     WHERE start_date < $2
+     WHERE session_id = $3
+       AND start_date < $2
        AND (start_date + (COALESCE(duration_months, 1) || ' months')::interval) > $1`,
-    [start, end],
+    [start, end, sessionId],
   );
 
   const donationsResult = await pool.query(
     `SELECT COALESCE(SUM(amount), 0) AS donations
      FROM payouts
-     WHERE source_period = $1 AND status = 'success'`,
-    [start],
+     WHERE source_period = $1 AND status = 'success' AND session_id = $2`,
+    [start, sessionId],
   );
 
   return {
@@ -106,6 +109,7 @@ async function computeMonthMetrics(
  */
 export async function recomputeSurplusPeriod(
   pool: pg.Pool,
+  sessionId: string,
   month: string,
 ): Promise<SurplusPeriod> {
   // opening = previous month's closing (or 0)
@@ -114,12 +118,12 @@ export async function recomputeSurplusPeriod(
   const prevMonthStr = monthStart(prevMonth);
 
   const prev = await pool.query(
-    'SELECT closing_surplus FROM surplus_periods WHERE period_month = $1',
-    [prevMonthStr],
+    'SELECT closing_surplus FROM surplus_periods WHERE period_month = $1 AND session_id = $2',
+    [prevMonthStr, sessionId],
   );
   const opening = prev.rows[0] ? Number(prev.rows[0].closing_surplus) : 0;
 
-  const m = await computeMonthMetrics(pool, month);
+  const m = await computeMonthMetrics(pool, sessionId, month);
   const closing = opening + m.income - m.expense - m.horizon - m.donations;
 
   const nowUtc = new Date();
@@ -128,9 +132,9 @@ export async function recomputeSurplusPeriod(
 
   const result = await pool.query(
     `INSERT INTO surplus_periods
-       (period_month, opening_balance, total_income, total_expense, horizon_bills, donations, closing_surplus, status, closed_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     ON CONFLICT (period_month) DO UPDATE SET
+       (period_month, opening_balance, total_income, total_expense, horizon_bills, donations, closing_surplus, status, closed_at, session_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     ON CONFLICT (session_id, period_month) DO UPDATE SET
        opening_balance = EXCLUDED.opening_balance,
        total_income = EXCLUDED.total_income,
        total_expense = EXCLUDED.total_expense,
@@ -141,7 +145,7 @@ export async function recomputeSurplusPeriod(
        closed_at = COALESCE(surplus_periods.closed_at, EXCLUDED.closed_at),
        updated_at = NOW()
      RETURNING *`,
-    [month, opening, m.income, m.expense, m.horizon, m.donations, closing, status, status === 'closed' ? new Date() : null],
+    [month, opening, m.income, m.expense, m.horizon, m.donations, closing, status, status === 'closed' ? new Date() : null, sessionId],
   );
 
   return result.rows[0];
@@ -152,10 +156,12 @@ export async function recomputeSurplusPeriod(
  */
 export async function ensureSurplusPeriods(
   pool: pg.Pool,
+  sessionId: string,
   throughMonth: string,
 ): Promise<SurplusPeriod[]> {
   const earliest = await pool.query(
-    `SELECT MIN(occurred_at)::date AS e FROM transactions WHERE is_projection = false`,
+    `SELECT MIN(occurred_at)::date AS e FROM transactions WHERE is_projection = false AND session_id = $1`,
+    [sessionId],
   );
   const start = earliest.rows[0].e ? monthStart(earliest.rows[0].e) : monthStart(new Date());
   const end = monthStart(throughMonth);
@@ -170,7 +176,7 @@ export async function ensureSurplusPeriods(
 
   const results: SurplusPeriod[] = [];
   for (const m of months) {
-    results.push(await recomputeSurplusPeriod(pool, m));
+    results.push(await recomputeSurplusPeriod(pool, sessionId, m));
   }
   return results;
 }
@@ -180,25 +186,26 @@ export async function ensureSurplusPeriods(
  */
 export async function getSurplusPeriod(
   pool: pg.Pool,
+  sessionId: string,
   month: string,
 ): Promise<SurplusPeriod> {
   const existing = await pool.query(
-    'SELECT * FROM surplus_periods WHERE period_month = $1',
-    [month],
+    'SELECT * FROM surplus_periods WHERE period_month = $1 AND session_id = $2',
+    [month, sessionId],
   );
   if (existing.rows[0]) return existing.rows[0];
-  return recomputeSurplusPeriod(pool, month);
+  return recomputeSurplusPeriod(pool, sessionId, month);
 }
 
 /**
  * After a donation change, cascade recompute forward from `month`.
  */
-export async function cascadeFrom(pool: pg.Pool, month: string): Promise<void> {
+export async function cascadeFrom(pool: pg.Pool, sessionId: string, month: string): Promise<void> {
   // Recompute through `month` (or current month if month is in future).
-  // ensureSurplusPeriods walks chronologically → opening_balance cascades correctly.
+  // ensureSurplusPeriods walks chronologically → opening_balances cascade correctly.
   const cur = currentMonth();
   const through = month > cur ? cur : month;
-  await ensureSurplusPeriods(pool, through);
+  await ensureSurplusPeriods(pool, sessionId, through);
 }
 
 export function currentMonth(): string {

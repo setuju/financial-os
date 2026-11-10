@@ -71,12 +71,14 @@ function mapGoal(r: RawGoalRow): GoalRow {
   };
 }
 
-export async function listGoals(pool: pg.Pool): Promise<GoalRow[]> {
+export async function listGoals(pool: pg.Pool, sessionId: string): Promise<GoalRow[]> {
   const r = await pool.query<RawGoalRow>(
     `SELECT id, user_id, name, target_amount, monthly_saving, interest_rate,
             loan_term_months, start_date, duration_months, progress_percent, created_at
      FROM goals
+     WHERE session_id = $1
      ORDER BY start_date ASC, created_at ASC`,
+    [sessionId],
   );
   return r.rows.map(mapGoal);
 }
@@ -94,13 +96,14 @@ export interface CreateGoalInput {
 
 export async function createGoal(
   pool: pg.Pool,
+  sessionId: string,
   input: CreateGoalInput,
 ): Promise<GoalRow> {
   const r = await pool.query<RawGoalRow>(
     `INSERT INTO goals
        (name, target_amount, monthly_saving, interest_rate,
-        loan_term_months, start_date, duration_months, progress_percent)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        loan_term_months, start_date, duration_months, progress_percent, session_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
      RETURNING id, user_id, name, target_amount, monthly_saving, interest_rate,
                loan_term_months, start_date, duration_months, progress_percent, created_at`,
     [
@@ -112,6 +115,7 @@ export async function createGoal(
       input.startDate,
       input.durationMonths,
       input.progressPercent,
+      sessionId,
     ],
   );
   return mapGoal(r.rows[0]);

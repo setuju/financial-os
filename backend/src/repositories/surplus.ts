@@ -34,14 +34,15 @@ export interface SurplusMetrics {
 }
 
 // Menghitung surplus total (Income - Expense) dari semua transaksi
-export async function calculateSurplus(pool: pg.Pool): Promise<SurplusMetrics> {
+export async function calculateSurplus(pool: pg.Pool, sessionId: string): Promise<SurplusMetrics> {
   const result = await pool.query(`
     SELECT
       COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
     FROM transactions
     WHERE is_projection = false
-  `);
+      AND session_id = $1
+  `, [sessionId]);
 
   const row = result.rows[0];
   const totalIncome = Number(row.total_income);
@@ -54,53 +55,55 @@ export async function calculateSurplus(pool: pg.Pool): Promise<SurplusMetrics> {
   };
 }
 
-export async function createPrediction(pool: pg.Pool, data: { predictedAmount: number, period: string, reason: string }) {
+export async function createPrediction(pool: pg.Pool, sessionId: string, data: { predictedAmount: number, period: string, reason: string }) {
   const result = await pool.query(
-    `INSERT INTO surplus_oracles (predicted_amount, period, reason) VALUES ($1, $2, $3) RETURNING *`,
-    [data.predictedAmount, data.period, data.reason]
+    `INSERT INTO surplus_oracles (predicted_amount, period, reason, session_id) VALUES ($1, $2, $3, $4) RETURNING *`,
+    [data.predictedAmount, data.period, data.reason, sessionId]
   );
   return result.rows[0];
 }
 
-export async function getLatestPrediction(pool: pg.Pool) {
+export async function getLatestPrediction(pool: pg.Pool, sessionId: string) {
   const result = await pool.query(
-    `SELECT * FROM surplus_oracles ORDER BY created_at DESC LIMIT 1`
+    `SELECT * FROM surplus_oracles WHERE session_id = $1 ORDER BY created_at DESC LIMIT 1`,
+    [sessionId]
   );
   return result.rows[0] || null;
 }
 
-export async function listPredictions(pool: pg.Pool) {
+export async function listPredictions(pool: pg.Pool, sessionId: string) {
   const result = await pool.query(
-    `SELECT * FROM surplus_oracles ORDER BY created_at DESC`
+    `SELECT * FROM surplus_oracles WHERE session_id = $1 ORDER BY created_at DESC`,
+    [sessionId]
   );
   return result.rows;
 }
 
-export async function updatePrediction(pool: pg.Pool, id: string, data: { predictedAmount: number, period: string, reason: string }) {
+export async function updatePrediction(pool: pg.Pool, sessionId: string, id: string, data: { predictedAmount: number, period: string, reason: string }) {
   const result = await pool.query(
-    `UPDATE surplus_oracles SET predicted_amount = $1, period = $2, reason = $3 WHERE id = $4 RETURNING *`,
-    [data.predictedAmount, data.period, data.reason, id]
+    `UPDATE surplus_oracles SET predicted_amount = $1, period = $2, reason = $3 WHERE id = $4 AND session_id = $5 RETURNING *`,
+    [data.predictedAmount, data.period, data.reason, id, sessionId]
   );
   return result.rows[0] || null;
 }
 
-export async function deletePrediction(pool: pg.Pool, id: string) {
+export async function deletePrediction(pool: pg.Pool, sessionId: string, id: string) {
   const result = await pool.query(
-    `DELETE FROM surplus_oracles WHERE id = $1 RETURNING id`,
-    [id]
+    `DELETE FROM surplus_oracles WHERE id = $1 AND session_id = $2 RETURNING id`,
+    [id, sessionId]
   );
   return result.rows.length > 0;
 }
 
 
-export async function markPredictionAchieved(pool: pg.Pool, id: string) {
+export async function markPredictionAchieved(pool: pg.Pool, sessionId: string, id: string) {
   const result = await pool.query(
     `UPDATE surplus_oracles
      SET status = 'resolved', resolved_at = NOW(), achieved_at = NOW(),
          actual_amount = predicted_amount
-     WHERE id = $1 AND status != 'resolved'
+     WHERE id = $1 AND session_id = $2 AND status != 'resolved'
      RETURNING *`,
-    [id],
+    [id, sessionId],
   );
   return result.rows[0] || null;
 }

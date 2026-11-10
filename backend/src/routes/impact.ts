@@ -52,6 +52,9 @@ interface PayoutBody {
 }
 
 const impactRoutes: FastifyPluginAsync = async (fastify) => {
+  // B2: hardcoded admin — B3 replaces with session extraction
+  const sid = '00000000-0000-0000-0000-000000000001';
+
   fastify.get('/impact/receivers', async () => {
     return { receivers: VETTED_RECEIVERS };
   });
@@ -62,7 +65,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
     async (req) => {
       const includeDeleted = req.query.include_deleted === 'true';
       const limit = req.query.limit ? Number(req.query.limit) : 50;
-      const payouts = await listPayouts(fastify.pg, { includeDeleted, limit });
+      const payouts = await listPayouts(fastify.pg, sid, { includeDeleted, limit });
       return { payouts };
     },
   );
@@ -80,7 +83,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
-      const ok = await softDeletePayout(fastify.pg, req.params.id);
+      const ok = await softDeletePayout(fastify.pg, sid, req.params.id);
       if (!ok) return reply.code(404).send({ error: 'not_found' });
       return { ok: true, deletedId: req.params.id };
     },
@@ -95,10 +98,11 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
     const result = await fastify.pg.query(
       `SELECT name, monthly_saving
        FROM goals
-       WHERE start_date < ($1::date + interval '1 month')
+       WHERE session_id = $2
+               AND start_date < ($1::date + interval '1 month')
          AND (start_date + (duration_months || ' months')::interval) > $1::date
        ORDER BY monthly_saving DESC`,
-      [nextMonth],
+      [nextMonth, sid],
     );
 
     const breakdown = result.rows.map((r) => ({
@@ -141,7 +145,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       const source = sourcePeriod || lastMonth();
 
       // Validate: source month surplus must have enough remaining
-      const period = await getSurplusPeriod(fastify.pg, source);
+      const period = await getSurplusPeriod(fastify.pg, sid, source);
       const available = Number(period.closing_surplus);
       if (amount > available + 0.001) {
         return reply.code(400).send({
@@ -175,7 +179,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
 
         const batchId = response.batchHeader?.payoutBatchId || null;
 
-        const payout = await createPayout(fastify.pg, {
+        const payout = await createPayout(fastify.pg, sid, {
           amount,
           currency,
           receiverEmail: receiver.email,
@@ -185,7 +189,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
         });
 
         // Cascade recompute: source month + all forward months
-        await cascadeFrom(fastify.pg, source);
+        await cascadeFrom(fastify.pg, sid, source);
 
         return reply.code(201).send({
           payout,
@@ -195,7 +199,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
         });
       } catch (error: unknown) {
         fastify.log.error({ err: error }, 'PayPal payout failed');
-        await createPayout(fastify.pg, {
+        await createPayout(fastify.pg, sid, {
           amount,
           currency,
           receiverEmail: receiver.email,
@@ -216,8 +220,8 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
     const cur = currentMonth();
 
     const [lastP, curP] = await Promise.all([
-      getSurplusPeriod(fastify.pg, last),
-      getSurplusPeriod(fastify.pg, cur),
+      getSurplusPeriod(fastify.pg, sid, last),
+      getSurplusPeriod(fastify.pg, sid, cur),
     ]);
 
     // Walk back 6 months for history strip
@@ -228,7 +232,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       d.setUTCMonth(d.getUTCMonth() - i);
       const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
       try {
-        const p = await getSurplusPeriod(fastify.pg, ym);
+        const p = await getSurplusPeriod(fastify.pg, sid, ym);
         history.push({
           period: ym,
           closing_surplus: Number(p.closing_surplus),

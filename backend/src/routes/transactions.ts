@@ -30,6 +30,7 @@ import type pg from 'pg';
 import { parseTransaction } from '../surplus/parser.js';
 import { updateTransaction } from '../repositories/transactions.js';
 import { insertTransaction, listTransactions } from '../repositories/transactions.js';
+import { ADMIN_UUID } from '../repositories/demo-sessions.js';
 
 import type { Client as ElasticClient } from '@elastic/elasticsearch';
 
@@ -77,7 +78,7 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      const transaction = await insertTransaction(fastify.pg, {
+      const transaction = await insertTransaction(fastify.pg, ADMIN_UUID, {
         userId: userId ?? null,
         parsed: parsed.tx,
       });
@@ -139,7 +140,7 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       const limit = Math.min(Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 50, 200);
       const offset = Math.max(Number.isFinite(rawOffset) && rawOffset > 0 ? rawOffset : 0, 0);
 
-      const transactions = await listTransactions(fastify.pg, { limit, offset });
+      const transactions = await listTransactions(fastify.pg, ADMIN_UUID, { limit, offset });
 
       return {
         transactions,
@@ -165,8 +166,8 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = req.params;
       try {
         const result = await fastify.pg.query(
-          'DELETE FROM transactions WHERE id = $1 RETURNING id',
-          [id],
+          'DELETE FROM transactions WHERE id = $1 AND session_id = $2 RETURNING id',
+              [id, ADMIN_UUID],
         );
         if ((result.rowCount ?? 0) === 0) {
           return reply.code(404).send({ error: 'not_found' });
@@ -205,7 +206,7 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       if (!parsed.ok) {
         return reply.code(400).send({ error: parsed.reason, rawText: raw_text });
       }
-      const updated = await updateTransaction(fastify.pg, id, {
+      const updated = await updateTransaction(fastify.pg, ADMIN_UUID, id, {
         rawText: raw_text,
         amount: parsed.tx.amount,
         type: parsed.tx.type,

@@ -81,6 +81,7 @@ function formatLabel(period: Date, groupBy: GroupBy): string {
 
 export async function getSummary(
   pool: pg.Pool,
+  sessionId: string,
   opts: {
     from: Date;
     to: Date;
@@ -91,9 +92,9 @@ export async function getSummary(
 ): Promise<SummaryResult> {
   const { from, to, groupBy, type, includeProjections } = opts;
 
-  const typeClause = type === 'all' ? '' : 'AND "type" = $4';
+  const typeClause = type === 'all' ? '' : 'AND "type" = $5';
   const projClause = includeProjections ? '' : 'AND is_projection = false';
-  const params: unknown[] = [groupBy, from, to];
+  const params: unknown[] = [groupBy, from, to, sessionId];
   if (type !== 'all') params.push(type);
 
   const sql = `
@@ -105,6 +106,7 @@ export async function getSummary(
     FROM transactions
     WHERE occurred_at >= $2
       AND occurred_at <= $3
+      AND session_id = $4
       ${typeClause}
       ${projClause}
     GROUP BY period
