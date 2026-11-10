@@ -13,6 +13,7 @@ export async function calculateSurplus(pool: pg.Pool): Promise<SurplusMetrics> {
       COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
     FROM transactions
+    WHERE is_projection = false
   `);
 
   const row = result.rows[0];
