@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import LogoutButton from './LogoutButton';
+import ResetNavButton from './ResetNavButton';
 
 type HealthStatus = 'ok' | 'degraded' | 'offline';
 
@@ -111,6 +112,7 @@ export default function NavBar({ status }: { status: HealthStatus }) {
           )}
 
           <ThemeToggle />
+          <ResetNavButton />
           <LogoutButton />
           <div
             className={`flex items-center gap-1.5 text-xs font-medium ${s.text}`}

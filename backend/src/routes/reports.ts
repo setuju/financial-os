@@ -84,6 +84,13 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       const typeFilter = req.query.type;
       const includeProjections = req.query.includeProjections === 'true';
 
+      // Convert to inclusive full-day timestamps.
+      // Client sends date strings ('YYYY-MM-DD'); backend treats as
+      // [from 00:00:00Z, to 23:59:59.999Z] so transactions added ANY time
+      // on `to` day are included (< next midnight, or <= 23:59:59.999).
+      const fromTs = `${from}T00:00:00.000Z`;
+      const toTs = `${to}T23:59:59.999Z`;
+
       const projClause = includeProjections ? '' : 'AND is_projection = false';
       const typeClause = typeFilter && typeFilter !== 'all'
         ? `AND type = '${typeFilter === 'income' ? 'income' : 'expense'}'`
@@ -94,7 +101,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
         `SELECT COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE -amount END), 0) AS opening
          FROM transactions
          WHERE occurred_at < $1 AND session_id = $2 ${projClause} ${typeClause}`,
-        [from, sid],
+        [fromTs, sid],
       );
       let opening = Number(beforeRes.rows[0].opening);
 
@@ -110,7 +117,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
          WHERE occurred_at >= $1 AND occurred_at < $2 AND session_id = $3 ${projClause} ${typeClause}
          GROUP BY 1
          ORDER BY 1 ASC`,
-        [from, to, sid, groupBy],
+        [fromTs, toTs, sid, groupBy],
       );
 
       const buckets: Bucket[] = bucketRes.rows.map((r) => {
