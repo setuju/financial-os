@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import {
-  BookOpen, Heart, Target, ArrowRight, ScanLine, Mic, Shield, GitBranch,
+  Heart,
+  ArrowRight,
+  ScanLine,
+  Mic,
+  Shield,
+  GitBranch,
 } from 'lucide-react';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingFooter from '@/components/landing/LandingFooter';
