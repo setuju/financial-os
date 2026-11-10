@@ -38,11 +38,12 @@ import {
   Table,
 } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import LogoutButton from './LogoutButton';
 
 type HealthStatus = 'ok' | 'degraded' | 'offline';
 
 const LINKS = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/journal', label: 'Journal', icon: BookOpen },
   { href: '/ledger', label: 'Ledger', icon: Table },
   { href: '/impact', label: 'Impact', icon: Heart },
@@ -63,7 +64,7 @@ export default function NavBar({ status }: { status: HealthStatus }) {
     <header className="sticky top-0 z-40 border-b border-line bg-surface-raised/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
-          href="/"
+          href="/dashboard"
           className="flex items-center gap-2 text-sm font-semibold text-ink"
         >
           <Wallet className="h-5 w-5 text-accent" />
@@ -73,7 +74,7 @@ export default function NavBar({ status }: { status: HealthStatus }) {
         <nav className="flex items-center gap-1">
           {LINKS.map(({ href, label, icon: Icon }) => {
             const active =
-              href === '/' ? pathname === '/' : pathname?.startsWith(href);
+              pathname?.startsWith(href);
             return (
               <Link
                 key={href}
@@ -93,6 +94,7 @@ export default function NavBar({ status }: { status: HealthStatus }) {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <LogoutButton />
           <div
             className={`flex items-center gap-1.5 text-xs font-medium ${s.text}`}
           >
