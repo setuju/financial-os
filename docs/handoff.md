@@ -515,3 +515,222 @@ b0ba7ba fix(frontend): correct impact payout currency + 2-step confirm
 
 ---
 
+
+---
+
+# Sesi 11 FINAL CLOSE (2026-11-10 10:45 WIB)
+
+**HEAD**: `477ff65`
+**Deadline**: **12 Nov 2026 12:00 PT** = 13 Nov 03:00 WIB (~62 jam)
+**Status**: **CODE 95% READY. SUBMISSION 0% — VIDEO + DEVPOST PENDING.**
+
+## Live state
+
+| Layer | URL | Status |
+|---|---|---|
+| Frontend | https://financial.saturumah.net | ✅ Live |
+| Backend | https://financial-api.saturumah.net | ✅ Live |
+| DB | Neon `ep-green-glitter` ap-southeast-1 | ✅ Seeded |
+| Cache | Upstash Redis | ✅ |
+| Search | Elastic Cloud | ✅ |
+| Repo | https://github.com/setuju/financial-os | 🟡 verify public toggle |
+| Keep-alive | UptimeRobot ping 5 min | ✅ |
+
+## Test suite summary
+
+```
+PASS: 55
+WARN: 1 (repo private — pending toggle)
+FAIL: 0
+```
+
+- 40/40 vitest (parser)
+- tsc backend + frontend clean
+- 12/12 API endpoints live
+- 7/7 pages live
+- 0 secret leaks
+- Response shapes verified
+
+## Persona Review Summary (Sesi 11 Close)
+
+| Persona | Verdict | Catatan |
+|---|---|---|
+| Product Owner | 🟢 | Fitur 95%, tapi polish > video = risk |
+| AI Architect | 🟢 | 4 modalities, defense in depth |
+| Backend Engineer | 🟢 | 12 endpoints, cascade clean |
+| Frontend Engineer | 🟢 | Dark mode + favicon + PDF fix |
+| Data Engineer | 🟡 | Angka dashboard vs impact beda — presentasi risk |
+| Integration Engineer | 🟢 | 6/6 wajib sponsor tools live |
+| Economist | 🟡 | Model cascade valid, presentasi hati-hati |
+| Ethics Officer | 🟢 | Human-in-loop + disclosure utuh |
+| QA Engineer | 🟢 | 55/55 pass, E2E gap noted |
+| DevOps | 🟡 | Manual deploy required |
+| Security | 🔴 | OpenRouter credit + Gemini key rotated noted |
+| Librarian | 🟡 | Handoff pending |
+| **Hackathon Judge** | 🔴 | **Video = 80% score** |
+| **Submission Reviewer** | 🔴 | **VETO until video + Devpost** |
+
+**Consensus: submit video atau tidak submit sama sekali.**
+
+## Shipped features (verified live)
+
+### AI (4 modalities)
+- **Text parser** — EN + ID, USD-first, negation + intent rejection
+- **Voice** — Web Speech API, amount editor inline fix
+- **Vision** — OCR receipt via Gemini 3 Flash Preview (native endpoint)
+- **Chat** — Scoped assistant, canary-protected prompt
+
+### Journal
+- Pagination 20/50/100/all
+- Edit per-row (re-parse raw_text via PUT)
+- Delete per-row (hard delete)
+- PDF export with # numbering
+
+### Ledger
+- Grid/Notebook + 36 filters + projections toggle
+- Opening/Closing cascade columns (month/year)
+- Status legend (actual/projected/mixed)
+- PDF export with # + Opening/Closing + no Status
+
+### Goals / Horizon
+- Add/edit/delete with typed confirm `delete "<name>"`
+- Auto-duration `ceil(target/monthly)`
+- Bryntum Gantt 8 with custom fields, zoom-to-fit
+
+### Oracle
+- Moved from Dashboard → Horizon
+- Predict, edit, delete, achieve
+- Celebration modal 🎉 "Congratulation! You finished the Oracle!"
+
+### Impact
+- Verified (Oct) + In-Progress (Nov) cards
+- 6-month history strip
+- Horizon next-month warning
+- Donation log with soft-delete (audit preserved)
+- PayPal Payouts 2-step confirm
+
+### UI
+- Dark mode (CSS variables, 300ms smooth inversion)
+- Wallet favicon (SVG, PayPal blue)
+- NavBar theme toggle (Moon/Sun, localStorage persist)
+- Mobile responsive (2-row input, 1-row desktop)
+
+## Key commits (Sesi 11)
+
+```
+477ff65  docs(readme): professional rewrite
+8893ae4  chore: cleanup root test artifacts + extend gitignore
+716fbee  feat(ui): dark mode toggle
+650f9b7  feat(ui): wallet favicon SVG
+a8b9150  feat(oracle): move to Horizon + achievement + celebration
+61d5780  docs(session 11): handoff close + lessons #35-44
+2fc1f21  fix(pdf): row numbering + remove Status + align
+8fe58b5  feat(journal): wire pencil icon + EditTransactionDialog
+b8c6172  feat(transactions): PUT /transactions/:id
+a81ccf4  fix(pdf): period label + opening/closing columns
+a298f36  feat(journal): pagination + delete per-row
+a2522c8  feat(seed): realistic US PayPal-employee data
+```
+
+## Deploy state
+
+- **Render** — manual deploy (auto-deploy OFF). Backend commit terakhir di-deploy: TBD verify.
+- **Vercel** — auto-deploy on push. Frontend live at `477ff65` (commit sebelum docs cleanup).
+- **Neon** — seeded US persona. `surplus_periods` rebuilt Jul→Nov.
+
+## Env vars state
+
+| Var | Status |
+|---|---|
+| `DATABASE_URL` | ✅ Neon green-glitter |
+| `REDIS_URL` | ✅ Upstash |
+| `ELASTIC_URL` + `ELASTIC_API_KEY` | ✅ |
+| `PAYPAL_CLIENT_ID` + `SECRET` | ✅ Sandbox |
+| `PAYPAL_MODE` | ✅ `sandbox` |
+| `GEMINI_API_KEY` | ✅ Rotated 2026-11-10 03:13 |
+| `OPENROUTER_API_KEY` | ✅ Active (credit status unknown) |
+| `ASSISTANT_MODEL` | ✅ Empty (default `google/gemini-3.8-flash` per R14) |
+
+## Known risks
+
+1. **🔴 OPEN — OpenRouter credit** — assistant may fail if credit exhausted. Mitigasi: migrate to Gemini native (~20 mnt, post-video).
+2. **🟡 OPEN — Repo public toggle** — status verify manual sebelum submit.
+3. **🟡 OPEN — Data angka berbeda** — Dashboard vs Impact beda 99 (horizon Jul-Nov). Video: tunjukkan Impact page saja.
+4. **🟡 OPEN — Render manual deploy** — backend commit terbaru (`477ff65`) belum deploy.
+5. **🟢 CLOSED — Gemini key** — sudah di-rotate.
+
+## Blockers (critical, non-code)
+
+| # | Blocker | Effort | Priority |
+|---|---|---|---|
+| **1** | **Video <3 menit public** | 90 mnt fokus | 🔴 CRITICAL |
+| **2** | **Devpost submit** | 40 mnt | 🔴 CRITICAL |
+| 3 | Repo public toggle (verify) | 30 detik | 🔴 if not done |
+
+## Next steps (Sesi 12 — urutan)
+
+### Phase 1 (30 detik): Toggle public + verify
+1. `gh repo edit setuju/financial-os --visibility public --accept-visibility-change-consequences`
+2. Verify: `curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/setuju/financial-os` → expect 200
+3. Buka `https://github.com/setuju/financial-os` di browser → cek README render cantik (badges, TOC, tables)
+
+### Phase 2 (90 menit): Rekam video
+**Pre-flight:**
+1. `curl https://financial-api.saturumah.net/health` → tunggu 200 (~50s kalau cold)
+2. Setup OBS: Window capture Chrome, 1080p30, MKV format
+3. Hard refresh semua tab: /, /journal, /journal/new, /ledger, /impact, /horizon
+4. Hide bookmark bar (Ctrl+Shift+B), 100% zoom, fullscreen F11
+5. **Verify favicon + dark mode bekerja** sebelum rekam
+
+**Shot list (per `docs/video-script.md`):**
+- 0:00-0:12 Hook — dashboard idle
+- 0:12-0:34 Text + Voice — parser rejection "want to buy"
+- 0:34-0:49 OCR ⭐ — receipt auto-fill
+- 0:49-1:06 Journal + Ledger — PDF export
+- 1:06-1:34 PayPal Payouts — **batch ID visible**
+- 1:34-1:50 Bryntum Horizon — hover custom fields
+- 1:50-2:08 AI Assistant — scoped refusal
+- 2:08-2:22 Tech slide — logo grid
+- 2:22-2:30 Closing — "Track with words. Give with intent."
+
+**Must-win shots:**
+1. Parser rejection (0:12-0:34)
+2. OCR auto-fill (0:34-0:49)
+3. PayPal batch ID (1:06-1:34)
+4. Assistant refusal (1:50-2:08)
+
+**Edit CapCut** (~20 mnt) → **Upload YouTube public** (~10 mnt)
+
+### Phase 3 (40 menit): Devpost submit
+1. Copy `docs/devpost-draft.md` → https://paypalaihackathon.devpost.com/
+2. Paste video URL ke field Video
+3. Submit sebelum **13 Nov 03:00 WIB**
+
+## Aturan baru (untuk docs/rules.md — R19)
+
+**R19 — Video + Devpost adalah submission, bukan optional.** Semua polish harus di-gate oleh video. Kalau video belum ada di T-48h, stop semua feature work dan fokus video 100%.
+
+## Lessons added this session
+
+#35 tsc strict rejects unused var (tsx tolerates)
+#36 API key leak via URL query param
+#37 Model IDs provider-specific
+#38 set -e kills discovery scripts
+#39 Route extractor regex fails on multiline generics
+#40 Interface change without SQL update = silent bug
+#41 Push before tsc gate = Vercel build fail
+#42 Rewrite endpoint without preserving contract
+#43 Blind multi-file patch → 3 iterations wasted
+#44 Import missed after inject
+
+## Files ready for Sesi 12
+
+| File | Purpose |
+|---|---|
+| `docs/video-script.md` | Shot list + timing (2:30) |
+| `docs/devpost-draft.md` | All form fields, ready to copy-paste |
+| `docs/submission-checklist.md` | Final checklist |
+| `docs/postman/financial-os.postman_collection.json` | API reference |
+
+**END OF SESI 11.**
+

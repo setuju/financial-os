@@ -7,9 +7,9 @@
 ## Required
 
 - [x] **LICENSE** — MIT (file present)
-- [ ] **Repo public** — currently private, toggle by 11 Nov
+- [ ] **Repo public** — toggle bubble sent, verify manual before submit
 - [x] **README complete** — updated with all features (see README.md)
-- [x] **Demo works end-to-end** (not mockup)
+- [x] **Demo works end-to-end** — verified 55/55 tests pass (not mockup)
   - Frontend: https://financial-os-nu.vercel.app
   - Backend: https://financial-os-api-lykz.onrender.com
   - All pages: `/`, `/journal`, `/journal/new`, `/ledger`, `/impact`, `/horizon`

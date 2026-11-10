@@ -313,3 +313,19 @@
 **Apa**: Bubble Phase 2 inject PUT route (dengan \`updateTransaction\`) tapi logic import check salah — import tidak ditambahkan. TS2552 Cannot find name.
 **Koreksi**: setiap patch yang inject kode dengan reference baru wajib verify import. Grep setelah patch: \`grep -c "^import.*<name>"\`.
 
+
+## Kesalahan 45: Oracle Move — Indent Mismatch (3 Iterations)
+**Apa**: Patch `app/page.tsx` cari indent 18-space, aktual 10-space. Patch `app/horizon/page.tsx` cari 14-space, aktual 6-space. 3 iterasi fix.
+**Koreksi**: setelah recon dump, pakai indent dari dump bukan asumsi. Fallback ke index-based insert (`src.find()` + `src[:idx] + insert + src[idx:]`) kalau exact match gagal.
+**Pelajaran**: whitespace matter. Recon dump = source of truth untuk indent.
+
+## Kesalahan 46: `!` di Commit Message / Echo → Bash History Expansion
+**Apa**: commit message `-m "Congratulation! You finished the Oracle"` — bash history expansion aktif, `!` trigger event lookup, message mangled atau error `event not found`.
+**Koreksi**: hindari `!` di `-m` atau echo double-quote. Pakai single-quote, atau escape `\!`, atau `set +H` di awal (wrapper bubble sudah set `+H` tapi subprocess `bash -c` kadang reset).
+**Pelajaran**: `set +H` di parent tidak selalu inherit ke nested `bash -c`. Pakai `<<'HEREDOC'` untuk multi-line text yang mungkin mengandung `!`.
+
+## Kesalahan 47: Repo Root Punya Test Stubs (hello.ts, neon.ts)
+**Apa**: root repo punya `hello.ts` + `neon.ts` + `package.json` + `package-lock.json` — sisa test Neon Functions setup. Tidak ada reference tapi tracked di git.
+**Koreksi**: recon wajib cek root file sebelum submit. Cleanup `git rm --cached` + `rm`.
+**Pelajaran**: kalau install tools di root (Neon CLI, Vercel CLI, dll), selalu cek `git status` setelah. Jangan asumsi .gitignore cover.
+
