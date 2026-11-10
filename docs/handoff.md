@@ -1,3 +1,17 @@
+<!--
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+│  ──────────────────────────────────────────────────────────────────   │
+│  File      : docs/handoff.md                                        │
+│  Purpose   : Docs: Handoff                                          │
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+│  GitHub    : https://github.com/setuju                            │
+│  Website   : https://saturumah.net                              │
+│  Created   : 10-11-2026                                             │
+│  License   : MIT                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+-->
+
 # Handoff — Financial OS Project
 
 **Last updated**: Sesi 2 close (2026-11-04)

@@ -1,3 +1,22 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : backend/src/paypal/sdk/src/core/response-decoder.ts    │
+ * │  Purpose   : Backend: response-decoder                              │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/backend
+ * @license   MIT
+ */
+
 import type { Entry } from "./validation/schema.js";
 import type { HttpMethod, RawClientOptions } from "./api-request.js";
 import type { BinaryContent, BinaryErrorContent } from "./binary.js";

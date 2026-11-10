@@ -1,3 +1,17 @@
+<!--
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+│  ──────────────────────────────────────────────────────────────────   │
+│  File      : docs/video-script.md                                   │
+│  Purpose   : Docs: Video Script                                     │
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+│  GitHub    : https://github.com/setuju                            │
+│  Website   : https://saturumah.net                              │
+│  Created   : 10-11-2026                                             │
+│  License   : MIT                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+-->
+
 # Video Script — Financial OS (2:30)
 **Deadline**: 12 Nov 2026 12:00 PT (Thu 13 Nov 03:00 WIB)
 **Upload**: YouTube public — title "Financial OS — Natural-Language Finance (PayPal AI Hackathon 2026)"

@@ -1,3 +1,22 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : backend/src/paypal/sdk/src/client.ts                   │
+ * │  Purpose   : Backend: client                                        │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/backend
+ * @license   MIT
+ */
+
 import { buildAuthSchemes, type AuthSchemes } from "./auth-schemes.js";
 import type { ClientOptions } from "./client-options.js";
 import { ApiError, type Declared, type Undeclared } from "./core/api-error.js";

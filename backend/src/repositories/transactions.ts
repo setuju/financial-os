@@ -1,4 +1,23 @@
 /**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : backend/src/repositories/transactions.ts               │
+ * │  Purpose   : Repo: transactions                                     │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/backend
+ * @license   MIT
+ */
+
+/**
  * Transactions repository. Thin data-access layer over pg Pool.
  * Kept separate from routes so unit tests can hit repo with a mocked pool.
  *

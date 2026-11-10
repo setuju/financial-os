@@ -1,3 +1,22 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : frontend/components/horizon/GanttInner.tsx             │
+ * │  Purpose   : Component: GanttInner                                  │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/frontend
+ * @license   MIT
+ */
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';

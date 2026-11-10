@@ -1,3 +1,17 @@
+<!--
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+│  ──────────────────────────────────────────────────────────────────   │
+│  File      : infra/README.md                                        │
+│  Purpose   : Readme                                                 │
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+│  GitHub    : https://github.com/setuju                            │
+│  Website   : https://saturumah.net                              │
+│  Created   : 10-11-2026                                             │
+│  License   : MIT                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+-->
+
 # Infra — Financial OS
 
 Local PostgreSQL 16 + Redis 7 untuk development.

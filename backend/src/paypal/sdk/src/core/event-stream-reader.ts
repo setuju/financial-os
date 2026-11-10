@@ -1,3 +1,22 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : backend/src/paypal/sdk/src/core/event-stream-reader.ts │
+ * │  Purpose   : Backend: event-stream-reader                           │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/backend
+ * @license   MIT
+ */
+
 import type { HttpMethod } from "./api-request.js";
 import { ConnectionError, TimeoutError } from "./errors.js";
 import type { ResolvedEventStreamOptions } from "./event-stream.js";

@@ -1,3 +1,22 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : backend/src/paypal/sdk/src/core/response-headers.ts    │
+ * │  Purpose   : Backend: response-headers                              │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/backend
+ * @license   MIT
+ */
+
 export function numberFromHeader(headers: Headers, name: string): number | undefined {
   const raw = firstValue(headers, name);
   if (raw === undefined) return undefined;

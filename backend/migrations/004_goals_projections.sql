@@ -1,3 +1,20 @@
+-- ┌──────────────────────────────────────────────────────────────────────┐
+-- │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+-- │  ──────────────────────────────────────────────────────────────────   │
+-- │  File      : backend/migrations/004_goals_projections.sql           │
+-- │  Purpose   : DB migration: 004_goals_projections                    │
+-- │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+-- │  GitHub    : https://github.com/setuju                            │
+-- │  Website   : https://saturumah.net                              │
+-- │  Created   : 10-11-2026                                             │
+-- │  License   : MIT                                                  │
+-- └──────────────────────────────────────────────────────────────────────┘
+--
+-- @author    Jack <Jack[at]SatuRumah[dot]Net>
+-- @created   10-11-2026
+-- @package   financial-os/backend
+-- @license   MIT
+
 -- 004_goals_projections.sql
 -- Adds goals table (for Bryntum Gantt) and is_projection flag on transactions
 -- (for future-dated forecast rows that should NOT be counted as realized surplus).

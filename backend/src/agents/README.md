@@ -1,3 +1,17 @@
+<!--
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+│  ──────────────────────────────────────────────────────────────────   │
+│  File      : backend/src/agents/README.md                           │
+│  Purpose   : Readme                                                 │
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+│  GitHub    : https://github.com/setuju                            │
+│  Website   : https://saturumah.net                              │
+│  Created   : 10-11-2026                                             │
+│  License   : MIT                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+-->
+
 # Financial OS Assistant (In-App Guide)
 
 The in-app AI helper for Financial OS users.

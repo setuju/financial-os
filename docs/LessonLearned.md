@@ -1,3 +1,17 @@
+<!--
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+│  ──────────────────────────────────────────────────────────────────   │
+│  File      : docs/LessonLearned.md                                  │
+│  Purpose   : Docs: Lessonlearned                                    │
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+│  GitHub    : https://github.com/setuju                            │
+│  Website   : https://saturumah.net                              │
+│  Created   : 10-11-2026                                             │
+│  License   : MIT                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+-->
+
 # Lesson Learned — Sesi Perencanaan
 
 ## Kesalahan 1: Menilai Bryntum "Tidak Relevan" Terlalu Cepat

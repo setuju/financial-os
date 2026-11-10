@@ -1,3 +1,20 @@
+-- ┌──────────────────────────────────────────────────────────────────────┐
+-- │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+-- │  ──────────────────────────────────────────────────────────────────   │
+-- │  File      : backend/migrations/003_surplus_oracle.sql              │
+-- │  Purpose   : DB migration: 003_surplus_oracle                       │
+-- │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+-- │  GitHub    : https://github.com/setuju                            │
+-- │  Website   : https://saturumah.net                              │
+-- │  Created   : 10-11-2026                                             │
+-- │  License   : MIT                                                  │
+-- └──────────────────────────────────────────────────────────────────────┘
+--
+-- @author    Jack <Jack[at]SatuRumah[dot]Net>
+-- @created   10-11-2026
+-- @package   financial-os/backend
+-- @license   MIT
+
 -- 003_surplus_oracle.sql
 CREATE TABLE IF NOT EXISTS surplus_oracles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

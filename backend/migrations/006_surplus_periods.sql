@@ -1,3 +1,20 @@
+-- ┌──────────────────────────────────────────────────────────────────────┐
+-- │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+-- │  ──────────────────────────────────────────────────────────────────   │
+-- │  File      : backend/migrations/006_surplus_periods.sql             │
+-- │  Purpose   : DB migration: 006_surplus_periods                      │
+-- │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+-- │  GitHub    : https://github.com/setuju                            │
+-- │  Website   : https://saturumah.net                              │
+-- │  Created   : 10-11-2026                                             │
+-- │  License   : MIT                                                  │
+-- └──────────────────────────────────────────────────────────────────────┘
+--
+-- @author    Jack <Jack[at]SatuRumah[dot]Net>
+-- @created   10-11-2026
+-- @package   financial-os/backend
+-- @license   MIT
+
 -- Surplus periods: cascade model, month-to-month rollover
 CREATE TABLE IF NOT EXISTS surplus_periods (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

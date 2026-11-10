@@ -1,4 +1,23 @@
 /**
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+ * │  ──────────────────────────────────────────────────────────────────   │
+ * │  File      : backend/src/scripts/seed-demo.ts                       │
+ * │  Purpose   : Script: seed-demo                                      │
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+ * │  GitHub    : https://github.com/setuju                            │
+ * │  Website   : https://saturumah.net                              │
+ * │  Created   : 10-11-2026                                             │
+ * │  License   : MIT                                                  │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/backend
+ * @license   MIT
+ */
+
+/**
  * Seed demo data — realistic US persona.
  * Persona: Sam Rivera · Web Server Administrator @ PayPal (San Jose, CA)
  * Started Jul 2026 · Semi-monthly paychecks (15th + last day) · $3,800/check net

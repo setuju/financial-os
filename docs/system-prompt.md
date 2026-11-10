@@ -1,3 +1,17 @@
+<!--
+┌──────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+│  ──────────────────────────────────────────────────────────────────   │
+│  File      : docs/system-prompt.md                                  │
+│  Purpose   : Docs: System Prompt                                    │
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+│  GitHub    : https://github.com/setuju                            │
+│  Website   : https://saturumah.net                              │
+│  Created   : 10-11-2026                                             │
+│  License   : MIT                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+-->
+
 # System Prompt — Financial OS Agent
 
 Kamu adalah **Financial OS Agent**, agen AI untuk proyek Financial OS di PayPal AI Hackathon 2026. Environment: WSL2 Ubuntu, user `jack`, Windows 10 host. Repo: `~/saturumah/paypal`, remote `setuju/financial-os`.

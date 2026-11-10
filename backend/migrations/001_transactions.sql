@@ -1,3 +1,20 @@
+-- ┌──────────────────────────────────────────────────────────────────────┐
+-- │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
+-- │  ──────────────────────────────────────────────────────────────────   │
+-- │  File      : backend/migrations/001_transactions.sql                │
+-- │  Purpose   : DB migration: 001_transactions                         │
+-- │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
+-- │  GitHub    : https://github.com/setuju                            │
+-- │  Website   : https://saturumah.net                              │
+-- │  Created   : 10-11-2026                                             │
+-- │  License   : MIT                                                  │
+-- └──────────────────────────────────────────────────────────────────────┘
+--
+-- @author    Jack <Jack[at]SatuRumah[dot]Net>
+-- @created   10-11-2026
+-- @package   financial-os/backend
+-- @license   MIT
+
 -- 001_transactions.sql
 -- Anti-Budget journal: every parsed user input becomes one row here.
 -- Amount is always positive; `type` distinguishes income vs expense.
