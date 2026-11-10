@@ -68,14 +68,16 @@ export default function ExportPdfButton({
       // Table
       autoTable(doc, {
         startY: 170,
-        head: [['Date', 'Description', 'Category', 'Type', 'Amount']],
-        body: transactions.map((t) => [
+        head: [['#', 'Date', 'Description', 'Category', 'Type', 'Amount']],
+        body: transactions.map((t, i) => [
+                String(i + 1),
+
           new Date(t.occurred_at).toLocaleDateString('en-US'),
           t.raw_text,
           t.category,
           t.type,
           `${t.type === 'income' ? '+' : '-'}${usd.format(Number(t.amount))}`,
-        ]),
+        ]  ),
         styles: { fontSize: 8, cellPadding: 4 },
         headStyles: { fillColor: [0, 112, 186], textColor: 255 },
         alternateRowStyles: { fillColor: [248, 250, 252] },

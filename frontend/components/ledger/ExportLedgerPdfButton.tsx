@@ -50,13 +50,6 @@ function fmtPeriod(iso: string, groupBy: ReportGroupBy): string {
   });
 }
 
-function statusLabel(b: SummaryBucket): string {
-  const s = b.status ?? (b.isProjection ? 'projected' : 'actual');
-  if (s === 'actual') return 'Actual';
-  if (s === 'projected') return 'Projected';
-  return 'Mixed';
-}
-
 export default function ExportLedgerPdfButton({
   buckets,
   totals,
@@ -123,11 +116,12 @@ export default function ExportLedgerPdfButton({
       // ── Table (conditional columns) ──
       const hasBalances = groupBy === 'month' || groupBy === 'year';
       const head = hasBalances
-        ? [['Period', 'Income', 'Expense', 'Net', 'Opening', 'Closing', 'Status']]
-        : [['Period', 'Income', 'Expense', 'Net', 'Status']];
+        ? [['#', 'Period', 'Income', 'Expense', 'Net', 'Opening', 'Closing']]
+        : [['#', 'Period', 'Income', 'Expense', 'Net']];
 
-      const body = buckets.map((b) => {
+      const body = buckets.map((b, i) => {
         const base: string[] = [
+          String(i + 1),
           fmtPeriod(b.period, groupBy),
           b.income > 0 ? usd.format(b.income) : '—',
           b.expense > 0 ? usd.format(b.expense) : '—',
@@ -136,18 +130,23 @@ export default function ExportLedgerPdfButton({
         if (hasBalances) {
           base.push(usd.format(b.opening ?? 0), usd.format(b.closing ?? 0));
         }
-        base.push(statusLabel(b));
         return base;
       });
 
-      const columnStyles: Record<number, { halign: 'right' }> = {
-        1: { halign: 'right' },
-        2: { halign: 'right' },
-        3: { halign: 'right' },
+      // Column styles: # center, Period left, all numerics right-aligned.
+      // Explicit cellWidth prevents autotable from squashing the numeric
+      // columns (root cause of the misalignment).
+      type ColStyle = { halign: 'left' | 'center' | 'right'; cellWidth?: number };
+      const columnStyles: Record<number, ColStyle> = {
+        0: { halign: 'center', cellWidth: 28 },
+        1: { halign: 'left', cellWidth: 110 },
+        2: { halign: 'right', cellWidth: 85 },
+        3: { halign: 'right', cellWidth: 85 },
+        4: { halign: 'right', cellWidth: 85 },
       };
       if (hasBalances) {
-        columnStyles[4] = { halign: 'right' };
-        columnStyles[5] = { halign: 'right' };
+        columnStyles[5] = { halign: 'right', cellWidth: 85 };
+        columnStyles[6] = { halign: 'right', cellWidth: 85 };
       }
 
       autoTable(doc, {
