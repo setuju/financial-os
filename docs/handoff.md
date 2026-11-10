@@ -752,3 +752,132 @@ a2522c8  feat(seed): realistic US PayPal-employee data
 
 **END OF SESI 11.**
 
+
+---
+
+## Sesi 12 PLAN: Multi-Tenant Migration
+
+**Recon date**: 2026-11-10 12:39 WIB
+**Backup date**: 2026-11-10 12:43 WIB
+**HEAD at backup**: `8ffc9a2`
+**Git tag**: `pre-multitenant-2026-11-10` (pushed to origin)
+
+### Backup files
+
+- **SQL dump**: `/home/jack/saturumah-backups/neon-20261110_124223.sql.gz` (0 bytes)
+- **JSON export**: `/home/jack/saturumah-backups/neon-20261110_124223.json` (615 bytes)
+- **Git tag**: `pre-multitenant-2026-11-10`
+
+### Current DB state (as of recon + backup)
+
+- Transactions: **115** (105 actual + 10 projection, via `/transactions?limit=200`)
+- Goals: **3** (Emergency Fund, Hawaii Vacation, MacBook Pro)
+- Surplus oracles: **2** (both pending, none achieved)
+- Payouts: **2** (status success)
+- Surplus periods: **6** (Jul-Nov cascade + history)
+- Verified Oct closing: **$10,813.87**
+- In-progress Nov: **$8,136.94**
+
+### Schema inventory (from migrations 001-006)
+
+| Table | Key columns | Unique / FK |
+|---|---|---|
+| transactions | id, raw_text, amount, type, category, occurred_at, source, is_projection, user_id (NULL) | PK id |
+| goals | id, name, target_amount, monthly_saving, interest_rate, loan_term_months, start_date, duration_months, progress_percent, user_id (NULL) | PK id |
+| payouts | id, transaction_id, amount, currency, receiver_email, status, paypal_batch_id, source_period, deleted_at | PK id, **FK transaction_id → transactions(id) — no CASCADE** |
+| surplus_oracles | id, predicted_amount, actual_amount, status, period, reason, achieved_at | PK id |
+| surplus_periods | id, period_month, opening_balance, total_income, total_expense, horizon_bills, donations, closing_surplus, status | PK id, **UNIQUE(period_month) — needs composite swap** |
+| _migrations | internal tracking | — |
+
+### Migration runner behavior
+
+- **Idempotent**: skip applied (tracks in `_migrations`)
+- **Transactional**: each .sql wrapped (verified — 2 refs to BEGIN/COMMIT)
+- **Ordered**: filename sort
+- **Safe to re-run**: DDL error → rollback → no partial state
+
+### Repo functions needing session_id (14 total)
+
+| File | Functions |
+|---|---|
+| goals.ts | listGoals, createGoal |
+| payouts.ts | createPayout, listPayouts, softDeletePayout |
+| reports.ts | getSummary |
+| surplus-periods.ts | computeMonthMetrics (private), recomputeSurplusPeriod, ensureSurplusPeriods, getSurplusPeriod, cascadeFrom |
+| surplus.ts | calculateSurplus, createPrediction, getLatestPrediction, listPredictions, updatePrediction, deletePrediction, markPredictionAchieved |
+| transactions.ts | insertTransaction, listTransactions, updateTransaction |
+
+### Routes needing session extraction (25 total, health.ts exempt)
+
+- transactions.ts: POST, GET/search, GET list, DELETE, PUT (5)
+- goals.ts: GET, POST, DELETE (3)
+- surplus.ts: GET/current, GET/predictions, POST/predict, PUT, DELETE, POST/achieve (6)
+- impact.ts: GET/receivers, GET/payouts, DELETE/payouts, GET/horizon-commitment, POST/payout, GET/surplus (6)
+- reports.ts: GET/summary (1)
+- receipts.ts: POST/ocr (1)
+- assistant.ts: POST/chat, GET/info (2)
+
+### Critical gotchas
+
+1. `surplus_periods.period_month UNIQUE` — must swap to composite UNIQUE(session_id, period_month)
+2. `payouts.transaction_id REFERENCES transactions(id)` — **no ON DELETE CASCADE**. Deleting a transaction with linked payout fails. Multi-tenant design must not depend on transaction deletes, or must add cascade.
+3. `user_id UUID` column exists in transactions + goals but NULL/unused. Leave as-is (future real auth). Do NOT repurpose for session_id.
+4. **Seed `main()` TRUNCATEs all rows**. Multi-tenant reset must scope: `DELETE FROM x WHERE session_id = $1`.
+5. **Frontend auth EXISTS** — `fos_auth=ok` cookie + shared password `financial-os`. Middleware redirects unauth to `/login`. This is our foundation — extend with name + password.
+6. **Migration 007 draft was created in an earlier bubble that failed.** No residual files exist — verify with `ls backend/migrations/007_*` before new migration.
+
+### Restore procedure (if migration fails)
+
+**A. Restore DB from SQL dump** (destroys current):
+```bash
+gunzip -c "/home/jack/saturumah-backups/neon-20261110_124223.sql.gz" | psql "$DATABASE_URL"
+```
+
+**B. Revert code to pre-multitenant tag**:
+```bash
+git fetch origin tag pre-multitenant-2026-11-10
+git checkout pre-multitenant-2026-11-10
+git push origin pre-multitenant-2026-11-10:main --force
+```
+
+**C. Verify backup integrity** (dry-run):
+```bash
+gunzip -c "/home/jack/saturumah-backups/neon-20261110_124223.sql.gz" | grep -c "^CREATE TABLE"
+gunzip -c "/home/jack/saturumah-backups/neon-20261110_124223.sql.gz" | grep -c "^COPY public\."
+```
+
+### Env vars needed for multi-tenant (proposed)
+
+- `ADMIN_PASSWORD` — optional, default `financial-os`
+- Cookie: `fos_session_id` (UUID), `fos_auth` remains `ok` for legacy gating
+
+### Risk register
+
+| Risk | Mitigation |
+|---|---|
+| Migration fails → data corrupt | Transactional DDL → auto-rollback + backup exists |
+| Forgotten WHERE session_id in a query → data leak | Systematic grep pre/post + E2E test with 2 accounts |
+| `payouts.transaction_id` FK blocks delete | Test before push; add CASCADE if needed |
+| Seed TRUNCATE wipes all users | Scope reset per session |
+| Frontend cookie mis-set | Test login → cookie → API flow |
+
+### NEXT STEPS (Sesi 12, after this recon)
+
+1. **Write `docs/multitenant-plan.md`** — detailed proposal with 6 bubbles, no code yet
+2. **User review** the plan doc
+3. **If approved**: execute bubbles in order:
+   - B1: migration 007 + demo_sessions repo + admin bootstrap
+   - B2: repo functions wire session_id (14 funcs)
+   - B3: routes extract session (25 routes)
+   - B4: seed refactor (runSeed(sessionId))
+   - B5: frontend signup/login + cookie flow
+   - B6: E2E isolation test + admin reset button
+4. **Hard time-box**: 4.5 hours total. If any bubble blocks > 30 min, rollback and revert to reset-button-only approach.
+
+### Decision log
+
+- **2026-11-10 12:00 WIB**: user requested full multi-tenant (name + password signup)
+- **2026-11-10 12:39 WIB**: recon ran — 14 repo funcs, 25 routes, 5 tables, 6 gotchas
+- **2026-11-10 2026-11-10 12:43 WIB**: backup taken (SQL + JSON + git tag), handoff recorded
+- **PENDING**: multitenant-plan.md write → user review → implement
+
