@@ -47,6 +47,9 @@ async function handle(
   const headers = new Headers();
   const ct = req.headers.get('content-type');
   if (ct) headers.set('content-type', ct);
+        // Forward session id from cookie
+        const sid = req.cookies.get('fos_session_id')?.value;
+        if (sid) headers.set('x-session-id', sid);
 
   let body: string | undefined;
   if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {

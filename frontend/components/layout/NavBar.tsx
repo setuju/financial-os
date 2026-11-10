@@ -100,6 +100,16 @@ export default function NavBar({ status }: { status: HealthStatus }) {
         </nav>
 
         <div className="flex items-center gap-2">
+          {name && (
+
+            <span className="hidden text-xs text-ink-soft sm:inline">
+
+              Hi, <strong className="font-semibold text-ink">{name}</strong>
+
+            </span>
+
+          )}
+
           <ThemeToggle />
           <LogoutButton />
           <div
