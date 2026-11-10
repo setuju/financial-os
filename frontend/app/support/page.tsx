@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
 import LegalPage from '@/components/landing/LegalPage';
+export const metadata: Metadata = {
+  title: 'Support & Dispute Center',
+  description: 'Contact channels, response times, dispute resolution, data deletion requests, accessibility, and feedback.',
+  alternates: { canonical: '/support' },
+};
+
 
 export default function SupportPage() {
   return (

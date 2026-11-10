@@ -10,6 +10,7 @@ export default function LandingNav() {
           <span>Financial OS</span>
         </Link>
         <nav className="flex items-center gap-4 text-sm">
+          <Link href="/features" className="hidden text-ink-soft hover:text-ink sm:inline" title="All features + User Journey Map">Features</Link>
           <Link href="/privacy" className="hidden text-ink-soft hover:text-ink sm:inline" title="Privacy policy \u2014 what we process, third-party providers">Privacy</Link>
           <Link href="/terms" className="hidden text-ink-soft hover:text-ink sm:inline" title="Terms of service \u2014 sandbox-only, no financial advice">Terms</Link>
           <Link

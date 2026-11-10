@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
 import LegalPage from '@/components/landing/LegalPage';
+export const metadata: Metadata = {
+  title: 'Security & Privacy Settings',
+  description: 'How Financial OS handles sessions, data in transit, data at rest, your controls, and how to report a vulnerability.',
+  alternates: { canonical: '/security' },
+};
+
 
 export default function SecurityPage() {
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Heart,
@@ -11,6 +12,12 @@ import LandingNav from '@/components/landing/LandingNav';
 import LandingFooter from '@/components/landing/LandingFooter';
 
 export const dynamic = 'force-static';
+
+export const metadata: Metadata = {
+  title: 'Financial OS — Natural-language finance with ethical surplus',
+  description: 'Track money with words in English or Bahasa Indonesia. Four AI modalities, ethical surplus cascade, PayPal Payouts sandbox. Built for PayPal AI Hackathon 2026.',
+  alternates: { canonical: '/' },
+};
 
 const FEATURES = [
   { icon: ScanLine, title: 'Anti-Budget Parser', desc: 'Type or speak. English or Bahasa Indonesia. Rejects plans and cancellations.' },
@@ -33,8 +40,36 @@ const TECH = [
 ];
 
 export default function LandingPage() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Financial OS',
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Web',
+    description:
+      'Natural-language personal finance with ethical surplus distribution via PayPal Payouts. Four AI modalities: text, voice, OCR, chat.',
+    url: 'https://financial.saturumah.net',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    author: { '@type': 'Person', name: 'Jack', url: 'https://saturumah.net' },
+    publisher: { '@type': 'Organization', name: 'SatuRumah', url: 'https://saturumah.net' },
+    featureList: [
+      'Natural-language parser (English + Bahasa Indonesia)',
+      'Voice input via Web Speech API',
+      'OCR receipt scan (Gemini Vision)',
+      'Scoped AI assistant',
+      'Financial Horizon (Bryntum Gantt)',
+      'Surplus Oracle',
+      'Impact Wallet (PayPal Payouts sandbox)',
+      'Ledger with 36 filter combinations',
+    ],
+  };
   return (
-    <div className="min-h-screen bg-surface">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="min-h-screen bg-surface">
       <LandingNav />
 
       <main>
@@ -174,6 +209,7 @@ Aug 2026  closing -> Sep 2026  opening
       </main>
 
       <LandingFooter />
-    </div>
+      </div>
+    </>
   );
 }

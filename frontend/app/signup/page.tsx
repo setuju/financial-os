@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Wallet } from 'lucide-react';
 import SignupForm from './SignupForm';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Sign up',
+  description: 'Create a demo session. Enter a name, receive a 5-character password. Your data is isolated — never mixed with other users.',
+  alternates: { canonical: '/signup' },
+};
 
 export default function SignupPage() {
   return (

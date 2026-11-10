@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Wallet } from 'lucide-react';
 import LoginForm from './LoginForm';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Sign in',
+  description: 'Sign in to the Financial OS demo. One shared password for demo access — no account, no email required.',
+  alternates: { canonical: '/login' },
+};
 
 export default function LoginPage({
   searchParams,

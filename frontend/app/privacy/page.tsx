@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
 import LegalPage from '@/components/landing/LegalPage';
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'What Financial OS processes, where data goes (PayPal Payouts sandbox, Google Gemini, OpenRouter), and how to request deletion.',
+  alternates: { canonical: '/privacy' },
+};
+
 
 export default function PrivacyPage() {
   return (

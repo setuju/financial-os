@@ -42,9 +42,58 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Financial OS — Natural-language finance",
+  metadataBase: new URL('https://financial.saturumah.net'),
+  title: {
+    default: 'Financial OS — Natural-language finance with ethical surplus',
+    template: '%s · Financial OS',
+  },
   description:
-    "Track money with words. Allocate ethical surplus via PayPal Payouts.",
+    'Track money with words. AI parser in English & Bahasa Indonesia, voice input, OCR receipts, ethical surplus cascade, and PayPal Payouts sandbox. Built for PayPal AI Hackathon 2026.',
+  keywords: [
+    'personal finance', 'natural language finance', 'AI finance',
+    'PayPal Payouts', 'ethical surplus', 'budget tracker',
+    'Bahasa Indonesia', 'OCR receipt scanner', 'Financial OS',
+    'PayPal AI Hackathon',
+  ],
+  authors: [{ name: 'Jack', url: 'https://saturumah.net' }],
+  creator: 'Jack',
+  publisher: 'Financial OS',
+  category: 'finance',
+  alternates: {
+    canonical: 'https://financial.saturumah.net',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://financial.saturumah.net',
+    siteName: 'Financial OS',
+    title: 'Financial OS — Natural-language finance',
+    description:
+      'Type or speak money. Ethical surplus → PayPal Payouts sandbox. Four AI modalities: text, voice, OCR, chat.',
+    images: [{ url: '/icon.svg', width: 512, height: 512, alt: 'Financial OS' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Financial OS — Natural-language finance',
+    description:
+      'Type or speak money. Ethical surplus → PayPal Payouts sandbox.',
+    images: ['/icon.svg'],
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
+  },
 };
 
 export default function RootLayout({

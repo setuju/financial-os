@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
 import LegalPage from '@/components/landing/LegalPage';
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Sandbox-only use, no financial advice, no warranty, MIT license, acceptable use. Financial OS is a demo app for PayPal AI Hackathon 2026.',
+  alternates: { canonical: '/terms' },
+};
+
 
 export default function TermsPage() {
   return (

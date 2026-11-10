@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
 import LegalPage from '@/components/landing/LegalPage';
+export const metadata: Metadata = {
+  title: 'Legal & Disclosures',
+  description: 'MIT license, PayPal Sandbox disclosure, AI-generated content notice, no regulatory claims, trademarks, tax treatment.',
+  alternates: { canonical: '/legal' },
+};
+
 
 export default function LegalPageRoute() {
   return (

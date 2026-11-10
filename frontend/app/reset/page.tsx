@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Wallet, RotateCcw } from 'lucide-react';
 import ResetButton from './ResetButton';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Reset Demo',
+  description: 'Restore your Financial OS demo session to baseline. Admin re-seeds sample data; other users get an empty slate.',
+  alternates: { canonical: '/reset' },
+};
 
 export default function ResetPage() {
   return (

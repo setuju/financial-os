@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PAGES = new Set([
-  '/', '/login', '/signup', '/reset', '/privacy', '/terms', '/legal', '/security', '/support',
+  '/', '/login', '/signup', '/features', '/reset', '/privacy', '/terms', '/legal', '/security', '/support',
 ]);
 const PUBLIC_API = new Set(['/api/login', '/api/logout', '/api/signup']);
 
