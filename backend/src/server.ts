@@ -40,6 +40,7 @@ import reportsRoutes from './routes/reports';
 import goalsRoutes from './routes/goals';
 import assistantRoutes from './routes/assistant';
 import receiptsRoutes from './routes/receipts';
+import demoRoutes from './routes/admin';
 import { ensureAdminSession } from './repositories/demo-sessions.js';
 import { verifySession } from './repositories/demo-sessions.js';
 import { ADMIN_UUID } from './repositories/demo-sessions.js';
@@ -93,6 +94,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   await app.register(goalsRoutes);
   await app.register(assistantRoutes);
   await app.register(receiptsRoutes);
+  await app.register(demoRoutes);
     // Multi-tenant: ensure admin session exists (idempotent)
   await ensureAdminSession(app.pg);
 
