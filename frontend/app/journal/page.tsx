@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { BookOpen, Plus, AlertCircle } from 'lucide-react';
 import { getTransactions } from '@/lib/api';
 import PageHeader from '@/components/ui/PageHeader';
-import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
 import ExportPdfButton from '@/components/journal/ExportPdfButton';
+import JournalTable from '@/components/journal/JournalTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,25 +16,10 @@ const usd = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
-const dateFmt = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
-
-type BadgeVariant = 'success' | 'danger' | 'warning' | 'info' | 'neutral';
-
-const CATEGORY_VARIANTS: Record<string, BadgeVariant> = {
-  food: 'warning',
-  transport: 'info',
-  bills: 'danger',
-  shopping: 'warning',
-  health: 'danger',
-  income: 'success',
-  other: 'neutral',
-};
-
 export default async function Journal() {
-  const allTx = await getTransactions(50);
+  // Fetch up to 500 — far more than seed (109), enough for demo.
+  // Backend may cap internally; if so, we paginate what we have.
+  const allTx = await getTransactions(500);
   const now = new Date();
   const transactions = (allTx ?? []).filter(
     (t) =>
@@ -43,15 +28,11 @@ export default async function Journal() {
   );
 
   const totalIn = transactions
-    ? transactions
-        .filter((t) => t.type === 'income')
-        .reduce((s, t) => s + Number(t.amount), 0)
-    : 0;
+    .filter((t) => t.type === 'income')
+    .reduce((s, t) => s + Number(t.amount), 0);
   const totalOut = transactions
-    ? transactions
-        .filter((t) => t.type === 'expense')
-        .reduce((s, t) => s + Number(t.amount), 0)
-    : 0;
+    .filter((t) => t.type === 'expense')
+    .reduce((s, t) => s + Number(t.amount), 0);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -60,7 +41,7 @@ export default async function Journal() {
         description="Every transaction parsed from natural-language input, with raw text preserved for audit."
         actions={
           <>
-            <ExportPdfButton transactions={transactions ?? []} />
+            <ExportPdfButton transactions={transactions} />
             <Link
               href="/journal/new"
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
@@ -72,7 +53,7 @@ export default async function Journal() {
         }
       />
 
-      {transactions === null ? (
+      {allTx === null ? (
         <EmptyState
           icon={<AlertCircle className="h-12 w-12 text-rose-500" />}
           title="Backend unreachable"
@@ -82,9 +63,7 @@ export default async function Journal() {
         <EmptyState
           icon={<BookOpen className="h-12 w-12" />}
           title="No transactions yet"
-          description={
-            'Record your first transaction using natural language — try "saya jajan 20ribu" or "tadi dapat bonus 500rb".'
-          }
+          description='Record your first transaction using natural language — try "saya jajan 20ribu" or "tadi dapat bonus 500rb".'
           action={
             <Link
               href="/journal/new"
@@ -100,7 +79,7 @@ export default async function Journal() {
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             <Card className="p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
-                Visible transactions
+                Total transactions
               </p>
               <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-ink">
                 {transactions.length}
@@ -124,95 +103,7 @@ export default async function Journal() {
             </Card>
           </div>
 
-          <Card className="overflow-hidden p-0">
-            <div className="hidden md:block">
-              <table className="w-full text-sm">
-                <thead className="bg-surface-sunken text-left text-xs uppercase tracking-wider text-ink-faint">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">When</th>
-                    <th className="px-4 py-3 font-medium">Description</th>
-                    <th className="px-4 py-3 font-medium">Category</th>
-                    <th className="px-4 py-3 text-right font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {transactions.map((tx) => {
-                    const isIncome = tx.type === 'income';
-                    return (
-                      <tr
-                        key={tx.id}
-                        className="transition-colors hover:bg-surface"
-                      >
-                        <td className="whitespace-nowrap px-4 py-3.5 text-ink-soft">
-                          {dateFmt.format(new Date(tx.occurred_at))}
-                        </td>
-                        <td className="px-4 py-3.5 text-ink">{tx.raw_text}</td>
-                        <td className="px-4 py-3.5">
-                          <Badge
-                            variant={
-                              CATEGORY_VARIANTS[tx.category] ?? 'neutral'
-                            }
-                          >
-                            {tx.category}
-                          </Badge>
-                        </td>
-                        <td
-                          className={`whitespace-nowrap px-4 py-3.5 text-right font-mono font-medium tabular-nums ${
-                            isIncome ? 'text-emerald-600' : 'text-rose-600'
-                          }`}
-                        >
-                          {isIncome ? '+' : '−'}{' '}
-                          {usd.format(Number(tx.amount))}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <ul className="divide-y divide-line md:hidden">
-              {transactions.map((tx) => {
-                const isIncome = tx.type === 'income';
-                return (
-                  <li key={tx.id} className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-ink">
-                          {tx.raw_text}
-                        </p>
-                        <p className="mt-1 text-xs text-ink-faint">
-                          {dateFmt.format(new Date(tx.occurred_at))}
-                        </p>
-                        <div className="mt-2">
-                          <Badge
-                            variant={
-                              CATEGORY_VARIANTS[tx.category] ?? 'neutral'
-                            }
-                          >
-                            {tx.category}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div
-                        className={`whitespace-nowrap font-mono text-sm font-medium tabular-nums ${
-                          isIncome ? 'text-emerald-600' : 'text-rose-600'
-                        }`}
-                      >
-                        {isIncome ? '+' : '−'}{' '}
-                        {usd.format(Number(tx.amount))}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-
-          <p className="mt-6 text-xs text-ink-faint">
-            Showing {transactions.length} transaction
-            {transactions.length === 1 ? '' : 's'} (newest first).
-          </p>
+          <JournalTable transactions={transactions} />
         </>
       )}
     </div>
