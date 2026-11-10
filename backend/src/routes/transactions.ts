@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
 import { parseTransaction } from '../surplus/parser.js';
+import { updateTransaction } from '../repositories/transactions.js';
 import { insertTransaction, listTransactions } from '../repositories/transactions.js';
 
 import type { Client as ElasticClient } from '@elastic/elasticsearch';
@@ -148,6 +149,45 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         req.log.error({ err }, 'delete transaction failed');
         return reply.code(500).send({ error: 'internal_error' });
       }
+    },
+  );
+
+
+  fastify.put<{ Params: { id: string }, Body: { raw_text: string } }>(
+    '/transactions/:id',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', minLength: 1 } },
+        },
+        body: {
+          type: 'object',
+          required: ['raw_text'],
+          properties: {
+            raw_text: { type: 'string', minLength: 1, maxLength: 500 },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params;
+      const { raw_text } = req.body;
+      const parsed = parseTransaction(raw_text);
+      if (!parsed.ok) {
+        return reply.code(400).send({ error: parsed.reason, rawText: raw_text });
+      }
+      const updated = await updateTransaction(fastify.pg, id, {
+        rawText: raw_text,
+        amount: parsed.tx.amount,
+        type: parsed.tx.type,
+        category: parsed.tx.category,
+      });
+      if (!updated) {
+        return reply.code(404).send({ error: 'not_found' });
+      }
+      return { ok: true, transaction: updated };
     },
   );
 

@@ -91,3 +91,26 @@ export async function listTransactions(
   );
   return result.rows.map(mapRow);
 }
+
+
+export interface UpdateTransactionInput {
+  rawText: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+}
+
+export async function updateTransaction(
+  pool: pg.Pool,
+  id: string,
+  input: UpdateTransactionInput,
+): Promise<unknown | null> {
+  const result = await pool.query(
+    `UPDATE transactions
+     SET raw_text = $1, amount = $2, type = $3, category = $4, source = 'rule'
+     WHERE id = $5
+     RETURNING *`,
+    [input.rawText, input.amount, input.type, input.category, id],
+  );
+  return result.rows[0] ?? null;
+}
