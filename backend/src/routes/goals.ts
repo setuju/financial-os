@@ -28,6 +28,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
 import { listGoals, createGoal } from '../repositories/goals.js';
+import { invalidateSurplusPeriods } from '../repositories/surplus-periods.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -86,6 +87,9 @@ const goalsRoutes: FastifyPluginAsync = async (fastify) => {
         durationMonths: b.durationMonths,
         progressPercent: b.progressPercent ?? 0,
       });
+
+      // Invalidate surplus cache
+      await invalidateSurplusPeriods(fastify.pg, sid);
       return reply.code(201).send({ goal });
     },
   );
@@ -112,7 +116,8 @@ const goalsRoutes: FastifyPluginAsync = async (fastify) => {
         if (result.rowCount === 0) {
           return reply.code(404).send({ error: 'not_found' });
         }
-        return { ok: true, deletedId: id };
+        await invalidateSurplusPeriods(fastify.pg, sid);
+              return { ok: true, deletedId: id };
       } catch (err) {
         req.log.error({ err }, 'delete goal failed');
         return reply.code(500).send({ error: 'internal_error' });

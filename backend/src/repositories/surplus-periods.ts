@@ -217,3 +217,21 @@ export function lastMonth(): string {
   d.setUTCMonth(d.getUTCMonth() - 1);
   return monthStart(d);
 }
+
+/**
+ * Invalidate cached surplus_periods for a session.
+ * Called after any mutation (transaction, goal, payout) so the next
+ * /impact/surplus read recomputes fresh (lazy invalidation).
+ *
+ * Why lazy? Writes stay fast; first read after write pays the cascade cost
+ * (~100-500ms for 6 months at demo scale). Acceptable trade-off.
+ */
+export async function invalidateSurplusPeriods(
+  pool: pg.Pool,
+  sessionId: string,
+): Promise<void> {
+  await pool.query('DELETE FROM surplus_periods WHERE session_id = $1', [
+    sessionId,
+  ]);
+}
+

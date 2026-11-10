@@ -29,6 +29,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
 import { parseTransaction } from '../surplus/parser.js';
 import { updateTransaction } from '../repositories/transactions.js';
+import { invalidateSurplusPeriods } from '../repositories/surplus-periods.js';
 import { insertTransaction, listTransactions } from '../repositories/transactions.js';
 
 import type { Client as ElasticClient } from '@elastic/elasticsearch';
@@ -82,6 +83,9 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         userId: userId ?? null,
         parsed: parsed.tx,
       });
+
+        // Invalidate surplus cache so next /impact/surplus recomputes
+        await invalidateSurplusPeriods(fastify.pg, sid);
 
       // Kirim ke Elasticsearch (fire-and-forget, jangan blokir response jika Elastic down)
       fastify.elastic.index({
@@ -174,7 +178,8 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         if ((result.rowCount ?? 0) === 0) {
           return reply.code(404).send({ error: 'not_found' });
         }
-        return { ok: true, deletedId: id };
+        await invalidateSurplusPeriods(fastify.pg, sid);
+              return { ok: true, deletedId: id };
       } catch (err) {
         req.log.error({ err }, 'delete transaction failed');
         return reply.code(500).send({ error: 'internal_error' });
@@ -215,6 +220,9 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         type: parsed.tx.type,
         category: parsed.tx.category,
       });
+
+        // Invalidate surplus cache so next /impact/surplus recomputes
+        await invalidateSurplusPeriods(fastify.pg, sid);
       if (!updated) {
         return reply.code(404).send({ error: 'not_found' });
       }
