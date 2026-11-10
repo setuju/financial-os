@@ -183,7 +183,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // Surplus v2: verified (last month) + in-progress (current) + history
+  // Surplus v2: verified (last month) + in-progress (current) + history (6 months)
   fastify.get('/impact/surplus', async () => {
     const last = lastMonth();
     const cur = currentMonth();
@@ -192,6 +192,25 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       getSurplusPeriod(fastify.pg, last),
       getSurplusPeriod(fastify.pg, cur),
     ]);
+
+    // Walk back 6 months for history strip
+    const history: Array<{ period: string; closing_surplus: number; status: string }> = [];
+    const base = new Date(cur + 'T00:00:00Z');
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(base);
+      d.setUTCMonth(d.getUTCMonth() - i);
+      const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
+      try {
+        const p = await getSurplusPeriod(fastify.pg, ym);
+        history.push({
+          period: ym,
+          closing_surplus: Number(p.closing_surplus),
+          status: p.status,
+        });
+      } catch {
+        // skip months without data
+      }
+    }
 
     return {
       verified: {
@@ -203,6 +222,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
         closing_surplus: Number(curP.closing_surplus),
         status: curP.status,
       },
+      history,
     };
   });
 };

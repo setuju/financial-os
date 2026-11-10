@@ -302,3 +302,72 @@ export async function deleteSurplusPrediction(id: string): Promise<boolean> {
     return res.ok;
   } catch { return false; }
 }
+
+
+// ---- Impact (v2: verified / in_progress / history) ----
+
+export type ImpactSurplusResponse = {
+  verified: { period: string; closing_surplus: number };
+  in_progress: { period: string; closing_surplus: number; status: 'open' | 'closed' };
+  history: Array<{ period: string; closing_surplus: number; status: 'open' | 'closed' }>;
+};
+
+export async function getImpactSurplus(): Promise<ImpactSurplusResponse | null> {
+  try {
+    const res = await fetch(`${API_URL}/impact/surplus`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ImpactSurplusResponse;
+  } catch {
+    return null;
+  }
+}
+
+export type PayoutRecord = {
+  id: string;
+  transaction_id: string | null;
+  amount: string;
+  currency: string;
+  receiver_email: string;
+  status: 'pending' | 'success' | 'failed';
+  paypal_batch_id: string | null;
+  source_period: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function getImpactPayouts(): Promise<PayoutRecord[] | null> {
+  try {
+    const res = await fetch(`${API_URL}/impact/payouts?limit=50`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { payouts?: PayoutRecord[] };
+    return data.payouts ?? [];
+  } catch {
+    return null;
+  }
+}
+
+export type HorizonCommitment = {
+  nextMonth: string;
+  total: number;
+  breakdown: Array<{ name: string; monthly: number }>;
+};
+
+export async function getHorizonCommitment(): Promise<HorizonCommitment | null> {
+  try {
+    const res = await fetch(`${API_URL}/impact/horizon-commitment`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as HorizonCommitment;
+  } catch {
+    return null;
+  }
+}

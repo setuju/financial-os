@@ -1,223 +1,282 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Loader2,
-  Send,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  AlertTriangle,
-  Heart,
-} from 'lucide-react';
-import { distributeSurplus, type PayoutResponse, type ImpactReceiver } from '@/lib/api';
-
-const MIN_PAYOUT_USD = 0.01;
+import { useRouter } from 'next/navigation';
+import { AlertCircle, AlertTriangle, CheckCircle2, Heart, Loader2 } from 'lucide-react';
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
 });
+
+const SUGGESTED_PERCENT = 0.1;
+
+export type ImpactReceiverLite = {
+  id: string;
+  name: string;
+  category: string;
+  email: string;
+};
 
 type Phase = 'idle' | 'confirming' | 'loading' | 'success' | 'error';
 
-export default function DistributeButton({
-  currentSurplus,
-  receivers,
-}: {
-  currentSurplus: number;
-  receivers: ImpactReceiver[];
-}) {
+type Props = {
+  verifiedAmount: number;
+  sourcePeriod: string;
+  receivers: ImpactReceiverLite[];
+};
+
+type SuccessPayload = {
+  batchId: string | null;
+  receiverEmail: string;
+  amount: number;
+  sourcePeriod: string;
+};
+
+export default function DistributeButton({ verifiedAmount, sourcePeriod, receivers }: Props) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>('idle');
-  const [result, setResult] = useState<PayoutResponse | null>(null);
+  const [receiverId, setReceiverId] = useState(receivers[0]?.id ?? '');
+  const [amount, setAmount] = useState<string>(
+    verifiedAmount > 0 ? (verifiedAmount * SUGGESTED_PERCENT).toFixed(2) : '',
+  );
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<SuccessPayload | null>(null);
 
-  const maxContribution = Math.max(0, currentSurplus * 0.1);
-  const [amountStr, setAmountStr] = useState(maxContribution.toFixed(2));
-  const [receiverId, setReceiverId] = useState('');
+  const max = Math.max(0, verifiedAmount);
+  const parsed = Number(amount);
+  const validAmount = Number.isFinite(parsed) && parsed > 0 && parsed <= max + 0.001;
+  const canProceed = validAmount && receiverId && max > 0;
 
-  const amountNum = parseFloat(amountStr);
-  const isValidAmount = !isNaN(amountNum) && amountNum >= MIN_PAYOUT_USD && amountNum <= maxContribution + 0.001;
-  const selectedReceiver = receivers.find(r => r.id === receiverId);
+  function beginConfirm() {
+    if (!canProceed) return;
+    setPhase('confirming');
+  }
 
-  const isSurplusNegative = currentSurplus <= 0;
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-    const num = parseFloat(val);
-    if (!isNaN(num) && num > maxContribution) {
-      val = maxContribution.toFixed(2);
-    }
-    setAmountStr(val);
-  };
-
-  const handleConfirm = async () => {
-    if (!isValidAmount || !selectedReceiver) return;
+  async function confirm() {
     setPhase('loading');
     setError(null);
-    setResult(null);
     try {
-      const res = await distributeSurplus(receiverId, amountNum);
-      setResult(res);
+      const receiver = receivers.find((r) => r.id === receiverId);
+      if (!receiver) {
+        setPhase('error');
+        setError('Receiver missing.');
+        return;
+      }
+      const res = await fetch('/api/proxy/impact/payout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          receiverId,
+          amount: Number(parsed.toFixed(2)),
+          currency: 'USD',
+          sourcePeriod,
+        }),
+        signal: AbortSignal.timeout(65_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        payout?: { paypal_batch_id?: string | null };
+        source_period?: string;
+        error?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        setPhase('error');
+        if (data.error === 'insufficient_surplus') {
+          setError(
+            data.message ||
+              `Amount exceeds ${sourcePeriod} closing surplus (${usd.format(max)}).`,
+          );
+        } else if (data.error === 'paypal_payout_failed') {
+          setError(data.message || 'PayPal payout failed. Try again.');
+        } else if (data.error === 'invalid_receiver') {
+          setError('Invalid receiver. Refresh and try again.');
+        } else {
+          setError(`Request failed (${res.status}).`);
+        }
+        return;
+      }
+      setSuccess({
+        batchId: data.payout?.paypal_batch_id ?? null,
+        receiverEmail: receiver.email,
+        amount: parsed,
+        sourcePeriod: data.source_period ?? sourcePeriod,
+      });
       setPhase('success');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      router.refresh();
+    } catch (e) {
       setPhase('error');
+      if (e instanceof Error && e.name === 'TimeoutError') {
+        setError('Request timed out. Backend may be waking — try again.');
+      } else {
+        setError('Network error. Check connection.');
+      }
     }
-  };
+  }
 
-  return (
-    <div className="rounded-xl border border-line bg-surface-raised p-6 shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <Heart className="h-5 w-5 text-rose-500" />
-        <h2 className="text-xl font-semibold text-ink">
-          Ethical Surplus Distribution
-        </h2>
-      </div>
+  function reset() {
+    setPhase('idle');
+    setSuccess(null);
+    setError(null);
+  }
 
-      <div className="mb-6 rounded-lg border border-line bg-surface-sunken p-4">
-        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-faint">
-          Verified Current Surplus
-        </p>
-        <p
-          className={`font-mono text-2xl font-semibold tabular-nums ${
-            isSurplusNegative ? 'text-rose-600' : 'text-emerald-600'
-          }`}
-        >
-          {usd.format(currentSurplus)}
-        </p>
-      </div>
-
-      {isSurplusNegative ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-warning-soft p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-800">
-            You do not have a positive surplus to distribute. Record more income or
-            reduce expenses in your Journal first.
+  // Success state
+  if (phase === 'success' && success) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border border-success/30 bg-success-soft p-4">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-success">
+            <CheckCircle2 className="h-4 w-4" />
+            Payout Successful
           </p>
-        </div>
-      ) : phase === 'idle' ? (
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Amount to distribute</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft">$</span>
-              <input
-                type="number"
-                min={MIN_PAYOUT_USD}
-                max={maxContribution}
-                step="0.01"
-                value={amountStr}
-                onChange={handleAmountChange}
-                className="w-full rounded-lg border border-line-strong bg-surface-raised py-2 pl-7 pr-3 font-mono text-lg text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
+          <dl className="mt-2 space-y-1 text-sm">
+            <div className="flex justify-between gap-2">
+              <dt className="text-ink-soft">Batch ID:</dt>
+              <dd className="font-mono text-ink">{success.batchId || '—'}</dd>
             </div>
-            <p className="mt-1 text-xs text-ink-faint">
-              Max: {usd.format(maxContribution)} (10% of your surplus)
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-ink">Select vetted cause</label>
-            <select
-              value={receiverId}
-              onChange={(e) => setReceiverId(e.target.value)}
-              className="w-full rounded-lg border border-line-strong bg-surface-raised px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-            >
-              <option value="" disabled>-- Select a cause --</option>
-              {receivers.map(r => (
-                <option key={r.id} value={r.id}>{r.name} — {r.category}</option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            disabled={!isValidAmount || !selectedReceiver}
-            onClick={() => setPhase('confirming')}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 font-medium text-white shadow-sm transition-colors hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send className="h-4 w-4" />
-            Distribute {isValidAmount ? usd.format(amountNum) : '$0.00'}
-            {selectedReceiver ? ` to ${selectedReceiver.name}` : ''}
-          </button>
-        </div>
-      ) : phase === 'confirming' ? (
-        <div className="rounded-lg border border-accent bg-accent-soft p-4">
-          <p className="mb-3 text-sm text-ink">
-            <ShieldCheck className="mr-1 inline h-4 w-4 text-accent" />
-            <strong>Confirm distribution:</strong> Send {usd.format(amountNum)} to{' '}
-            <strong>{selectedReceiver?.name}</strong> via PayPal Sandbox?
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Yes, send payout
-            </button>
-            <button
-              type="button"
-              onClick={() => setPhase('idle')}
-              className="rounded-lg border border-line bg-surface-raised px-4 py-2.5 text-sm font-medium text-ink hover:bg-surface-sunken"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : phase === 'loading' ? (
-        <button
-          type="button"
-          disabled
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 font-medium text-white opacity-70"
-        >
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Processing PayPal payout…
-        </button>
-      ) : phase === 'success' && result ? (
-        <div className="rounded-lg border border-emerald-200 bg-success-soft p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-            <h3 className="font-semibold text-emerald-900">Payout Successful</h3>
-          </div>
-          <dl className="space-y-1 text-sm text-emerald-800">
-            <div className="flex gap-2">
-              <dt className="w-24 text-emerald-700">Batch ID:</dt>
-              <dd className="font-mono text-xs">{result.payout.paypal_batch_id}</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-ink-soft">Receiver:</dt>
+              <dd className="font-mono text-ink">{success.receiverEmail}</dd>
             </div>
-            <div className="flex gap-2">
-              <dt className="w-24 text-emerald-700">Receiver:</dt>
-              <dd className="font-mono text-xs">{result.payout.receiver_email}</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-ink-soft">Amount:</dt>
+              <dd className="font-semibold text-ink">{usd.format(success.amount)} USD</dd>
             </div>
-            <div className="flex gap-2">
-              <dt className="w-24 text-emerald-700">Amount:</dt>
-              <dd className="font-mono text-xs">${result.payout.amount} USD</dd>
+            <div className="flex justify-between gap-2">
+              <dt className="text-ink-soft">From period:</dt>
+              <dd className="font-mono text-ink">{success.sourcePeriod}</dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-emerald-700">
+          <p className="mt-2 text-xs text-ink-soft">
             Funds are being processed by PayPal Sandbox. No real money moved.
           </p>
         </div>
-      ) : phase === 'error' ? (
-        <div className="rounded-lg border border-rose-200 bg-danger-soft p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-rose-600" />
-            <h3 className="font-semibold text-rose-900">Payout failed</h3>
-          </div>
-          <p className="text-sm text-rose-800">{error}</p>
+        <button
+          type="button"
+          onClick={reset}
+          className="rounded-md border border-line-strong bg-surface-raised px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-sunken"
+        >
+          Distribute again
+        </button>
+      </div>
+    );
+  }
+
+  // Idle / confirming / loading / error
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md bg-surface-sunken px-3 py-2 text-xs text-ink-soft">
+        Source period: <strong>{sourcePeriod || 'n/a'}</strong> · Available:{' '}
+        <strong>{usd.format(max)}</strong>
+      </div>
+
+      {max <= 0 && (
+        <div className="flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>No verified surplus available. Add transactions first.</span>
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-ink-soft">
+          Receiver
+        </label>
+        <select
+          value={receiverId}
+          onChange={(e) => setReceiverId(e.target.value)}
+          disabled={phase !== 'idle'}
+          className="w-full rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-60"
+        >
+          {receivers.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name} — {r.category}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-1 flex items-center justify-between text-xs font-medium text-ink-soft">
+          <span>Amount (USD)</span>
           <button
             type="button"
-            onClick={() => setPhase('idle')}
-            className="mt-3 rounded-lg border border-rose-300 bg-surface-raised px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+            disabled={phase !== 'idle' || max <= 0}
+            onClick={() => setAmount((max * SUGGESTED_PERCENT).toFixed(2))}
+            className="text-accent hover:underline disabled:opacity-40"
           >
-            Try again
+            {SUGGESTED_PERCENT * 100}% suggestion
           </button>
+        </label>
+        <input
+          type="number"
+          min="0.01"
+          step="0.01"
+          max={max}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          disabled={phase !== 'idle'}
+          className="w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-60"
+        />
+        <p className="mt-1 text-xs text-ink-faint">
+          Max: {usd.format(max)} · Suggested: {usd.format(max * SUGGESTED_PERCENT)}
+        </p>
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-1.5 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>{error}</span>
         </div>
-      ) : null}
+      )}
+
+      {phase === 'confirming' && (
+        <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
+          <p className="flex items-start gap-1.5 text-sm text-ink">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
+            <span>
+              Confirm payout of <strong>{usd.format(parsed)}</strong> to{' '}
+              <strong>{receivers.find((r) => r.id === receiverId)?.name}</strong>{' '}
+              from <strong>{sourcePeriod}</strong> surplus. Sandbox only.
+            </span>
+          </p>
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPhase('idle')}
+              className="rounded-md border border-line-strong bg-surface-raised px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-sunken"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirm}
+              className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover"
+            >
+              <Heart className="h-4 w-4" />
+              Confirm payout
+            </button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'idle' && (
+        <button
+          type="button"
+          onClick={beginConfirm}
+          disabled={!canProceed}
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Heart className="h-4 w-4" />
+          Distribute
+        </button>
+      )}
+
+      {phase === 'loading' && (
+        <div className="inline-flex items-center gap-2 rounded-md bg-surface-sunken px-4 py-2 text-sm text-ink-soft">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Processing PayPal payout…
+        </div>
+      )}
     </div>
   );
 }
