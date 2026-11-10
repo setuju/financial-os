@@ -70,6 +70,14 @@ export async function buildServer(): Promise<FastifyInstance> {
     maxAge: 86400,
   });
 
+  // Security headers — defense in depth (CSP handled by frontend via Next config)
+  app.addHook('onSend', async (_req, reply) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+    reply.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  });
+
   await app.register(rootRoutes);
   await app.register(dbPlugin);
 

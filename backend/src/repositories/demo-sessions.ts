@@ -137,15 +137,23 @@ export async function verifyLogin(
   return toSession(row);
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function verifySession(
   pool: pg.Pool,
   id: string,
 ): Promise<DemoSession | null> {
-  const res = await pool.query(
-    `SELECT id, name, is_admin, created_at, last_seen_at
-     FROM demo_sessions WHERE id = $1`,
-    [id],
-  );
-  if (res.rows.length === 0) return null;
-  return toSession(res.rows[0]);
+  // Reject malformed UUID before hitting Postgres (avoids 500 on invalid syntax)
+  if (typeof id !== 'string' || !UUID_RE.test(id)) return null;
+  try {
+    const res = await pool.query(
+      `SELECT id, name, is_admin, created_at, last_seen_at
+       FROM demo_sessions WHERE id = $1`,
+      [id],
+    );
+    if (res.rows.length === 0) return null;
+    return toSession(res.rows[0]);
+  } catch {
+    return null;
+  }
 }

@@ -847,3 +847,42 @@ grep -c '^INSERT INTO'  neon-20261110_130127.sql  # 134
 
 ### Deferred
 - Category filter in Ledger (~45 min)
+
+---
+
+## Security Audit (2026-11-10)
+
+**Verdict:** 1 real bug fixed, 0 critical blockers, npm audit accepted.
+
+### Findings summary
+
+| Phase | Result |
+|---|---|
+| A. Static analysis | ✅ No eval/RCE, no SQLi, no secret leak. `dangerouslySetInnerHTML` = legit (theme + JSON-LD only). |
+| B. Headers | ✅ HSTS, nosniff, CORS blocks evil origin. ⚠️ Added X-Frame, Referrer-Policy, Permissions-Policy (fix). |
+| C. Injection | ✅ SQLi blocked (400), LFI blocked (redirect/403), XSS no reflect, Host header 403. |
+| D. Auth | 🔴 **FIXED** malformed UUID → was 500, now falls back gracefully. |
+| E. AI safety | ✅ Refuses off-topic, no canary leak, **fallback to Gemini triggered** during test (proves dual-provider works). |
+| F. Error hygiene | ✅ No stack trace leak, JSON error format consistent. |
+| G. SEO | ✅ 9 unique titles, 2× valid JSON-LD, sitemap 10 URLs, robots 10 allow / 6 disallow, OG + Twitter. |
+| H. CSS | ✅ Viewport correct, 53 sm / 10 md / 4 lg breakpoints, no fixed-width mobile breaks. |
+| I. npm audit | 🟡 3 crit/7 high (backend), 3 crit/12 high (frontend). **Transitive deps** of Next.js/Fastify/Bryntum/Elastic. Risky to fix at T-53h. Accepted for demo. |
+| J. Integrity | ✅ Signup → POST → DELETE → reset all work. |
+
+### npm audit — accepted risk
+
+25 vulnerabilities backend (3 crit, 7 high), 32 frontend (3 crit, 12 high).
+**All in transitive dependencies** — not in our code. Primary sources:
+- `@elastic/elasticsearch` → older `axios`/`undici`
+- `next@14.2.35` → older webpack/postcss chain
+- `@bryntum/gantt-enterprise@8.0.0` → older dev tooling
+
+**Remediation is `pnpm audit --fix --force`** which may break Next 14 / Fastify 4 / Bryntum compat. **Not attempted** — risk/benefit wrong at T-53h.
+
+### Manual tests remaining (browser-only)
+
+- [ ] Visual responsive (DevTools iPhone 12)
+- [ ] WCAG AA contrast (axe DevTools)
+- [ ] Keyboard navigation
+- [ ] Lighthouse score
+
