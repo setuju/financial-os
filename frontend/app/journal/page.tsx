@@ -48,10 +48,15 @@ export default async function Journal() {
   // Backend may cap internally; if so, we paginate what we have.
   const allTx = await getTransactions(500);
   const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  // Include all non-projection transactions up to end-of-today (server UTC).
+  // Using end-of-today (not "now") so seed transactions dated "today"
+  // later in the day still appear in Journal — matches Ledger bucket view.
   const transactions = (allTx ?? []).filter(
     (t) =>
       !(t as unknown as { is_projection?: boolean }).is_projection &&
-      new Date(t.occurred_at) <= now,
+      new Date(t.occurred_at) <= endOfToday,
   );
 
   const totalIn = transactions
