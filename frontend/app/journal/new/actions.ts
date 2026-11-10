@@ -28,7 +28,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createTransaction } from '@/lib/api';
+import { serverCreateTransaction as createTransaction } from '@/lib/api-server';
 
 export async function submitTransaction(formData: FormData): Promise<void> {
   const text = String(formData.get('text') ?? '').trim();

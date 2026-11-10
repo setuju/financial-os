@@ -27,7 +27,8 @@
 
 'use client';
 
-import { Info } from 'lucide-react';
+import { Info, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { SummaryBucket as ReportBucket } from '@/lib/api';
 
 const usd = new Intl.NumberFormat('en-US', {
@@ -66,7 +67,63 @@ function fmtPeriod(iso: string, groupBy: GroupBy): string {
   });
 }
 
+type SortBy = 'period' | 'income' | 'expense' | 'net' | 'status';
+type SortDir = 'asc' | 'desc';
+
+function effectiveStatus(b: ReportBucket): 'actual' | 'projected' | 'mixed' {
+  return b.status ?? (b.isProjection ? 'projected' : 'actual');
+}
+
 export default function LedgerGrid({ buckets, groupBy, showBalances }: Props) {
+  const [sortBy, setSortBy] = useState<SortBy>('period');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const sortedBuckets = useMemo(() => {
+    const copy = [...buckets];
+    copy.sort((a, b) => {
+      let cmp = 0;
+      switch (sortBy) {
+        case 'period':
+          cmp = new Date(a.period).getTime() - new Date(b.period).getTime();
+          break;
+        case 'income':
+          cmp = a.income - b.income;
+          break;
+        case 'expense':
+          cmp = a.expense - b.expense;
+          break;
+        case 'net':
+          cmp = a.net - b.net;
+          break;
+        case 'status':
+          cmp = effectiveStatus(a).localeCompare(effectiveStatus(b));
+          break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return copy;
+  }, [buckets, sortBy, sortDir]);
+
+  const toggleSort = (col: SortBy) => {
+    if (sortBy === col) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(col);
+      setSortDir('desc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortBy }) =>
+    sortBy === col ? (
+      sortDir === 'asc' ? (
+        <ArrowUp className="inline h-3 w-3" />
+      ) : (
+        <ArrowDown className="inline h-3 w-3" />
+      )
+    ) : (
+      <ArrowUpDown className="inline h-3 w-3 opacity-30" />
+    );
+
   if (buckets.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-line-strong bg-surface-raised px-6 py-12 text-center text-sm text-ink-soft">
@@ -80,21 +137,21 @@ export default function LedgerGrid({ buckets, groupBy, showBalances }: Props) {
       <table className="w-full text-sm">
         <thead className="border-b border-line bg-surface-sunken">
           <tr className="text-left text-xs uppercase tracking-wide text-ink-soft">
-            <th className="px-3 py-2 font-medium">Period</th>
-            <th className="px-3 py-2 text-right font-medium">Income</th>
-            <th className="px-3 py-2 text-right font-medium">Expense</th>
-            <th className="px-3 py-2 text-right font-medium">Net</th>
+            <th className="px-3 py-2 font-medium"><button type="button" onClick={() => toggleSort('period')} className="inline-flex items-center gap-1 hover:text-ink">Period<SortIcon col="period" /></button></th>
+            <th className="px-3 py-2 text-right font-medium"><button type="button" onClick={() => toggleSort('income')} className="ml-auto inline-flex items-center gap-1 hover:text-ink">Income<SortIcon col="income" /></button></th>
+            <th className="px-3 py-2 text-right font-medium"><button type="button" onClick={() => toggleSort('expense')} className="ml-auto inline-flex items-center gap-1 hover:text-ink">Expense<SortIcon col="expense" /></button></th>
+            <th className="px-3 py-2 text-right font-medium"><button type="button" onClick={() => toggleSort('net')} className="ml-auto inline-flex items-center gap-1 hover:text-ink">Net<SortIcon col="net" /></button></th>
             {showBalances && (
               <>
                 <th className="px-3 py-2 text-right font-medium">Opening</th>
                 <th className="px-3 py-2 text-right font-medium">Closing</th>
               </>
             )}
-            <th className="px-3 py-2 text-center font-medium">Status</th>
+            <th className="px-3 py-2 text-center font-medium"><button type="button" onClick={() => toggleSort('status')} className="inline-flex items-center gap-1 hover:text-ink">Status<SortIcon col="status" /></button></th>
           </tr>
         </thead>
         <tbody>
-          {buckets.map((b) => {
+          {sortedBuckets.map((b) => {
             const effectiveStatus = b.status ?? (b.isProjection ? 'projected' : 'actual');
             const statusColor =
               effectiveStatus === 'actual'
@@ -158,8 +215,6 @@ export default function LedgerGrid({ buckets, groupBy, showBalances }: Props) {
 }
 
 export function StatusLegend({ buckets }: { buckets: ReportBucket[] }) {
-  const effectiveStatus = (b: ReportBucket): 'actual' | 'projected' | 'mixed' =>
-    b.status ?? (b.isProjection ? 'projected' : 'actual');
   const hasProjected = buckets.some((b) => {
     const s = effectiveStatus(b);
     return s === 'projected' || s === 'mixed';

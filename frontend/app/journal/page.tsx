@@ -27,7 +27,7 @@
 
 import Link from 'next/link';
 import { BookOpen, Plus, AlertCircle } from 'lucide-react';
-import { getTransactions } from '@/lib/api';
+import { serverGetTransactions as getTransactions } from '@/lib/api-server';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';

@@ -31,7 +31,7 @@ import StatCard from '@/components/ui/StatCard';
 import Card from '@/components/ui/Card';
 import GanttWrapper from '@/components/horizon/GanttWrapper';
 import GoalsSection, { type Goal } from '@/components/horizon/GoalsSection';
-import { getGoals, getPredictions } from '@/lib/api';
+import { serverGetGoals as getGoals, serverGetPredictions as getPredictions } from '@/lib/api-server';
 import SurplusOracleCard from '@/components/SurplusOracleCard';
 
 export const dynamic = 'force-dynamic';

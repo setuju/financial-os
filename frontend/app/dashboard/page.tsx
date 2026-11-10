@@ -34,7 +34,7 @@ import {
   TrendingDown,
   Sparkles,
 } from 'lucide-react';
-import { getSurplus } from '@/lib/api';
+import { serverGetSurplus as getSurplus } from '@/lib/api-server';
 import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
 

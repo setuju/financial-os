@@ -30,12 +30,7 @@ import { ArrowLeft, AlertTriangle, CheckCircle2, TrendingUp, Heart } from 'lucid
 import PageHeader from '@/components/ui/PageHeader';
 import DistributeButton from '@/components/DistributeButton';
 import PayoutLog from '@/components/impact/PayoutLog';
-import {
-  getImpactSurplus,
-  getImpactPayouts,
-  getImpactReceivers,
-  getHorizonCommitment,
-} from '@/lib/api';
+import { serverGetImpactSurplus as getImpactSurplus, serverGetImpactPayouts as getImpactPayouts, serverGetImpactReceivers as getImpactReceivers, serverGetHorizonCommitment as getHorizonCommitment } from '@/lib/api-server';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
