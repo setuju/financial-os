@@ -24,6 +24,39 @@ const TYPE_LABELS: Record<ReportType, string> = {
   expense: 'Expense only',
 };
 
+function fmtPeriod(iso: string, groupBy: ReportGroupBy): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  if (groupBy === 'year') return String(d.getUTCFullYear());
+  if (groupBy === 'month') {
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+  }
+  if (groupBy === 'week') {
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+  }
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function statusLabel(b: SummaryBucket): string {
+  const s = b.status ?? (b.isProjection ? 'projected' : 'actual');
+  if (s === 'actual') return 'Actual';
+  if (s === 'projected') return 'Projected';
+  return 'Mixed';
+}
+
 export default function ExportLedgerPdfButton({
   buckets,
   totals,
@@ -48,7 +81,6 @@ export default function ExportLedgerPdfButton({
     if (disabled) return;
     setGenerating(true);
     try {
-      // Dynamic import keeps jspdf out of the initial /ledger bundle.
       const { jsPDF } = await import('jspdf');
       const autoTableMod = await import('jspdf-autotable');
       const autoTable = autoTableMod.default;
@@ -56,7 +88,7 @@ export default function ExportLedgerPdfButton({
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
 
-      // Header
+      // ── Header ──
       doc.setFontSize(18);
       doc.setTextColor(24, 24, 27);
       doc.text('Financial OS', 40, 50);
@@ -71,17 +103,14 @@ export default function ExportLedgerPdfButton({
       });
       doc.text(`Exported ${exportDate}`, pageWidth - 40, 50, { align: 'right' });
 
-      // Filter context line
+      // ── Filter context line ──
       doc.setFontSize(9);
       doc.setTextColor(80, 80, 87);
       const projLabel = includeProjections ? 'including projections' : 'actuals only';
-      doc.text(
-        `Range ${from} → ${to}  ·  ${TYPE_LABELS[type]}  ·  Grouped by ${GROUP_LABELS[groupBy]}  ·  ${projLabel}`,
-        40,
-        86,
-      );
+      const contextLine = `Range ${from} to ${to} | ${TYPE_LABELS[type]} | Grouped by ${GROUP_LABELS[groupBy]} | ${projLabel}`;
+      doc.text(contextLine, 40, 86);
 
-      // Summary block
+      // ── Summary block ──
       doc.setFontSize(11);
       doc.setTextColor(24, 24, 27);
       doc.text(`Periods: ${buckets.length}`, 40, 112);
@@ -91,31 +120,50 @@ export default function ExportLedgerPdfButton({
       doc.text(`Net:       ${usd.format(totals.net)}`, 40, 160);
       doc.setFont('helvetica', 'normal');
 
-      // Table
-      autoTable(doc, {
-        startY: 182,
-        head: [['Period', 'Income', 'Expense', 'Net', 'Status']],
-        body: buckets.map((b) => [
-          b.label,
+      // ── Table (conditional columns) ──
+      const hasBalances = groupBy === 'month' || groupBy === 'year';
+      const head = hasBalances
+        ? [['Period', 'Income', 'Expense', 'Net', 'Opening', 'Closing', 'Status']]
+        : [['Period', 'Income', 'Expense', 'Net', 'Status']];
+
+      const body = buckets.map((b) => {
+        const base: string[] = [
+          fmtPeriod(b.period, groupBy),
           b.income > 0 ? usd.format(b.income) : '—',
           b.expense > 0 ? usd.format(b.expense) : '—',
           `${b.net >= 0 ? '+' : ''}${usd.format(b.net)}`,
-          b.isProjection ? 'Projected' : 'Actual',
-        ]),
+        ];
+        if (hasBalances) {
+          base.push(usd.format(b.opening ?? 0), usd.format(b.closing ?? 0));
+        }
+        base.push(statusLabel(b));
+        return base;
+      });
+
+      const columnStyles: Record<number, { halign: 'right' }> = {
+        1: { halign: 'right' },
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+      };
+      if (hasBalances) {
+        columnStyles[4] = { halign: 'right' };
+        columnStyles[5] = { halign: 'right' };
+      }
+
+      autoTable(doc, {
+        startY: 182,
+        head,
+        body,
         styles: { fontSize: 8, cellPadding: 4 },
         headStyles: { fillColor: [0, 112, 186], textColor: 255 },
         alternateRowStyles: { fillColor: [248, 250, 252] },
-        columnStyles: {
-          1: { halign: 'right' },
-          2: { halign: 'right' },
-          3: { halign: 'right' },
-        },
+        columnStyles,
         didDrawPage: () => {
           const pageHeight = doc.internal.pageSize.getHeight();
           doc.setFontSize(8);
           doc.setTextColor(160);
           doc.text(
-            'Financial OS — ledger report generated from verified transactions',
+            'Financial OS - ledger report generated from verified transactions',
             40,
             pageHeight - 20,
           );
