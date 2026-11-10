@@ -61,3 +61,11 @@ receipt*.jpeg
 /receipt*.jpeg
 /receipt*.webp
 uploads/
+# Recon artifacts (safe extras)
+*.pdf
+screenshot*.png
+screenshot*.jpg
+*.bak
+*.tmp
+test-*.ts
+play-*.ts
