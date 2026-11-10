@@ -1,12 +1,16 @@
 import Link from 'next/link';
-import { getSurplus } from '@/lib/api';
+import { getSurplus, getImpactReceivers } from '@/lib/api';
 import DistributeButton from '@/components/DistributeButton';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ImpactWallet() {
-  const surplusData = await getSurplus();
+  const [surplusData, receiversData] = await Promise.all([
+    getSurplus(),
+    getImpactReceivers(),
+  ]);
   const currentSurplus = surplusData?.metrics.currentSurplus || 0;
+  const receivers = receiversData?.receivers || [];
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
@@ -23,8 +27,8 @@ export default async function ImpactWallet() {
           </Link>
         </div>
 
-        <DistributeButton currentSurplus={currentSurplus} />
-        
+        <DistributeButton currentSurplus={currentSurplus} receivers={receivers} />
+
         <div className="mt-8 rounded-lg border border-blue-100 bg-blue-50 p-4">
           <p className="text-xs text-blue-800">
             <strong>Note:</strong> This transaction is processed via PayPal Sandbox. No real money is moved.

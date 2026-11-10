@@ -60,6 +60,36 @@ const goalsRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(201).send({ goal });
     },
   );
+
+  fastify.delete<{ Params: { id: string } }>(
+    '/goals/:id',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', minLength: 1 } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params;
+      try {
+        const result = await fastify.pg.query(
+          'DELETE FROM goals WHERE id = $1 RETURNING id',
+          [id],
+        );
+        if (result.rowCount === 0) {
+          return reply.code(404).send({ error: 'not_found' });
+        }
+        return { ok: true, deletedId: id };
+      } catch (err) {
+        req.log.error({ err }, 'delete goal failed');
+        return reply.code(500).send({ error: 'internal_error' });
+      }
+    },
+  );
+
 };
 
 export default goalsRoutes;

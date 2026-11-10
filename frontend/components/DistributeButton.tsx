@@ -10,11 +10,9 @@ import {
   AlertTriangle,
   Heart,
 } from 'lucide-react';
-import { distributeSurplus, type PayoutResponse } from '@/lib/api';
+import { distributeSurplus, type PayoutResponse, type ImpactReceiver } from '@/lib/api';
 
 const MIN_PAYOUT_USD = 0.01;
-const SURPLUS_PERCENTAGE = 0.1;
-const SANDBOX_EMAIL = 'sb-wyxsu53660889@personal.example.com';
 
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -25,24 +23,43 @@ const usd = new Intl.NumberFormat('en-US', {
 
 type Phase = 'idle' | 'confirming' | 'loading' | 'success' | 'error';
 
-export default function DistributeButton({ currentSurplus }: { currentSurplus: number }) {
+export default function DistributeButton({
+  currentSurplus,
+  receivers,
+}: {
+  currentSurplus: number;
+  receivers: ImpactReceiver[];
+}) {
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<PayoutResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const contributionUSD = Math.max(0, currentSurplus * SURPLUS_PERCENTAGE);
-  const amountUSD = Math.max(
-    MIN_PAYOUT_USD,
-    Math.round(contributionUSD * 100) / 100,
-  );
+  const maxContribution = Math.max(0, currentSurplus * 0.1);
+  const [amountStr, setAmountStr] = useState(maxContribution.toFixed(2));
+  const [receiverId, setReceiverId] = useState('');
+
+  const amountNum = parseFloat(amountStr);
+  const isValidAmount = !isNaN(amountNum) && amountNum >= MIN_PAYOUT_USD && amountNum <= maxContribution + 0.001;
+  const selectedReceiver = receivers.find(r => r.id === receiverId);
+
   const isSurplusNegative = currentSurplus <= 0;
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    const num = parseFloat(val);
+    if (!isNaN(num) && num > maxContribution) {
+      val = maxContribution.toFixed(2);
+    }
+    setAmountStr(val);
+  };
+
   const handleConfirm = async () => {
+    if (!isValidAmount || !selectedReceiver) return;
     setPhase('loading');
     setError(null);
     setResult(null);
     try {
-      const res = await distributeSurplus(SANDBOX_EMAIL, amountUSD);
+      const res = await distributeSurplus(receiverId, amountNum);
       setResult(res);
       setPhase('success');
     } catch (err: unknown) {
@@ -82,32 +99,57 @@ export default function DistributeButton({ currentSurplus }: { currentSurplus: n
           </p>
         </div>
       ) : phase === 'idle' ? (
-        <>
-          <p className="mb-4 text-sm text-ink-soft">
-            We&apos;ll distribute{' '}
-            <strong className="font-mono text-ink">
-              {usd.format(amountUSD)}
-            </strong>{' '}
-            (10% of your surplus) to a verified impact receiver via PayPal.
-          </p>
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">Amount to distribute</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft">$</span>
+              <input
+                type="number"
+                min={MIN_PAYOUT_USD}
+                max={maxContribution}
+                step="0.01"
+                value={amountStr}
+                onChange={handleAmountChange}
+                className="w-full rounded-lg border border-line-strong bg-surface-raised py-2 pl-7 pr-3 font-mono text-lg text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+              />
+            </div>
+            <p className="mt-1 text-xs text-ink-faint">
+              Max: {usd.format(maxContribution)} (10% of your surplus)
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">Select vetted cause</label>
+            <select
+              value={receiverId}
+              onChange={(e) => setReceiverId(e.target.value)}
+              className="w-full rounded-lg border border-line-strong bg-surface-raised px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+            >
+              <option value="" disabled>-- Select a cause --</option>
+              {receivers.map(r => (
+                <option key={r.id} value={r.id}>{r.name} — {r.category}</option>
+              ))}
+            </select>
+          </div>
+
           <button
             type="button"
+            disabled={!isValidAmount || !selectedReceiver}
             onClick={() => setPhase('confirming')}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 font-medium text-white shadow-sm transition-colors hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="h-4 w-4" />
-            Distribute {usd.format(amountUSD)}
+            Distribute {isValidAmount ? usd.format(amountNum) : '$0.00'}
+            {selectedReceiver ? ` to ${selectedReceiver.name}` : ''}
           </button>
-        </>
+        </div>
       ) : phase === 'confirming' ? (
         <div className="rounded-lg border border-accent bg-accent-soft p-4">
           <p className="mb-3 text-sm text-ink">
             <ShieldCheck className="mr-1 inline h-4 w-4 text-accent" />
-            <strong>Confirm distribution:</strong> Send {usd.format(amountUSD)} to{' '}
-            <code className="rounded bg-surface-raised px-1.5 py-0.5 font-mono text-xs">
-              {SANDBOX_EMAIL}
-            </code>
-            ?
+            <strong>Confirm distribution:</strong> Send {usd.format(amountNum)} to{' '}
+            <strong>{selectedReceiver?.name}</strong> via PayPal Sandbox?
           </p>
           <div className="flex gap-2">
             <button
