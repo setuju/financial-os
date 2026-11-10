@@ -1,15 +1,23 @@
 /**
- * ┌──────────────────────────────────────────────────────────────────────┐
- * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
- * │  ──────────────────────────────────────────────────────────────────   │
- * │  File      : frontend/components/ledger/LedgerGrid.tsx              │
- * │  Purpose   : Component: LedgerGrid                                  │
- * │  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
- * │  GitHub    : https://github.com/setuju                            │
- * │  Website   : https://saturumah.net                              │
- * │  Created   : 10-11-2026                                             │
- * │  License   : MIT                                                  │
- * └──────────────────────────────────────────────────────────────────────┘
+ * ┌────────────────────────────────────────────────────────────────────┐
+ * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
+ * ├────────────────────────────────────────────────────────────────────┤
+ * │  File      : frontend/components/ledger/LedgerGrid.tsx
+ * │  Purpose   : Component: LedgerGrid
+ * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
+ * │  GitHub    : https://github.com/setuju
+ * │  Website   : https://saturumah.net
+ * │  Created   : 10-11-2026
+ * │  License   : MIT
+ * └────────────────────────────────────────────────────────────────────┘
+ *
+ * @author    Jack <Jack[at]SatuRumah[dot]Net>
+ * @created   10-11-2026
+ * @package   financial-os/frontend
+ * @license   MIT
+ */
+
+/**
  *
  * @author    Jack <Jack[at]SatuRumah[dot]Net>
  * @created   10-11-2026

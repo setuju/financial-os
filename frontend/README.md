@@ -1,15 +1,19 @@
 <!--
-┌──────────────────────────────────────────────────────────────────────┐
-│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
-│  ──────────────────────────────────────────────────────────────────   │
-│  File      : frontend/README.md                                     │
-│  Purpose   : Readme                                                 │
-│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
-│  GitHub    : https://github.com/setuju                            │
-│  Website   : https://saturumah.net                              │
-│  Created   : 10-11-2026                                             │
-│  License   : MIT                                                  │
-└──────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
+├────────────────────────────────────────────────────────────────────┤
+│  File      : frontend/README.md
+│  Purpose   : Readme
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net
+│  GitHub    : https://github.com/setuju
+│  Website   : https://saturumah.net
+│  Created   : 10-11-2026
+│  License   : MIT
+└────────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────────┘
+-->
+
+<!--
 -->
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).

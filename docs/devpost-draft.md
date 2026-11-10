@@ -1,15 +1,19 @@
 <!--
-┌──────────────────────────────────────────────────────────────────────┐
-│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
-│  ──────────────────────────────────────────────────────────────────   │
-│  File      : docs/devpost-draft.md                                  │
-│  Purpose   : Docs: Devpost Draft                                    │
-│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
-│  GitHub    : https://github.com/setuju                            │
-│  Website   : https://saturumah.net                              │
-│  Created   : 10-11-2026                                             │
-│  License   : MIT                                                  │
-└──────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
+├────────────────────────────────────────────────────────────────────┤
+│  File      : docs/devpost-draft.md
+│  Purpose   : Docs: Devpost Draft
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net
+│  GitHub    : https://github.com/setuju
+│  Website   : https://saturumah.net
+│  Created   : 10-11-2026
+│  License   : MIT
+└────────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────────┘
+-->
+
+<!--
 -->
 
 # Devpost Form Draft — Financial OS

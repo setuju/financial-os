@@ -1,15 +1,19 @@
 <!--
-┌──────────────────────────────────────────────────────────────────────┐
-│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT                  │
-│  ──────────────────────────────────────────────────────────────────   │
-│  File      : backend/src/paypal/sdk/api-reference.md                │
-│  Purpose   : Api Reference                                          │
-│  Author    : Jack — Jack[at]SatuRumah[dot]Net                      │
-│  GitHub    : https://github.com/setuju                            │
-│  Website   : https://saturumah.net                              │
-│  Created   : 10-11-2026                                             │
-│  License   : MIT                                                  │
-└──────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
+├────────────────────────────────────────────────────────────────────┤
+│  File      : backend/src/paypal/sdk/api-reference.md
+│  Purpose   : Api Reference
+│  Author    : Jack — Jack[at]SatuRumah[dot]Net
+│  GitHub    : https://github.com/setuju
+│  Website   : https://saturumah.net
+│  Created   : 10-11-2026
+│  License   : MIT
+└────────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────────┘
+-->
+
+<!--
 -->
 
 # Reference
