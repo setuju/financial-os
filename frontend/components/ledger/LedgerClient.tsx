@@ -166,6 +166,11 @@ export default function LedgerClient() {
         }
       />
 
+      <div className="mb-4 rounded-lg border border-line bg-surface-sunken px-4 py-2 text-xs text-ink-soft">
+        <strong className="font-medium text-ink">Ledger shows transactions only.</strong>{' '}
+        Goals are managed in <strong>Horizon</strong> · Oracle predictions are in <strong>Horizon</strong>.
+      </div>
+
       <FilterBar
         view={view} setView={setView}
         type={type} setType={setType}

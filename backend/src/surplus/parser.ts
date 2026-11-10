@@ -43,8 +43,9 @@
 
 export type TransactionType = 'income' | 'expense';
 export type TransactionCategory =
-  | 'food' | 'transport' | 'utilities' | 'shopping'
-  | 'health' | 'entertainment' | 'education' | 'other';
+  | 'food' | 'groceries' | 'transport' | 'utilities'
+  | 'shopping' | 'health' | 'fitness' | 'subscription'
+  | 'entertainment' | 'education' | 'travel' | 'other';
 
 export interface ParsedTransaction {
   amount: number;
@@ -198,13 +199,18 @@ function detectType(text: string): TransactionType {
 
 // ---- Category detection ----
 
+// Order matters — more specific categories checked first.
 const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]> = {
+  fitness: ['planet fitness', 'gym', 'yoga', 'workout', 'sport', 'fitness'],
+  subscription: ['netflix', 'spotify', 'subscription', 'hulu', 'disney+'],
+  travel: ['flight', 'hotel', 'airbnb', 'vacation', 'plane ticket', 'tiket pesawat'],
+  groceries: ['groceries', 'grocery', 'supermarket', 'safeway', 'trader joe', 'whole foods', 'pasar', 'sayur', 'buah'],
   food: ['makan', 'jajan', 'kopi', 'warteg', 'resto', 'restoran', 'nasi', 'minum', 'food', 'coffee', 'lunch', 'dinner', 'grocer', 'restaurant', 'meal', 'drink'],
   transport: ['bensin', 'grab', 'gojek', 'parkir', 'ojek', 'taksi', 'taxi', 'bus', 'kereta', 'transport', 'fuel', 'gas', 'uber', 'ride'],
   utilities: ['listrik', 'air', 'internet', 'pulsa', 'token', 'wifi', 'utilities', 'electricity', 'water', 'utility', 'bill', 'rent'],
   shopping: ['belanja', 'shopee', 'tokopedia', 'baju', 'sepatu', 'shopping', 'clothes', 'shoes', 'shop', 'store'],
   health: ['obat', 'dokter', 'rumah sakit', 'klinik', 'health', 'medicine', 'doctor', 'pharmacy', 'hospital'],
-  entertainment: ['nonton', 'bioskop', 'netflix', 'spotify', 'game', 'entertainment', 'movie', 'concert'],
+  entertainment: ['nonton', 'bioskop', 'game', 'entertainment', 'movie', 'concert'],
   education: ['buku', 'kursus', 'sekolah', 'kuliah', 'education', 'book', 'course', 'tuition', 'school'],
 };
 

@@ -343,6 +343,7 @@ export async function deleteSurplusPrediction(id: string): Promise<boolean> {
 export type ImpactSurplusResponse = {
   verified: { period: string; closing_surplus: number };
   in_progress: { period: string; closing_surplus: number; status: 'open' | 'closed' };
+  is_first_month?: boolean;
   history: Array<{ period: string; closing_surplus: number; status: 'open' | 'closed' }>;
 };
 

@@ -226,6 +226,14 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       getSurplusPeriod(fastify.pg, sid, cur),
     ]);
 
+    // Detect first-month: last period has NO prior data at all.
+    const lastHasData =
+      Number(lastP.total_income) > 0 ||
+      Number(lastP.total_expense) > 0 ||
+      Number(lastP.opening_balance) > 0 ||
+      Number(lastP.donations) > 0;
+    const isFirstMonth = !lastHasData;
+
     // Walk back 6 months for history strip
     const history: Array<{ period: string; closing_surplus: number; status: string }> = [];
     const base = new Date(cur + 'T00:00:00Z');
@@ -245,16 +253,24 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
+    // First month: distributable = current surplus (no prior period exists yet).
+    // Month 2+: distributable = last month's closing surplus.
+    const verifiedPeriod = isFirstMonth ? cur : last;
+    const verifiedAmount = isFirstMonth
+      ? Number(curP.closing_surplus)
+      : Number(lastP.closing_surplus);
+
     return {
       verified: {
-        period: last,
-        closing_surplus: Number(lastP.closing_surplus),
+        period: verifiedPeriod,
+        closing_surplus: verifiedAmount,
       },
       in_progress: {
         period: cur,
         closing_surplus: Number(curP.closing_surplus),
         status: curP.status,
       },
+      is_first_month: isFirstMonth,
       history,
     };
   });

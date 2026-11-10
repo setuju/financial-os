@@ -834,3 +834,16 @@ grep -c '^INSERT INTO'  neon-20261110_130127.sql  # 134
 
 ### NEXT → `docs/multitenant-plan.md` (proposal for user review)
 
+
+---
+
+## Sesi 11 Hotfix (2026-11-10 15:16 WIB)
+
+### Fixed
+1. Impact first-month — new users see current surplus; auto-switch from month 2
+2. Indonesian text → English (3 UI locations; parser tests/vocab KEPT)
+3. Ledger hint banner (Goals/Oracle are separate pages)
+4. Categories 8→12: + groceries, fitness, subscription, travel
+
+### Deferred
+- Category filter in Ledger (~45 min)

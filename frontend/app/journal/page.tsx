@@ -90,7 +90,7 @@ export default async function Journal() {
         <EmptyState
           icon={<BookOpen className="h-12 w-12" />}
           title="No transactions yet"
-          description='Record your first transaction using natural language — try "saya jajan 20ribu" or "tadi dapat bonus 500rb".'
+          description='Record your first transaction using natural language — try "spent 20 on coffee" or "received 500 bonus".'
           action={
             <Link
               href="/journal/new"

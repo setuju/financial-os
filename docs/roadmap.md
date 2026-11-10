@@ -143,3 +143,22 @@ Sessions isolate data per user; admin session owns the seeded baseline.
 - URL rotation (Neon roles)
 - Second admin account
 - User data export / GDPR-style delete
+
+---
+
+## Post-video Backlog
+
+### Category Filter (Ledger)
+- Multi-select filter by `category` column
+- Requires: `groupBy=category` in `/reports/summary` + FilterBar chips + URL state
+- Effort: ~45 min
+- **Defer post-video**
+
+### Impact First-Month (Shipped 2026-11-10)
+- User sees "Current Surplus" for first month
+- Auto-switches to "Verified Surplus (last month)" from month 2
+- Banner explains transition
+
+### Categories (Expanded 2026-11-10)
+- 8 → 12: + groceries, fitness, subscription, travel
+- Keyword dict ordered specific→generic

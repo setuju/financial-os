@@ -129,7 +129,7 @@ Latest 50 transactions, newest first. Mini stats: visible count, total in, total
 
 **\`/journal/new\` — Add transaction**
 Three input methods:
-1. Type — natural language in English or Bahasa Indonesia. Examples: \`"spent 20 on coffee"\`, \`"received 500 bonus"\`, \`"paid 120 utilities"\`, \`"bayar listrik 1.250.000"\`.
+1. Type — natural language in English or Bahasa Indonesia. Examples: \`"spent 20 on coffee"\`, \`"received 500 bonus"\`, \`"paid 120 utilities"\`, \`"paid 120 utilities"\`.
 2. Voice — click mic, speak. Works on Chrome/Edge + mobile via Web Speech API.
 3. Receipt scan (planned) — upload photo, Gemini Vision extracts amount.
 

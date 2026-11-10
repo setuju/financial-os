@@ -49,10 +49,17 @@ const dateFmt = new Intl.DateTimeFormat('en-US', {
 type BadgeVariant = 'success' | 'danger' | 'warning' | 'info' | 'neutral';
 const CATEGORY_VARIANTS: Record<string, BadgeVariant> = {
   food: 'warning',
+  groceries: 'success',
   transport: 'info',
+  utilities: 'danger',
   bills: 'danger',
   shopping: 'warning',
   health: 'danger',
+  fitness: 'success',
+  subscription: 'info',
+  entertainment: 'warning',
+  education: 'neutral',
+  travel: 'info',
   income: 'success',
   other: 'neutral',
 };

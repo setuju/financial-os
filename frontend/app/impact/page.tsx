@@ -58,6 +58,7 @@ export default async function ImpactWallet() {
 
   const verified = surplus?.verified.closing_surplus ?? 0;
   const inProgress = surplus?.in_progress.closing_surplus ?? 0;
+  const isFirstMonth = surplus?.is_first_month ?? false;
   const history = surplus?.history ?? [];
   const receiverList = receivers?.receivers ?? [];
   const payoutList = payouts ?? [];
@@ -77,6 +78,17 @@ export default async function ImpactWallet() {
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>
       </div>
+
+      {isFirstMonth && inProgress !== 0 && (
+        <div className="mb-4 rounded-lg border border-accent/30 bg-accent-soft/40 px-4 py-3 text-sm text-ink">
+          <p className="font-medium">🌱 Welcome — this is your first month</p>
+          <p className="mt-1 text-xs text-ink-soft">
+            You can donate from your <strong>current surplus</strong> right now.
+            Starting next month, donations come from your <strong>verified
+            surplus</strong> (last month&apos;s closing balance).
+          </p>
+        </div>
+      )}
 
       {/* Surplus cards */}
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
