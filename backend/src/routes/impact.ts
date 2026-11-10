@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
 import { paypalClient } from '../paypal/client.js';
-import { createPayout } from '../repositories/payouts.js';
-import { calculateSurplus } from '../repositories/surplus.js';
+import { createPayout, listPayouts, softDeletePayout } from '../repositories/payouts.js';
+import { getSurplusPeriod, lastMonth, currentMonth, cascadeFrom } from '../repositories/surplus-periods.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -21,11 +21,66 @@ interface PayoutBody {
   amount: number;
   currency?: string;
   note?: string;
+  sourcePeriod?: string;  // YYYY-MM-DD, defaults to last month
 }
 
 const impactRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/impact/receivers', async () => {
     return { receivers: VETTED_RECEIVERS };
+  });
+
+  // Donation log (soft-deleted hidden by default)
+  fastify.get<{ Querystring: { include_deleted?: string; limit?: string } }>(
+    '/impact/payouts',
+    async (req) => {
+      const includeDeleted = req.query.include_deleted === 'true';
+      const limit = req.query.limit ? Number(req.query.limit) : 50;
+      const payouts = await listPayouts(fastify.pg, { includeDeleted, limit });
+      return { payouts };
+    },
+  );
+
+  // Soft delete a donation log entry (money is gone; surplus stays reduced)
+  fastify.delete<{ Params: { id: string } }>(
+    '/impact/payouts/:id',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string', minLength: 1 } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const ok = await softDeletePayout(fastify.pg, req.params.id);
+      if (!ok) return reply.code(404).send({ error: 'not_found' });
+      return { ok: true, deletedId: req.params.id };
+    },
+  );
+
+  // Horizon commitment for next month (warning on impact page)
+  fastify.get('/impact/horizon-commitment', async () => {
+    const next = new Date();
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    const nextMonth = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-01`;
+
+    const result = await fastify.pg.query(
+      `SELECT name, monthly_saving
+       FROM goals
+       WHERE start_date < ($1::date + interval '1 month')
+         AND (start_date + (duration_months || ' months')::interval) > $1::date
+       ORDER BY monthly_saving DESC`,
+      [nextMonth],
+    );
+
+    const breakdown = result.rows.map((r) => ({
+      name: String(r.name),
+      monthly: Number(r.monthly_saving),
+    }));
+    const total = breakdown.reduce((s, r) => s + r.monthly, 0);
+
+    return { nextMonth, total, breakdown };
   });
 
   fastify.post<{ Body: PayoutBody }>(
@@ -40,26 +95,35 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
             amount: { type: 'number', minimum: 0.01 },
             currency: { type: 'string', default: 'USD' },
             note: { type: 'string' },
+            sourcePeriod: { type: 'string' },
           },
         },
       },
     },
     async (req, reply) => {
-      const { receiverId, amount, currency = 'USD', note = 'Financial OS Impact' } = req.body;
+      const {
+        receiverId, amount, currency = 'USD', note = 'Financial OS Impact',
+        sourcePeriod,
+      } = req.body;
 
-      const receiver = VETTED_RECEIVERS.find(r => r.id === receiverId);
+      const receiver = VETTED_RECEIVERS.find((r) => r.id === receiverId);
       if (!receiver) {
-        return reply.code(400).send({ error: 'invalid_receiver', message: 'Receiver not found or not vetted.' });
+        return reply.code(400).send({ error: 'invalid_receiver' });
       }
 
-      const metrics = await calculateSurplus(fastify.pg);
-      const maxAmount = Math.max(0, metrics.currentSurplus * 0.1);
+      const source = sourcePeriod || lastMonth();
 
-      if (amount > maxAmount + 0.001) {
+      // Validate: source month surplus must have enough remaining
+      const period = await getSurplusPeriod(fastify.pg, source);
+      const available = Number(period.closing_surplus);
+      if (amount > available + 0.001) {
         return reply.code(400).send({
-          error: 'exceeds_ten_percent',
-          message: `Amount exceeds 10% of surplus (max: ${maxAmount.toFixed(2)})`,
-          max: maxAmount,
+          error: 'insufficient_surplus',
+          message: `Amount exceeds ${source} closing surplus (${
+            available.toFixed(2)
+          })`,
+          available,
+          sourcePeriod: source,
         });
       }
 
@@ -79,7 +143,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
                 senderItemId: `item_${Date.now()}`,
               },
             ],
-          }
+          },
         });
 
         const batchId = response.batchHeader?.payoutBatchId || null;
@@ -90,25 +154,57 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           receiverEmail: receiver.email,
           status: 'success',
           paypalBatchId: batchId || undefined,
+          sourcePeriod: source,
         });
 
-        return reply.code(201).send({ payout, paypalResponse: response });
-      } catch (error: any) {
+        // Cascade recompute: source month + all forward months
+        await cascadeFrom(fastify.pg, source);
+
+        return reply.code(201).send({
+          payout,
+          paypalResponse: response,
+          surplus_updated: true,
+          source_period: source,
+        });
+      } catch (error: unknown) {
         fastify.log.error({ err: error }, 'PayPal payout failed');
         await createPayout(fastify.pg, {
           amount,
           currency,
           receiverEmail: receiver.email,
           status: 'failed',
+          sourcePeriod: source,
         });
         return reply.code(500).send({
           error: 'paypal_payout_failed',
-          message: error.message || 'Unknown error',
-          details: error.details || {},
+          message: error instanceof Error ? error.message : 'Unknown error',
         });
       }
-    }
+    },
   );
+
+  // Surplus v2: verified (last month) + in-progress (current) + history
+  fastify.get('/impact/surplus', async () => {
+    const last = lastMonth();
+    const cur = currentMonth();
+
+    const [lastP, curP] = await Promise.all([
+      getSurplusPeriod(fastify.pg, last),
+      getSurplusPeriod(fastify.pg, cur),
+    ]);
+
+    return {
+      verified: {
+        period: last,
+        closing_surplus: Number(lastP.closing_surplus),
+      },
+      in_progress: {
+        period: cur,
+        closing_surplus: Number(curP.closing_surplus),
+        status: curP.status,
+      },
+    };
+  });
 };
 
 export default impactRoutes;
