@@ -42,10 +42,10 @@
  */
 
 export type TransactionType = 'income' | 'expense';
-export type TransactionCategory =
-  | 'food' | 'groceries' | 'transport' | 'utilities'
-  | 'shopping' | 'health' | 'fitness' | 'subscription'
-  | 'entertainment' | 'education' | 'travel' | 'other';
+export type TransactionCategory = 
+  | 'food' | 'groceries' | 'transport' | 'utilities' | 'shopping' 
+  | 'health' | 'fitness' | 'subscription' | 'entertainment' | 'education' 
+  | 'travel' | 'investment' | 'debt' | 'gift' | 'other';
 
 export interface ParsedTransaction {
   amount: number;
@@ -176,15 +176,16 @@ function detectIntent(text: string): boolean {
 // ---- Type detection ----
 
 const INCOME_VERBS = [
-  'gave me', 'gave', 'gifted', 'won',
-  'dapat', 'terima', 'menerima', 'gaji', 'bonus', 'menang',
-  'income', 'earn', 'earned', 'received', 'receive', 'salary', 'refund',
+  'gave me', 'gave', 'gifted', 'won', 'got', 'received', 'earned', 'deposited',
+  'salary', 'wage', 'paycheck', 'pay', 'profit', 'dividend', 'interest', 'rent',
+  'royalty', 'grant', 'subsidy', 'allowance', 'bonus', 'cashback', 'refund',
+  'dapat', 'dikasih', 'gaji', 'menang', 'terima', 'income', 'revenue'
 ];
 
 const EXPENSE_VERBS = [
-  'beli', 'membeli', 'bayar', 'membayar', 'jajan', 'makan',
-  'minum', 'isi', 'keluar', 'spend', 'spent', 'pay', 'paid',
-  'buy', 'bought', 'purchase', 'purchased',
+  'spent', 'paid', 'bought', 'buy', 'purchase', 'purchased', 'cost', 'expense', 'outcome',
+  'bills', 'fee', 'tax', 'debt', 'loan', 'fine', 'premium', 'installment',
+  'beli', 'bayar', 'jajan', 'keluar'
 ];
 
 function detectType(text: string): TransactionType {
@@ -202,17 +203,31 @@ function detectType(text: string): TransactionType {
 
 // Order matters — more specific categories checked first.
 const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]> = {
+  // Kategori Income & Investasi (Arus Masuk)
+  investment: ['dividend', 'interest', 'profit', 'stock', 'invest', 'saham', 'bunga', 'crypto', 'capital gain', 'yield'],
+  
+  // Kategori Pengeluaran (Arus Keluar)
+  debt: ['loan', 'debt', 'tax', 'fine', 'premium', 'installment', 'utang', 'pajak', 'denda', 'tagihan'],
+  gift: ['gift', 'mom', 'dad', 'granpa', 'grandma', 'brother', 'sister', 'donation', 'hadiah', 'donasi', 'beri uang', 'kasih uang'],
+  
+  // Kategori Rumah Tangga & Belanja
+  groceries: ['groceries', 'grocery', 'supermarket', 'safeway', 'trader joe', 'whole foods', 'pasar', 'sayur', 'buah', 'sembako'],
+  food: ['makan', 'jajan', 'kopi', 'warteg', 'resto', 'restoran', 'nasi', 'minum', 'food', 'coffee', 'lunch', 'dinner', 'restaurant', 'meal', 'drink', 'cafe'],
+  utilities: ['listrik', 'air', 'internet', 'pulsa', 'token', 'wifi', 'utilities', 'electricity', 'water', 'utility', 'bill', 'rent', 'sewa', 'pajak bumi'],
+  shopping: ['belanja', 'shopee', 'tokopedia', 'baju', 'sepatu', 'bike', 'motor', 'mobil', 'shopping', 'clothes', 'shoes', 'shop', 'store', 'amazon', 'target', 'buy'],
+  
+  // Kategori Transportasi & Perjalanan
+  transport: ['bensin', 'grab', 'gojek', 'parkir', 'ojek', 'taksi', 'taxi', 'bus', 'kereta', 'transport', 'fuel', 'gas', 'uber', 'ride', 'commute'],
+  travel: ['flight', 'hotel', 'airbnb', 'vacation', 'plane ticket', 'tiket pesawat', 'liburan', 'penerbangan'],
+  
+  // Kategori Gaya Hidup & Kesehatan
   fitness: ['planet fitness', 'gym', 'yoga', 'workout', 'sport', 'fitness'],
-  subscription: ['netflix', 'spotify', 'subscription', 'hulu', 'disney+'],
-  travel: ['flight', 'hotel', 'airbnb', 'vacation', 'plane ticket', 'tiket pesawat'],
-  groceries: ['groceries', 'grocery', 'supermarket', 'safeway', 'trader joe', 'whole foods', 'pasar', 'sayur', 'buah'],
-  food: ['makan', 'jajan', 'kopi', 'warteg', 'resto', 'restoran', 'nasi', 'minum', 'food', 'coffee', 'lunch', 'dinner', 'grocer', 'restaurant', 'meal', 'drink'],
-  transport: ['bensin', 'grab', 'gojek', 'parkir', 'ojek', 'taksi', 'taxi', 'bus', 'kereta', 'transport', 'fuel', 'gas', 'uber', 'ride'],
-  utilities: ['listrik', 'air', 'internet', 'pulsa', 'token', 'wifi', 'utilities', 'electricity', 'water', 'utility', 'bill', 'rent'],
-  shopping: ['belanja', 'shopee', 'tokopedia', 'baju', 'sepatu', 'shopping', 'clothes', 'shoes', 'shop', 'store'],
-  health: ['obat', 'dokter', 'rumah sakit', 'klinik', 'health', 'medicine', 'doctor', 'pharmacy', 'hospital'],
-  entertainment: ['nonton', 'bioskop', 'game', 'entertainment', 'movie', 'concert'],
-  education: ['buku', 'kursus', 'sekolah', 'kuliah', 'education', 'book', 'course', 'tuition', 'school'],
+  health: ['obat', 'dokter', 'rumah sakit', 'klinik', 'health', 'medicine', 'doctor', 'pharmacy', 'hospital', 'dental'],
+  entertainment: ['nonton', 'bioskop', 'cinema', 'game', 'entertainment', 'movie', 'concert', 'konser', 'netflix', 'spotify'],
+  subscription: ['netflix', 'spotify', 'subscription', 'hulu', 'disney+', 'icloud', 'langganan'],
+  
+  // Kategori Pendidikan
+  education: ['buku', 'kursus', 'sekolah', 'kuliah', 'education', 'book', 'course', 'tuition', 'school', 'university']
 };
 
 function detectCategory(text: string): TransactionCategory {
@@ -276,7 +291,7 @@ export function parseMultipleTransactions(
   }
 
   // Pisahkan berdasarkan kata hubung yang kuat atau tanda baca
-  const clauses = rawText.split(/\b(?:and then|then|after that)\b|;|\.\s+/i)
+  const clauses = rawText.split(/\b(?:and then|and also|after that|then|and|also|but|or|so|however|therefore|meanwhile|consequently|furthermore|moreover)\b|[,;]|\.\s+/i)
     .map((c) => c.trim())
     .filter(Boolean);
 
