@@ -28,7 +28,7 @@
 import { AlertCircle } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import Card from '@/components/ui/Card';
-import NewTransactionFormLoader from '@/components/journal/NewTransactionFormLoader';
+import NewTransactionForm from '@/components/journal/NewTransactionForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,7 +70,7 @@ export default function NewTransactionPage({ searchParams }: PageProps) {
       ) : null}
 
       <Card>
-        <NewTransactionFormLoader />
+        <NewTransactionForm />
       </Card>
     </div>
   );

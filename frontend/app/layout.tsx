@@ -104,11 +104,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" translate="no" suppressHydrationWarning>
+      <head>
+
               <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){d.setAttribute('data-theme',t);}}catch(e){}})();`,
           }}
         />
+      </head>
+
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
