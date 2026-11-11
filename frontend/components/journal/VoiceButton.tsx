@@ -142,22 +142,71 @@ export default function VoiceButton({
     setPhase('requesting');
 
     // 1. Request mic (triggers dialog + gives us stream for audio meter)
+    // 0. Device presence check
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const mics = devices.filter((d) => d.kind === 'audioinput');
+      if (mics.length === 0) {
+        setPhase('idle');
+        emitError(
+          'No microphone hardware detected on this device. Connect a mic and reload.',
+        );
+        return;
+      }
+    } catch {
+      /* skip — proceed to getUserMedia anyway */
+    }
+
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err) {
       const name = err instanceof Error ? err.name : '';
+      const message = err instanceof Error ? err.message : '';
       setPhase('idle');
+
+      // Differentiate site-permission vs OS-level block
+      let permState: 'granted' | 'prompt' | 'denied' | 'unknown' = 'unknown';
+      try {
+        const p = await navigator.permissions.query({
+          name: 'microphone' as PermissionName,
+        });
+        permState = p.state as 'granted' | 'prompt' | 'denied';
+      } catch {
+        /* Permissions API may not support microphone */
+      }
+
+      // eslint-disable-next-line no-console
+      console.warn('[voice] getUserMedia failed', { name, message, permState });
+
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        emitError(
-          'Microphone blocked. Click the lock icon in your address bar → Allow microphone → Reload.',
-        );
+        if (permState === 'granted') {
+          emitError(
+            'Chrome permission is ALLOWED, but Windows blocked the mic. Windows 11: Settings → Privacy & security → Microphone → enable "Microphone access", "Let apps access your microphone", and "Let desktop apps access your microphone". Reload Chrome after.',
+          );
+        } else if (permState === 'denied') {
+          emitError(
+            'Site blocked mic. Click the lock icon in the address bar → Microphone → Allow → Reload.',
+          );
+        } else {
+          emitError(
+            'Mic access denied. If the lock icon shows Allow, the block is at OS level (Windows Settings → Privacy & security → Microphone) or a Chrome policy.',
+          );
+        }
       } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
         emitError('No microphone detected. Connect one and try again.');
       } else if (name === 'NotReadableError') {
-        emitError('Microphone is in use by another app. Close it and retry.');
+        emitError(
+          'Microphone is locked by another app (Zoom/Teams/Discord). Close it and retry.',
+        );
+      } else if (name === 'SecurityError') {
+        emitError(
+          'Blocked by browser security policy. Make sure you are on https:// and not in private mode with restrictions.',
+        );
       } else {
-        emitError(`Could not access microphone${name ? ` (${name})` : ''}.`);
+        emitError(
+          `Could not access microphone${name ? ` (${name})` : ''}${message ? `: ${message.slice(0, 100)}` : ''}.`,
+        );
       }
       return;
     }
