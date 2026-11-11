@@ -177,6 +177,8 @@ export default function ExportLedgerPdfButton({
       }
 
       autoTable(doc, {
+        tableWidth: 'auto',
+        margin: { left: 40, right: 40 },
         startY: 182,
         head,
         body,

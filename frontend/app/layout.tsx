@@ -103,7 +103,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" translate="no" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning translate="no">
       <head>
 
               <script
@@ -113,7 +113,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

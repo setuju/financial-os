@@ -79,7 +79,7 @@ export default async function ImpactWallet({ searchParams }: { searchParams: { p
 
       <div className="mb-4 flex justify-end">
         <Link
-          href="/"
+          href="/dashboard"
           className="inline-flex items-center gap-1 text-sm text-accent hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Dashboard
