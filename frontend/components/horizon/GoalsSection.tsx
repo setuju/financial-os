@@ -30,7 +30,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, X, AlertCircle, Loader2, Target, ShoppingBag } from 'lucide-react';
-import ProductSearchDialog from './ProductSearchDialog';
+import ProductSearchDialog, { type C3Product } from './ProductSearchDialog';
 
 export type Goal = {
   id: string;
@@ -96,8 +96,8 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.target_amount, form.monthly_saving]);
 
-  const handleProductSelect = (product: any) => {
-    setForm((prev) => ({ ...prev, name: product.title || product.name || String(product), target_amount: String(product.offers?.[0]?.price || product.offers?.[0]?.amount || product.price || 0) }));
+  const handleProductSelect = (product: C3Product) => {
+    setForm((prev) => ({ ...prev, name: product.title, target_amount: String(product.offers?.[0]?.price || 0) }));
     setIsProductDialogOpen(false);
   };
 
