@@ -108,7 +108,7 @@ export default async function Journal() {
         />
       ) : (
         <>
-          <div className="mb-6 grid gap-3 sm:grid-cols-3">
+          <div className="mb-6 grid gap-3 sm:grid-cols-4">
             <Card className="p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
                 Total transactions
@@ -131,6 +131,15 @@ export default async function Journal() {
               </p>
               <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-rose-600">
                 {usd.format(totalOut)}
+              </p>
+            </Card>
+
+            <Card className="p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Current Balance
+              </p>
+              <p className={`mt-1 font-mono text-xl font-semibold tabular-nums ${totalIn - totalOut >= 0 ? 'text-accent' : 'text-danger'}`}>
+                {usd.format(totalIn - totalOut)}
               </p>
             </Card>
           </div>

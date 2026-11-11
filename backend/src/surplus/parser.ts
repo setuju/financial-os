@@ -292,51 +292,44 @@ export function parseMultipleTransactions(
     return [{ ok: false, reason: 'invalid_input', rawText: String(rawText) }];
   }
 
-  // Cari semua kemunculan angka (termasuk format 1.000, 10,000, atau 5000k)
-  const numberRegex = /(\d{1,3}(?:[.,]\d{3})*|[\d]+)(?:[.,]\d+)?(?:s*(jt|juta|rb|ribu|k))?/gi;
-  const matches = Array.from(rawText.matchAll(numberRegex));
+  // Pecah kalimat menjadi kata-kata
+  const words = rawText.split(/\s+/);
+  const chunks: string[] = [];
+  let currentChunk: string[] = [];
 
-  // Jika hanya ada 1 atau 0 angka, langsung parse sebagai satu transaksi
-  if (matches.length <= 1) {
+  for (const word of words) {
+    currentChunk.push(word);
+    
+    // Jika kata ini mengandung angka, ini adalah akhir dari sebuah transaksi
+    if (/\d/.test(word)) {
+      chunks.push(currentChunk.join(' '));
+      currentChunk = [];
+    }
+  }
+
+  // Jika masih ada sisa kata tanpa angka di akhir, gabungkan ke chunk terakhir
+  if (currentChunk.length > 0) {
+    if (chunks.length > 0) {
+      chunks[chunks.length - 1] += ' ' + currentChunk.join(' ');
+    } else {
+      chunks.push(currentChunk.join(' '));
+    }
+  }
+
+  // Jika hanya ada 1 chunk, langsung parse utuh
+  if (chunks.length <= 1) {
     return [parseTransaction(rawText, now)];
   }
 
+  // Parse setiap chunk secara independen
   const results: ParseResult[] = [];
-  let lastIndex = 0;
-
-  for (let i = 0; i < matches.length; i++) {
-    const match = matches[i];
-    const matchIndex = match.index ?? 0;
-    const matchLength = match[0].length;
-    
-    // Tentukan batas potongan (Chunk) dari tengah-tengah antara angka sebelumnya dan saat ini
-    let startIdx = lastIndex;
-    if (i > 0) {
-      const prevMatch = matches[i - 1];
-      const prevEnd = (prevMatch.index ?? 0) + prevMatch[0].length;
-      // Titik potong di tengah-tengah teks di antara dua angka
-      startIdx = prevEnd + Math.floor((matchIndex - prevEnd) / 2);
+  for (const chunk of chunks) {
+    const res = parseTransaction(chunk, now);
+    if (res.ok) {
+      results.push(res);
     }
-
-    // Tentukan akhir potongan
-    let endIdx = rawText.length;
-    if (i < matches.length - 1) {
-      const nextMatch = matches[i + 1];
-      const nextStart = nextMatch.index ?? rawText.length;
-      endIdx = matchIndex + matchLength + Math.floor((nextStart - (matchIndex + matchLength)) / 2);
-    }
-
-    const chunk = rawText.slice(startIdx, endIdx).trim();
-    if (chunk) {
-      const res = parseTransaction(chunk, now);
-      if (res.ok) {
-        results.push(res);
-      }
-    }
-    lastIndex = endIdx;
   }
 
-  // Fallback: jika semua chunk gagal, parse utuh
   if (results.length === 0) {
     return [parseTransaction(rawText, now)];
   }
