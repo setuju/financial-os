@@ -158,7 +158,7 @@ export default function JournalTable({ transactions }: Props) {
                     <td className="px-4 py-3.5 text-ink">{tx.raw_text}</td>
                     <td className="px-4 py-3.5">
                       <Badge variant={CATEGORY_VARIANTS[tx.category] ?? 'neutral'}>
-                        {tx.category}
+                        {isIncome ? 'IN' : 'OUT'}:{tx.category}
                       </Badge>
                     </td>
                     <td
@@ -240,7 +240,7 @@ export default function JournalTable({ transactions }: Props) {
                     </p>
                     <div className="mt-2">
                       <Badge variant={CATEGORY_VARIANTS[tx.category] ?? 'neutral'}>
-                        {tx.category}
+                        {isIncome ? 'IN' : 'OUT'}:{tx.category}
                       </Badge>
                     </div>
                   </div>

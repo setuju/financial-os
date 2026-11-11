@@ -101,7 +101,7 @@ export default function ExportPdfButton({
 
           new Date(t.occurred_at).toLocaleDateString('en-US'),
           t.raw_text,
-          t.category,
+          `${t.type === 'income' ? 'IN' : 'OUT'}:${t.category}`,
           t.type,
           `${t.type === 'income' ? '+' : '-'}${usd.format(Number(t.amount))}`,
         ]  ),
@@ -109,7 +109,8 @@ export default function ExportPdfButton({
         headStyles: { fillColor: [0, 112, 186], textColor: 255 },
         alternateRowStyles: { fillColor: [248, 250, 252] },
         columnStyles: {
-          4: { halign: 'right' },
+          0: { halign: 'right' },
+          5: { halign: 'right' },
         },
         didDrawPage: () => {
           const pageHeight = doc.internal.pageSize.getHeight();
