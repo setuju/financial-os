@@ -106,7 +106,7 @@ export default function RootLayout({
     <html lang="en" translate="no" suppressHydrationWarning>
               <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}else{var m=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',m?'dark':'light');}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
+            __html: `(function(){try{var d=document.documentElement;d.classList.add('no-transitions');var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){d.setAttribute('data-theme',t);}else{var m=window.matchMedia('(prefers-color-scheme: dark)').matches;d.setAttribute('data-theme',m?'dark':'light');}requestAnimationFrame(function(){requestAnimationFrame(function(){d.classList.remove('no-transitions');});});}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
           }}
         />
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>

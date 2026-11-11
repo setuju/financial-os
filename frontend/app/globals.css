@@ -87,3 +87,12 @@ html[data-theme='dark'] {
     @apply overflow-x-hidden;
   }
 }
+
+/* Anti-flash: disable transitions during initial theme application */
+.no-transitions,
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
+  transition: none !important;
+  animation: none !important;
+}

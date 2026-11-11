@@ -99,6 +99,7 @@ export default function GanttInner({
     setConfig({
       columns: [],
       tasks: data as CustomTask[],
+      detectCSSCompatibilityIssues: false,
       viewPreset: 'monthAndYear',
       startDate: new Date(minStart),
       endDate: new Date(maxEnd),
