@@ -143,7 +143,10 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
         sourcePeriod,
       } = req.body;
 
-      const receiver = VETTED_RECEIVERS.find((r) => r.id === receiverId);
+      let receiver = VETTED_RECEIVERS.find((r) => r.id === receiverId);
+      if (!receiver && receiverId.includes('@')) {
+        receiver = { id: receiverId, name: 'Custom Email', category: 'External', email: receiverId };
+      }
       if (!receiver) {
         return reply.code(400).send({ error: 'invalid_receiver' });
       }

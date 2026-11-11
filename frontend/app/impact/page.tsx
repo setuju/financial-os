@@ -28,7 +28,7 @@
 import Link from 'next/link';
 import { ArrowLeft, AlertTriangle, CheckCircle2, TrendingUp, Heart } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
-import DistributeButton from '@/components/DistributeButton';
+import DistributeSection from '@/components/impact/DistributeSection';
 import PayoutLog from '@/components/impact/PayoutLog';
 import { serverGetImpactSurplus as getImpactSurplus, serverGetImpactPayouts as getImpactPayouts, serverGetImpactReceivers as getImpactReceivers, serverGetHorizonCommitment as getHorizonCommitment } from '@/lib/api-server';
 
@@ -215,11 +215,7 @@ export default async function ImpactWallet({ searchParams }: { searchParams: { p
             Ethical Surplus Distribution
           </h2>
         </div>
-        <DistributeButton
-          verifiedAmount={verified}
-          sourcePeriod={surplus?.verified.period ?? ''}
-          receivers={receiverList}
-        />
+        <DistributeSection receivers={receiverList} verifiedSurplus={verified} sourcePeriod={surplus?.verified.period || ""} />
       </div>
 
       {/* Donation log */}
