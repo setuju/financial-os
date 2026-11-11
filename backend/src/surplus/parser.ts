@@ -55,7 +55,8 @@ function detectNegation(text: string): boolean { return NEGATION_RES.some((re) =
 function detectIntent(text: string): boolean { return INTENT_RES.some((re) => re.test(text)); }
 
 const INCOME_VERBS = ['gave me', 'gave', 'gifted', 'won', 'got', 'received', 'earned', 'deposited', 'salary', 'wage', 'paycheck', 'profit', 'dividend', 'interest', 'rent', 'royalty', 'grant', 'subsidy', 'allowance', 'bonus', 'cashback', 'refund', 'dapat', 'dikasih', 'gaji', 'menang', 'terima', 'income', 'revenue', 'get'];
-const EXPENSE_VERBS = ['spent', 'paid', 'bought', 'buy', 'purchase', 'purchased', 'cost', 'expense', 'outcome', 'bills', 'fee', 'tax', 'debt', 'loan', 'fine', 'premium', 'installment', 'pay', 'beli', 'bayar', 'jajan', 'keluar'];
+const EXPENSE_VERBS = [
+  'give to', 'give','spent', 'paid', 'bought', 'buy', 'purchase', 'purchased', 'cost', 'expense', 'outcome', 'bills', 'fee', 'tax', 'debt', 'loan', 'fine', 'premium', 'installment', 'pay', 'beli', 'bayar', 'jajan', 'keluar'];
 
 function detectType(text: string): TransactionType {
   const lower = text.toLowerCase();
@@ -63,8 +64,11 @@ function detectType(text: string): TransactionType {
   for (const v of INCOME_VERBS) { const idx = lower.indexOf(v); if (idx !== -1 && idx < minIncomeIdx) minIncomeIdx = idx; }
   let minExpenseIdx = Infinity;
   for (const v of EXPENSE_VERBS) { const idx = lower.indexOf(v); if (idx !== -1 && idx < minExpenseIdx) minExpenseIdx = idx; }
+
+  // Prioritas: Jika ada kata kerja eksplisit, gunakan itu.
+  // Jika tidak ada sama sekali, default ke expense.
+  if (minIncomeIdx === Infinity && minExpenseIdx === Infinity) return 'expense';
   if (minIncomeIdx < minExpenseIdx) return 'income';
-  if (minExpenseIdx < minIncomeIdx) return 'expense';
   return 'expense';
 }
 
@@ -72,7 +76,7 @@ const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]>
   income: ['paycheck', 'salary', 'wage', 'deposit', 'gaji', 'upah', 'pendapatan', 'paypal'],
   freelance: ['freelance', 'design', 'project', 'contract', 'client'],
   bonus: ['bonus', 'thr', 'incentive', 'hadiah'],
-  gift: ['gift', 'mom', 'dad', 'sugar', 'granpa', 'grandma', 'brother', 'sister'],
+  gift: ['gift', 'hadiah'],
   investment: ['dividend', 'interest', 'profit', 'stock', 'invest', 'saham', 'bunga', 'crypto', 'capital gain', 'yield'],
   debt: ['loan', 'debt', 'tax', 'fine', 'premium', 'installment', 'utang', 'pajak', 'denda', 'tagihan'],
   donation: ['donation', 'donate', 'charity', 'unicef', 'redcross', 'relief', 'donasi'],
@@ -91,12 +95,26 @@ const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]>
 
 function detectCategory(text: string, type: TransactionType): TransactionCategory {
   const lower = text.toLowerCase();
+  
+  // Prioritas kategori untuk INCOME
+  if (type === 'income') {
+    const incomeKeys = ['freelance', 'bonus', 'gift', 'investment', 'income'];
+    for (const key of incomeKeys) {
+      if (CATEGORY_KEYWORDS[key as keyof typeof CATEGORY_KEYWORDS]?.some(kw => lower.includes(kw))) {
+        return key as TransactionCategory;
+      }
+    }
+    return 'income';
+  }
+
+  // Prioritas kategori untuk EXPENSE (menghindari misklasifikasi)
   for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (cat === 'income' || cat === 'freelance' || cat === 'bonus' || cat === 'gift' || cat === 'investment') continue;
     for (const kw of keywords) {
       if (lower.includes(kw)) return cat as TransactionCategory;
     }
   }
-  return type === 'income' ? 'income' : 'other';
+  return 'other';
 }
 
 export function parseTransaction(rawText: string, now: Date = new Date()): ParseResult {

@@ -38,8 +38,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   zero_amount: 'Amount cannot be zero.',
   negated_input: "This looks like a cancellation or refusal (\"don't want\", \"change my mind\"). No transaction was recorded.",
   planned_input: "This looks like a plan or intention (\"want to\", \"planning to\", \"hopefully\"), not a completed transaction. Record it only after you actually spend or receive the money.",
-  network_error: 'Could not reach backend. Is it running on port 3001?',
+  network_error: 'Could not reach backend. Is it running?',
   empty: 'Please enter some text describing the transaction.',
+  failed: 'The backend rejected the transaction. Please check your input and try again.',
+  invalid_json: 'Invalid data format sent to server.'
 };
 
 interface PageProps {

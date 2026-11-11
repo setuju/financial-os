@@ -19,6 +19,11 @@ export async function submitTransactions(formData: FormData) {
     body: JSON.stringify({ transactions: txs }),
   });
   
-  if (!res.ok) redirect('/journal/new?error=failed');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    const msg = errData.message || errData.error || 'failed';
+    console.log('Backend rejected batch:', msg);
+    redirect('/journal/new?error=' + encodeURIComponent(msg));
+  }
   redirect('/journal');
 }

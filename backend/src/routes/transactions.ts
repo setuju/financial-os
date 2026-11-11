@@ -177,10 +177,33 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
   
   fastify.post<{ Body: { transactions: any[] } }>(
     '/transactions/batch',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['transactions'],
+          properties: {
+            transactions: {
+              type: 'array',
+              minItems: 1,
+              items: {
+                type: 'object',
+                required: ['amount', 'type', 'category', 'rawText'],
+                properties: {
+                  amount: { type: 'number' },
+                  type: { type: 'string', enum: ['income', 'expense'] },
+                  category: { type: 'string' },
+                  rawText: { type: 'string' },
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     async (req, reply) => {
       const sid = req.sessionId;
       const { transactions } = req.body;
-      if (!transactions || transactions.length === 0) return reply.code(400).send({ error: 'empty_batch' });
 
       const inserted: any[] = [];
       const client = await fastify.pg.connect();
@@ -194,7 +217,13 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
           inserted.push(transaction);
         }
         await client.query('COMMIT');
-      } catch (err) { await client.query('ROLLBACK'); throw err; } finally { client.release(); }
+      } catch (err: any) { 
+        await client.query('ROLLBACK'); 
+        fastify.log.error({ err }, 'Batch insert failed');
+        return reply.code(500).send({ error: 'db_error', message: err.message });
+      } finally { 
+        client.release(); 
+      }
       await invalidateSurplusPeriods(fastify.pg, sid);
       return reply.code(201).send({ transactions: inserted });
     }
