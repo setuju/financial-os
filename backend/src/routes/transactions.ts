@@ -174,6 +174,32 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
+  
+  fastify.post<{ Body: { transactions: any[] } }>(
+    '/transactions/batch',
+    async (req, reply) => {
+      const sid = req.sessionId;
+      const { transactions } = req.body;
+      if (!transactions || transactions.length === 0) return reply.code(400).send({ error: 'empty_batch' });
+
+      const inserted: any[] = [];
+      const client = await fastify.pg.connect();
+      try {
+        await client.query('BEGIN');
+        for (const tx of transactions) {
+          const transaction = await insertTransaction(client as any, sid, {
+            userId: null,
+            parsed: { amount: tx.amount, type: tx.type, category: tx.category, occurredAt: new Date(), rawText: tx.rawText, source: 'manual_edit' }
+          });
+          inserted.push(transaction);
+        }
+        await client.query('COMMIT');
+      } catch (err) { await client.query('ROLLBACK'); throw err; } finally { client.release(); }
+      await invalidateSurplusPeriods(fastify.pg, sid);
+      return reply.code(201).send({ transactions: inserted });
+    }
+  );
+
   fastify.get<{ Querystring: ListQuery }>(
     '/transactions',
     async (req) => {

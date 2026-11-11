@@ -1,43 +1,24 @@
-/**
- * ┌────────────────────────────────────────────────────────────────────┐
- * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
- * ├────────────────────────────────────────────────────────────────────┤
- * │  File      : frontend/app/journal/new/actions.ts
- * │  Purpose   : Actions
- * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 10-11-2026
- * │  License   : MIT
- * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/frontend
- * @license   MIT
- */
-
-/**
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/frontend
- * @license   MIT
- */
-
 'use server';
 
 import { redirect } from 'next/navigation';
-import { serverCreateTransaction as createTransaction } from '@/lib/api-server';
+import { cookies } from 'next/headers';
 
-export async function submitTransaction(formData: FormData): Promise<void> {
-  const text = String(formData.get('text') ?? '').trim();
-  if (!text) {
-    redirect('/journal/new?error=empty');
-  }
-  const result = await createTransaction(text);
-  if (!result.ok) {
-    redirect(`/journal/new?error=${result.error}`);
-  }
+export async function submitTransactions(formData: FormData) {
+  const txsJson = String(formData.get('transactions') ?? '[]');
+  let txs = [];
+  try { txs = JSON.parse(txsJson); } catch { redirect('/journal/new?error=invalid_json'); }
+  
+  if (txs.length === 0) redirect('/journal/new?error=empty');
+
+  const sessionId = cookies().get('fos_session_id')?.value || '';
+  const backendUrl = process.env.API_URL || 'http://localhost:3001';
+  
+  const res = await fetch(`${backendUrl}/transactions/batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Session-Id': sessionId },
+    body: JSON.stringify({ transactions: txs }),
+  });
+  
+  if (!res.ok) redirect('/journal/new?error=failed');
   redirect('/journal');
 }
