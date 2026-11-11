@@ -40,6 +40,11 @@ export default function DisasterFeed() {
           </li>
         ))}
       </ul>
+
+      <div className="mt-6 border-t border-line pt-4 text-[10px] text-ink-faint text-center italic">
+        Headlines and alerts are aggregated in real-time from third-party sources. Financial OS does not verify or endorse the accuracy of these reports. Please consult official channels for verified information.
+      </div>
+
     </div>
   );
 }

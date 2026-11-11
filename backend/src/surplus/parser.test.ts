@@ -26,7 +26,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseTransaction } from './parser.js';
+import { parseTransaction, parseMultipleTransactions } from './parser.js';
 
 const FIXED_NOW = new Date('2026-11-04T00:00:00.000Z');
 
@@ -297,5 +297,28 @@ describe('parseTransaction — normal flow unaffected', () => {
       expect(r.tx.type).toBe('expense');
       expect(r.tx.category).toBe('food');
     }
+  });
+});
+
+describe('parseMultipleTransactions', () => {
+  it('splits multiple expenses', () => {
+    const res = parseMultipleTransactions('i buy groceries 500 and pay electricity bill 200');
+    expect(res.length).toBe(2);
+    expect(res[0].ok && res[0].tx.type).toBe('expense');
+    expect(res[1].ok && res[1].tx.type).toBe('expense');
+  });
+
+  it('inherits context (Income to Income)', () => {
+    const res = parseMultipleTransactions('i get money from momma 5000 from daddy 7000');
+    expect(res.length).toBe(2);
+    expect(res[0].ok && res[0].tx.type).toBe('income');
+    expect(res[1].ok && res[1].tx.type).toBe('income'); // Context Inheritance
+  });
+
+  it('handles mixed income and expense', () => {
+    const res = parseMultipleTransactions('salary 5000 buy laptop 1200');
+    expect(res.length).toBe(2);
+    expect(res[0].ok && res[0].tx.type).toBe('income');
+    expect(res[1].ok && res[1].tx.type).toBe('expense');
   });
 });

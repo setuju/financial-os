@@ -46,7 +46,15 @@ export default function LandingFooter() {
             </ul>
           </div>
         </div>
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-line pt-6 text-xs text-ink-faint sm:flex-row">
+        
+        <div className="mt-10 border-t border-line pt-6 text-center text-[10px] text-ink-faint">
+          <p>
+            Disclaimer: News feeds and disaster alerts are aggregated from third-party sources (USGS, Google News). 
+            Financial OS is not responsible for the accuracy, imagery, or content provided by external organizations.
+          </p>
+        </div>
+        <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-line pt-6 text-xs text-ink-faint sm:flex-row">
+
           <p>© 2026 Jack · Medan, Indonesia · MIT License</p>
           <p>Built for PayPal AI Hackathon 2026</p>
         </div>

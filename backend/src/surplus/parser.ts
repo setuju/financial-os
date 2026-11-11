@@ -48,8 +48,13 @@ function extractAmount(text: string): AmountMatch | null {
   return null;
 }
 
-const NEGATION_RES: RegExp[] = [/\b(?:cancel(?:led|ed)?|forget it|never ?mind|change my mind|scrap that|no longer|no thanks|no need)\b/i];
-const INTENT_RES: RegExp[] = [/\b(?:want to|wanna|plan to|planning to|would like to|i'?d like to|hoping to|hope to)\b/i, /\b(?:hopefully|maybe i|might buy|perhaps i)\b/i];
+const NEGATION_RES: RegExp[] = [
+  /\b(?:cancel(?:led|ed)?|forget it|never ?mind|change my mind|scrap that|no longer|no thanks|no need|dont|don't|do not|didn't|did not)\b/i,
+];
+const INTENT_RES: RegExp[] = [
+  /\b(?:want to|wanna|plan to|planning to|would like to|i'?d like to|hoping to|hope to|going to|gonna)\b/i,
+  /\b(?:hopefully|maybe i|might buy|perhaps i)\b/i,
+];
 
 function detectNegation(text: string): boolean { return NEGATION_RES.some((re) => re.test(text)); }
 function detectIntent(text: string): boolean { return INTENT_RES.some((re) => re.test(text)); }

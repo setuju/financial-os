@@ -26,6 +26,7 @@
  */
 
 import Fastify from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import cors from '@fastify/cors';
 import type { FastifyInstance } from 'fastify';
 import { config } from './config';
@@ -56,6 +57,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: config.logLevel },
   });
+  await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
   await app.register(cors, {
     origin: [
       'https://financial-os-nu.vercel.app',
