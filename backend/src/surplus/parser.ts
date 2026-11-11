@@ -45,7 +45,7 @@ export type TransactionType = 'income' | 'expense';
 export type TransactionCategory = 
   | 'food' | 'groceries' | 'transport' | 'utilities' | 'shopping' 
   | 'health' | 'fitness' | 'subscription' | 'entertainment' | 'education' 
-  | 'travel' | 'investment' | 'debt' | 'gift' | 'income' | 'other';
+  | 'travel' | 'investment' | 'debt' | 'gift' | 'income' | 'donation' | 'other';
 
 export interface ParsedTransaction {
   amount: number;
@@ -209,6 +209,7 @@ const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]>
   
   // Kategori Pengeluaran (Arus Keluar)
   debt: ['loan', 'debt', 'tax', 'fine', 'premium', 'installment', 'utang', 'pajak', 'denda', 'tagihan'],
+  donation: ['donation', 'donate', 'charity', 'unicef', 'redcross', 'relief', 'donasi'],
   gift: ['gift', 'mom', 'dad', 'granpa', 'grandma', 'brother', 'sister', 'donation', 'hadiah', 'donasi', 'beri uang', 'kasih uang'],
   
   // Kategori Rumah Tangga & Belanja
@@ -291,24 +292,51 @@ export function parseMultipleTransactions(
     return [{ ok: false, reason: 'invalid_input', rawText: String(rawText) }];
   }
 
-  // Pisahkan berdasarkan kata hubung yang kuat atau tanda baca
-  const clauses = rawText.split(/\b(?:and then|and also|after that|then|and|also|but|or|so|however|therefore|meanwhile|consequently|furthermore|moreover)\b|[,;]|\.\s+/i)
-    .map((c) => c.trim())
-    .filter(Boolean);
+  // Cari semua kemunculan angka (termasuk format 1.000, 10,000, atau 5000k)
+  const numberRegex = /(\d{1,3}(?:[.,]\d{3})*|[\d]+)(?:[.,]\d+)?(?:s*(jt|juta|rb|ribu|k))?/gi;
+  const matches = Array.from(rawText.matchAll(numberRegex));
 
-  if (clauses.length <= 1) {
+  // Jika hanya ada 1 atau 0 angka, langsung parse sebagai satu transaksi
+  if (matches.length <= 1) {
     return [parseTransaction(rawText, now)];
   }
 
   const results: ParseResult[] = [];
-  for (const clause of clauses) {
-    const res = parseTransaction(clause, now);
-    // Jika klausa valid, ATAU jika gagal karena tidak ada angka (bukan error fatal), kita simpan
-    if (res.ok || res.reason !== 'no_amount') {
-      results.push(res);
+  let lastIndex = 0;
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const matchIndex = match.index ?? 0;
+    const matchLength = match[0].length;
+    
+    // Tentukan batas potongan (Chunk) dari tengah-tengah antara angka sebelumnya dan saat ini
+    let startIdx = lastIndex;
+    if (i > 0) {
+      const prevMatch = matches[i - 1];
+      const prevEnd = (prevMatch.index ?? 0) + prevMatch[0].length;
+      // Titik potong di tengah-tengah teks di antara dua angka
+      startIdx = prevEnd + Math.floor((matchIndex - prevEnd) / 2);
     }
+
+    // Tentukan akhir potongan
+    let endIdx = rawText.length;
+    if (i < matches.length - 1) {
+      const nextMatch = matches[i + 1];
+      const nextStart = nextMatch.index ?? rawText.length;
+      endIdx = matchIndex + matchLength + Math.floor((nextStart - (matchIndex + matchLength)) / 2);
+    }
+
+    const chunk = rawText.slice(startIdx, endIdx).trim();
+    if (chunk) {
+      const res = parseTransaction(chunk, now);
+      if (res.ok) {
+        results.push(res);
+      }
+    }
+    lastIndex = endIdx;
   }
 
+  // Fallback: jika semua chunk gagal, parse utuh
   if (results.length === 0) {
     return [parseTransaction(rawText, now)];
   }

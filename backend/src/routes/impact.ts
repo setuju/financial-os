@@ -210,7 +210,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           parsed: {
             amount: amount,
             type: 'expense',
-            category: 'other',
+            category: 'donation',
             occurredAt: new Date(),
             rawText: `Donation to ${receiver.name}`,
             source: 'rule',
