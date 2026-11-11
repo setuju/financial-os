@@ -264,3 +264,37 @@ export function parseTransaction(
     },
   };
 }
+
+// ---- Multiple Parser (For complex sentences) ----
+export function parseMultipleTransactions(
+  rawText: string,
+  now: Date = new Date(),
+): ParseResult[] {
+  if (typeof rawText !== 'string' || rawText.trim().length === 0) {
+    return [{ ok: false, reason: 'invalid_input', rawText: String(rawText) }];
+  }
+
+  // Pisahkan berdasarkan kata hubung yang kuat atau tanda baca
+  const clauses = rawText.split(/\b(?:and then|then|after that)\b|;|\.\s+/i)
+    .map((c) => c.trim())
+    .filter(Boolean);
+
+  if (clauses.length <= 1) {
+    return [parseTransaction(rawText, now)];
+  }
+
+  const results: ParseResult[] = [];
+  for (const clause of clauses) {
+    const res = parseTransaction(clause, now);
+    // Jika klausa valid, ATAU jika gagal karena tidak ada angka (bukan error fatal), kita simpan
+    if (res.ok || res.reason !== 'no_amount') {
+      results.push(res);
+    }
+  }
+
+  if (results.length === 0) {
+    return [parseTransaction(rawText, now)];
+  }
+
+  return results;
+}

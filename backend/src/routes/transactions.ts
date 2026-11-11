@@ -27,7 +27,8 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
-import { parseTransaction } from '../surplus/parser.js';
+import { parseTransaction, parseMultipleTransactions } from '../surplus/parser.js';
+import type { ParsedTransaction } from '../surplus/parser.js';
 import { updateTransaction } from '../repositories/transactions.js';
 import { invalidateSurplusPeriods } from '../repositories/surplus-periods.js';
 import { insertTransaction, listTransactions } from '../repositories/transactions.js';
@@ -71,38 +72,45 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       const sid = req.sessionId;
       const { text, userId } = req.body;
 
-      const parsed = parseTransaction(text);
-      if (!parsed.ok) {
+      const parseResults = parseMultipleTransactions(text);
+      const successfulTxs = parseResults
+        .filter((r): r is { ok: true; tx: ParsedTransaction } => r.ok)
+        .map((r) => r.tx);
+
+      if (successfulTxs.length === 0) {
+        const firstError = parseResults[0];
         return reply.code(400).send({
-          error: parsed.reason,
-          rawText: parsed.rawText,
+          error: firstError.ok ? 'invalid_input' : firstError.reason,
+          rawText: text,
         });
       }
 
-      const transaction = await insertTransaction(fastify.pg, sid, {
-        userId: userId ?? null,
-        parsed: parsed.tx,
-      });
+      const inserted: any[] = [];
+      for (const tx of successfulTxs) {
+        const transaction = await insertTransaction(fastify.pg, sid, {
+          userId: userId ?? null,
+          parsed: tx,
+        });
+        inserted.push(transaction);
 
-        // Invalidate surplus cache so next /impact/surplus recomputes
-        await invalidateSurplusPeriods(fastify.pg, sid);
+        fastify.elastic.index({
+          index: 'transactions',
+          id: transaction.id,
+          document: {
+            raw_text: transaction.raw_text,
+            category: transaction.category,
+            type: transaction.type,
+            amount: transaction.amount,
+            occurred_at: transaction.occurred_at,
+          },
+        }).catch((err: any) => {
+          fastify.log.error({ err }, 'Failed to index transaction to Elastic');
+        });
+      }
 
-      // Kirim ke Elasticsearch (fire-and-forget, jangan blokir response jika Elastic down)
-      fastify.elastic.index({
-        index: 'transactions',
-        id: transaction.id,
-        document: {
-          raw_text: transaction.raw_text,
-          category: transaction.category,
-          type: transaction.type,
-          amount: transaction.amount,
-          occurred_at: transaction.occurred_at,
-        },
-      }).catch((err: any) => {
-        fastify.log.error({ err }, 'Failed to index transaction to Elastic');
-      });
+      await invalidateSurplusPeriods(fastify.pg, sid);
 
-      return reply.code(201).send({ transaction });
+      return reply.code(201).send({ transaction: inserted[0], transactions: inserted });
     },
   );
 
