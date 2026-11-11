@@ -117,10 +117,6 @@ const VAR: Record<number, Array<[number, string, number, string]>> = {
     [8, 'dividend from index funds', 150.5, 'investment'],
     [9, 'trader joes groceries', 87.6, 'groceries'],
     [10, 'starbucks coffee', 6.9, 'food'],
-    [11, 'donation to Red Cross', 25, 'donation'],
-    [12, 'annual performance bonus', 1500, 'bonus'],
-    [13, 'planet fitness membership', 24.99, 'fitness'],
-    [14, 'amazon electronics', 98.99, 'shopping'],
   ],
 };
 
