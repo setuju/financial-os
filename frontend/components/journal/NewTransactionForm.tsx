@@ -44,6 +44,7 @@ const EXAMPLES = [
 
 export default function NewTransactionForm() {
   const [text, setText] = useState('');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   return (
     <form action={submitTransaction}>
@@ -64,10 +65,25 @@ export default function NewTransactionForm() {
           placeholder="spent 20 dollars on coffee this morning"
           className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
-        <VoiceButton onTranscript={setText} />
+        <VoiceButton onTranscript={setText} onError={setVoiceError} />
       </div>
 
       <ReceiptScanButton onExtracted={setText} />
+
+      {voiceError && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-ink">
+          <span className="mt-0.5 flex-shrink-0 text-warning">⚠️</span>
+          <span className="flex-1">{voiceError}</span>
+          <button
+            type="button"
+            onClick={() => setVoiceError(null)}
+            aria-label="Dismiss voice error"
+            className="ml-2 rounded px-1 text-xs text-ink-soft hover:bg-surface-sunken"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <AmountEditor text={text} onChange={setText} />
 
