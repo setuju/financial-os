@@ -75,7 +75,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('X-Frame-Options', 'DENY');
     reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-    reply.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    reply.header('Permissions-Policy', 'geolocation=(), microphone=(self), camera=()');
   });
 
   await app.register(rootRoutes);
