@@ -228,6 +228,8 @@ export default async function ImpactWallet({ searchParams }: { searchParams: { p
           </h2>
         </div>
         <PayoutLog payouts={payoutList} />
+
+      <DisasterFeed />
       </div>
 
       <div className="mt-6 rounded-lg border border-accent/20 bg-accent-soft/40 p-3 text-xs text-ink-soft">

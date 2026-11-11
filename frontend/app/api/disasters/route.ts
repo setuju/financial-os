@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 
+interface ReliefWebItem {
+  id: string;
+  fields: {
+    title: string;
+    source?: Array<{ name: string }>;
+    date: { created: string };
+    url: string;
+  };
+}
+
 export async function GET() {
   try {
     const res = await fetch(
@@ -8,7 +18,7 @@ export async function GET() {
     );
     if (!res.ok) throw new Error('Failed to fetch from ReliefWeb');
     const data = await res.json();
-    const disasters = data.data?.map((item: any) => ({
+    const disasters = data.data?.map((item: ReliefWebItem) => ({
       id: item.id,
       title: item.fields.title,
       source: item.fields.source?.[0]?.name || 'Unknown Source',
