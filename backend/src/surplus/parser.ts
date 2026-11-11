@@ -45,7 +45,7 @@ export type TransactionType = 'income' | 'expense';
 export type TransactionCategory = 
   | 'food' | 'groceries' | 'transport' | 'utilities' | 'shopping' 
   | 'health' | 'fitness' | 'subscription' | 'entertainment' | 'education' 
-  | 'travel' | 'investment' | 'debt' | 'gift' | 'other';
+  | 'travel' | 'investment' | 'debt' | 'gift' | 'income' | 'other';
 
 export interface ParsedTransaction {
   amount: number;
@@ -204,6 +204,7 @@ function detectType(text: string): TransactionType {
 // Order matters — more specific categories checked first.
 const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]> = {
   // Kategori Income & Investasi (Arus Masuk)
+  income: ['paycheck', 'salary', 'wage', 'deposit', 'bonus', 'gaji', 'upah', 'pendapatan', 'paypal'],
   investment: ['dividend', 'interest', 'profit', 'stock', 'invest', 'saham', 'bunga', 'crypto', 'capital gain', 'yield'],
   
   // Kategori Pengeluaran (Arus Keluar)
