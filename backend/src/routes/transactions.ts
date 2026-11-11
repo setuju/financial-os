@@ -212,7 +212,7 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         for (const tx of transactions) {
           const transaction = await insertTransaction(client as any, sid, {
             userId: null,
-            parsed: { amount: tx.amount, type: tx.type, category: tx.category, occurredAt: new Date(), rawText: tx.rawText, source: 'manual_edit' }
+            parsed: { amount: tx.amount, type: tx.type, category: tx.category, occurredAt: new Date(), rawText: tx.rawText, source: 'rule' }
           });
           inserted.push(transaction);
         }
