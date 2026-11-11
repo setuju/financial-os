@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Loader2, X } from 'lucide-react';
+import { Mic, MicOff, Loader2, X, Square } from 'lucide-react';
 
 interface SR {
   lang: string;
@@ -33,14 +33,14 @@ interface SRWindow extends Window {
 type Support = 'unknown' | 'supported' | 'unsupported';
 type Phase = 'idle' | 'requesting' | 'listening';
 
-const VOICE_TIMEOUT_MS = 15_000;
-const SILENCE_HINT_MS = 5_000;
+const SILENCE_FINALIZE_MS = 3000;
+const HARD_TIMEOUT_MS = 60_000;
 
 function friendlyError(code: string): string {
   switch (code) {
     case 'not-allowed':
     case 'service-not-allowed':
-      return 'Chrome speech service is blocked or unreachable. Try Edge, or type instead. (Check chrome://settings/languages → Speech recognition.)';
+      return 'Chrome speech service blocked. Try Edge, or type. (chrome://settings/languages → Speech recognition)';
     case 'no-speech':
       return "Didn't hear anything. Tap the mic and speak clearly.";
     case 'audio-capture':
@@ -63,10 +63,10 @@ export default function VoiceButton({
 }) {
   const [support, setSupport] = useState<Support>('unknown');
   const [phase, setPhase] = useState<Phase>('idle');
+  const [accumulated, setAccumulated] = useState('');
   const [interim, setInterim] = useState('');
-  const [micLevel, setMicLevel] = useState(0); // 0..100
+  const [micLevel, setMicLevel] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [showSilenceHint, setShowSilenceHint] = useState(false);
 
   const recRef = useRef<SR | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -75,11 +75,11 @@ export default function VoiceButton({
   const rafRef = useRef<number | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTsRef = useRef(0);
-  const lastInterimTsRef = useRef(0);
+  const lastResultTsRef = useRef(0);
+  const accumulatedRef = useRef('');
+  const cancelledRef = useRef(false);
 
-  const emitError = (msg: string | null) => {
-    onError?.(msg);
-  };
+  const emitError = (msg: string | null) => onError?.(msg);
 
   useEffect(() => {
     const w = window as unknown as SRWindow;
@@ -87,7 +87,7 @@ export default function VoiceButton({
     setSupport(Ctor ? 'supported' : 'unsupported');
   }, []);
 
-  const teardown = () => {
+  const cleanupSideEffects = () => {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -104,57 +104,72 @@ export default function VoiceButton({
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-    if (recRef.current) {
-      try {
-        recRef.current.abort();
-      } catch {
-        /* ignore */
-      }
-      recRef.current = null;
-    }
     analyserRef.current = null;
+    recRef.current = null;
   };
 
-  const cancel = () => {
-    teardown();
+  const resetState = () => {
     setPhase('idle');
+    setAccumulated('');
     setInterim('');
     setMicLevel(0);
     setElapsedMs(0);
-    setShowSilenceHint(false);
+    accumulatedRef.current = '';
   };
 
-  useEffect(() => () => teardown(), []);
+  const finalize = () => {
+    try {
+      recRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const cancel = () => {
+    cancelledRef.current = true;
+    try {
+      recRef.current?.abort();
+    } catch {
+      /* ignore */
+    }
+    cleanupSideEffects();
+    resetState();
+  };
+
+  useEffect(
+    () => () => {
+      cancelledRef.current = true;
+      cleanupSideEffects();
+    },
+    [],
+  );
 
   const start = async () => {
     if (phase !== 'idle') return;
     emitError(null);
-    setInterim('');
-    setShowSilenceHint(false);
+    resetState();
+    cancelledRef.current = false;
 
     if (support === 'unsupported') {
       emitError(
-        'Voice input requires Chrome, Edge, or Safari. Firefox does not support Web Speech API — please type instead.',
+        'Voice requires Chrome, Edge, or Safari. Firefox not supported — please type instead.',
       );
       return;
     }
 
     setPhase('requesting');
 
-    // 1. Request mic (triggers dialog + gives us stream for audio meter)
-    // 0. Device presence check
+    // Device presence check
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const mics = devices.filter((d) => d.kind === 'audioinput');
       if (mics.length === 0) {
         setPhase('idle');
-        emitError(
-          'No microphone hardware detected on this device. Connect a mic and reload.',
-        );
+        emitError('No microphone hardware detected. Connect a mic and reload.');
         return;
       }
     } catch {
-      /* skip — proceed to getUserMedia anyway */
+      /* skip */
     }
 
     let stream: MediaStream;
@@ -165,7 +180,6 @@ export default function VoiceButton({
       const message = err instanceof Error ? err.message : '';
       setPhase('idle');
 
-      // Differentiate site-permission vs OS-level block
       let permState: 'granted' | 'prompt' | 'denied' | 'unknown' = 'unknown';
       try {
         const p = await navigator.permissions.query({
@@ -173,7 +187,7 @@ export default function VoiceButton({
         });
         permState = p.state as 'granted' | 'prompt' | 'denied';
       } catch {
-        /* Permissions API may not support microphone */
+        /* skip */
       }
 
       // eslint-disable-next-line no-console
@@ -182,46 +196,41 @@ export default function VoiceButton({
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         if (permState === 'granted') {
           emitError(
-            'Chrome permission is ALLOWED, but Windows blocked the mic. Windows 11: Settings → Privacy & security → Microphone → enable "Microphone access", "Let apps access your microphone", and "Let desktop apps access your microphone". Reload Chrome after.',
+            'Chrome permission is ALLOWED, but OS blocked the mic. Windows 11: Settings → Privacy & security → Microphone → enable "Microphone access", "Let apps access your microphone", and "Let desktop apps access your microphone".',
           );
         } else if (permState === 'denied') {
           emitError(
-            'Site blocked mic. Click the lock icon in the address bar → Microphone → Allow → Reload.',
+            'Site blocked mic. Click the lock icon → Microphone → Allow → Reload.',
           );
         } else {
-          emitError(
-            'Mic access denied. If the lock icon shows Allow, the block is at OS level (Windows Settings → Privacy & security → Microphone) or a Chrome policy.',
-          );
+          emitError('Mic access denied. Check both browser and OS settings.');
         }
       } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-        emitError('No microphone detected. Connect one and try again.');
+        emitError('No microphone detected.');
       } else if (name === 'NotReadableError') {
-        emitError(
-          'Microphone is locked by another app (Zoom/Teams/Discord). Close it and retry.',
-        );
+        emitError('Mic locked by another app (Zoom/Teams/Discord). Close it.');
       } else if (name === 'SecurityError') {
-        emitError(
-          'Blocked by browser security policy. Make sure you are on https:// and not in private mode with restrictions.',
-        );
+        emitError('Blocked by browser security policy. Check https + private mode.');
       } else {
-        emitError(
-          `Could not access microphone${name ? ` (${name})` : ''}${message ? `: ${message.slice(0, 100)}` : ''}.`,
-        );
+        emitError(`Could not access mic${name ? ` (${name})` : ''}.`);
       }
       return;
     }
     streamRef.current = stream;
 
-    // 2. Setup audio meter (visual proof mic captures)
+    // Audio meter
     try {
-      const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      const AC =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
       if (AC) {
         const ctx = new AC();
         audioCtxRef.current = ctx;
-        const source = ctx.createMediaStreamSource(stream);
+        const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
-        source.connect(analyser);
+        src.connect(analyser);
         analyserRef.current = analyser;
         const buf = new Uint8Array(analyser.frequencyBinCount);
         const loop = () => {
@@ -229,88 +238,93 @@ export default function VoiceButton({
           analyserRef.current.getByteFrequencyData(buf);
           let sum = 0;
           for (let i = 0; i < buf.length; i++) sum += buf[i];
-          const avg = sum / buf.length;
-          // amplify for visibility: 0..100
-          const pct = Math.min(100, Math.round((avg / 128) * 100 * 2.5));
+          const pct = Math.min(
+            100,
+            Math.round((sum / buf.length / 128) * 100 * 2.5),
+          );
           setMicLevel(pct);
-          if (pct > 8) lastInterimTsRef.current = Date.now();
           rafRef.current = requestAnimationFrame(loop);
         };
         loop();
       }
     } catch {
-      /* meter is nice-to-have; continue without */
+      /* meter is optional */
     }
 
-    // 3. Start SpeechRecognition
     const w = window as unknown as SRWindow;
     const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!Ctor) {
-      teardown();
+      cleanupSideEffects();
       setPhase('idle');
-      emitError('Voice input is unavailable in this browser.');
+      emitError('Voice unavailable in this browser.');
       return;
     }
 
     const rec = new Ctor();
     recRef.current = rec;
     rec.lang = 'en-US';
-    rec.continuous = false;
+    rec.continuous = true; // KEY FIX: don't auto-stop after first phrase
     rec.interimResults = true;
 
     rec.onresult = (e: SREvent) => {
+      lastResultTsRef.current = Date.now();
+      let newFinal = '';
       let interimText = '';
-      let finalText = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
-        const txt = res[0]?.transcript ?? '';
-        if (res.isFinal) finalText += txt;
-        else interimText += txt;
+        const txt = (res[0]?.transcript ?? '').trim();
+        if (!txt) continue;
+        if (res.isFinal) newFinal += txt + ' ';
+        else interimText += txt + ' ';
       }
-      if (interimText) {
-        setInterim(interimText);
-        lastInterimTsRef.current = Date.now();
+      if (newFinal) {
+        accumulatedRef.current =
+          (accumulatedRef.current + ' ' + newFinal).trim() + ' ';
+        setAccumulated(accumulatedRef.current.trim());
       }
-      if (finalText) {
-        onTranscript(finalText.trim());
-        cancel();
-      }
+      setInterim(interimText.trim());
     };
 
     rec.onerror = (e) => {
+      if (e.error === 'aborted' || cancelledRef.current) return;
       const msg = friendlyError(e.error);
       if (msg) emitError(msg);
-      teardown();
-      setPhase('idle');
-      setMicLevel(0);
-      setElapsedMs(0);
     };
 
     rec.onend = () => {
-      teardown();
-      setPhase('idle');
-      setMicLevel(0);
-      setElapsedMs(0);
-      setInterim('');
+      if (cancelledRef.current) {
+        cleanupSideEffects();
+        resetState();
+        return;
+      }
+      const final = accumulatedRef.current.trim();
+      if (final) onTranscript(final);
+      cleanupSideEffects();
+      resetState();
     };
 
     try {
       startTsRef.current = Date.now();
-      lastInterimTsRef.current = Date.now();
+      lastResultTsRef.current = Date.now();
       rec.start();
       setPhase('listening');
 
       tickRef.current = setInterval(() => {
         const el = Date.now() - startTsRef.current;
         setElapsedMs(el);
-        // Silence hint: mic active but no speech
-        if (
-          el > SILENCE_HINT_MS &&
-          Date.now() - lastInterimTsRef.current > SILENCE_HINT_MS
-        ) {
-          setShowSilenceHint(true);
+        const sinceLast = Date.now() - lastResultTsRef.current;
+
+        // Auto-finalize: 3s silence AFTER having some accumulated text
+        if (accumulatedRef.current && sinceLast > SILENCE_FINALIZE_MS) {
+          try {
+            rec.stop();
+          } catch {
+            /* ignore */
+          }
+          return;
         }
-        if (el >= VOICE_TIMEOUT_MS) {
+        // Hard timeout
+        if (el >= HARD_TIMEOUT_MS) {
           try {
             rec.stop();
           } catch {
@@ -319,14 +333,13 @@ export default function VoiceButton({
         }
       }, 100);
     } catch {
-      teardown();
+      cleanupSideEffects();
       setPhase('idle');
-      emitError('Could not start microphone. Try reloading the page.');
+      emitError('Could not start microphone. Try reloading.');
     }
   };
 
   if (support === 'unknown') return null;
-
   const unsupported = support === 'unsupported';
 
   return (
@@ -335,7 +348,11 @@ export default function VoiceButton({
         type="button"
         onClick={start}
         disabled={phase !== 'idle' || unsupported}
-        title={unsupported ? 'Voice requires Chrome, Edge, or Safari' : 'Speak your transaction'}
+        title={
+          unsupported
+            ? 'Voice requires Chrome, Edge, or Safari'
+            : 'Speak your transaction(s)'
+        }
         aria-label="Speak your transaction"
         className={`flex items-center justify-center gap-2 rounded-lg border px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
           unsupported
@@ -369,7 +386,7 @@ export default function VoiceButton({
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 left-1/2 z-50 flex w-[min(92vw,420px)] -translate-x-1/2 flex-col gap-2 rounded-2xl border border-line bg-ink px-5 py-4 text-white shadow-2xl"
+          className="fixed bottom-6 left-1/2 z-50 flex w-[min(92vw,460px)] -translate-x-1/2 flex-col gap-3 rounded-2xl border border-line bg-ink px-5 py-4 text-white shadow-2xl"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -381,12 +398,14 @@ export default function VoiceButton({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-white/60">
-                {(elapsedMs / 1000).toFixed(1)}s / {(VOICE_TIMEOUT_MS / 1000).toFixed(0)}s
+                {(elapsedMs / 1000).toFixed(1)}s /{' '}
+                {(HARD_TIMEOUT_MS / 1000).toFixed(0)}s
               </span>
               <button
                 type="button"
                 onClick={cancel}
                 aria-label="Cancel voice input"
+                title="Cancel (discard)"
                 className="rounded-md p-1 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
               >
                 <X className="h-4 w-4" />
@@ -394,9 +413,11 @@ export default function VoiceButton({
             </div>
           </div>
 
-          {/* Audio meter — visual proof mic is capturing */}
           <div className="flex items-center gap-2">
-            <Mic className="h-3 w-3 flex-shrink-0 text-white/40" aria-hidden />
+            <Mic
+              className={`h-3 w-3 flex-shrink-0 ${micLevel > 5 ? 'text-emerald-400' : 'text-white/40'}`}
+              aria-hidden
+            />
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/15">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-red-500 transition-[width] duration-100"
@@ -405,21 +426,30 @@ export default function VoiceButton({
             </div>
           </div>
 
-          {interim && (
-            <p className="text-center text-xs italic text-white/80">&ldquo;{interim}&rdquo;</p>
-          )}
-
-          {!interim && showSilenceHint && (
-            <p className="text-center text-xs text-white/70">
-              {micLevel > 3
-                ? 'Mic is working, but Chrome speech service isn\u2019t responding. Try Edge or type instead.'
-                : 'Speak clearly into your microphone.'}
+          {(accumulated || interim) && (
+            <p className="text-sm leading-relaxed text-white">
+              {accumulated}
+              {interim && (
+                <span className="italic text-white/60"> {interim}</span>
+              )}
             </p>
           )}
 
-          {!interim && !showSilenceHint && (
-            <p className="text-center text-xs text-white/50">Speak now…</p>
+          {!accumulated && !interim && (
+            <p className="text-center text-xs text-white/50">
+              Speak now — say one or more items, then click Stop (or pause 3s)
+            </p>
           )}
+
+          <button
+            type="button"
+            onClick={finalize}
+            disabled={!accumulated && !interim}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover disabled:opacity-40"
+          >
+            <Square className="h-3.5 w-3.5 fill-current" />
+            Stop &amp; insert
+          </button>
         </div>
       )}
     </>
