@@ -29,7 +29,8 @@ import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
 import { paypalClient } from '../paypal/client.js';
 import { createPayout, listPayouts, softDeletePayout } from '../repositories/payouts.js';
-import { getSurplusPeriod, lastMonth, currentMonth, cascadeFrom } from '../repositories/surplus-periods.js';
+import { insertTransaction } from '../repositories/transactions.js';
+import { getSurplusPeriod, lastMonth, currentMonth, cascadeFrom, invalidateSurplusPeriods } from '../repositories/surplus-periods.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -199,6 +200,21 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
 
         // Cascade recompute: source month + all forward months
         await cascadeFrom(fastify.pg, sid, source);
+
+        // Catat donasi sebagai pengeluaran (Expense) di Jurnal
+        await insertTransaction(fastify.pg, sid, {
+          userId: null,
+          parsed: {
+            amount: amount,
+            type: 'expense',
+            category: 'other',
+            occurredAt: new Date(),
+            rawText: `Donation to ${receiver.name}`,
+            source: 'rule',
+          }
+        });
+        // Invalidate cache agar surplus langsung terpotong
+        await invalidateSurplusPeriods(fastify.pg, sid);
 
         return reply.code(201).send({
           payout,

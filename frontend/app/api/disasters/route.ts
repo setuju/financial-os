@@ -1,32 +1,36 @@
 import { NextResponse } from 'next/server';
 
-interface ReliefWebItem {
+interface UsgsFeature {
   id: string;
-  fields: {
+  properties: {
     title: string;
-    source?: Array<{ name: string }>;
-    date: { created: string };
+    place: string;
+    time: number;
     url: string;
+    mag: number;
   };
 }
 
 export async function GET() {
   try {
+    // Mengambil gempa signifikan 30 hari terakhir dari USGS
     const res = await fetch(
-      'https://api.reliefweb.int/v2/reports?appname=financial-os-demo&limit=5&preset=latest',
+      'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson',
       { next: { revalidate: 3600 } }
     );
-    if (!res.ok) throw new Error('Failed to fetch from ReliefWeb');
+    if (!res.ok) throw new Error('Failed to fetch from USGS');
+    
     const data = await res.json();
-    const disasters = data.data?.map((item: ReliefWebItem) => ({
+    const disasters = data.features?.slice(0, 5).map((item: UsgsFeature) => ({
       id: item.id,
-      title: item.fields.title,
-      source: item.fields.source?.[0]?.name || 'Unknown Source',
-      date: new Date(item.fields.date.created).toLocaleDateString('en-US', {
+      title: item.properties.title,
+      source: 'USGS Earthquake Hazards Program',
+      date: new Date(item.properties.time).toLocaleDateString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric',
       }),
-      url: item.fields.url,
+      url: item.properties.url,
     })) || [];
+    
     return NextResponse.json({ disasters });
   } catch (error) {
     console.error('Disaster API Error:', error);

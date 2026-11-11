@@ -176,6 +176,7 @@ function detectIntent(text: string): boolean {
 // ---- Type detection ----
 
 const INCOME_VERBS = [
+  'gave me', 'gave', 'gifted', 'won',
   'dapat', 'terima', 'menerima', 'gaji', 'bonus', 'menang',
   'income', 'earn', 'earned', 'received', 'receive', 'salary', 'refund',
 ];
