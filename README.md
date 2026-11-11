@@ -16,7 +16,7 @@
 
 **Natural-language personal finance with ethical surplus distribution.**
 
-Type money like you text — `"spent 20 on coffee"` or `"bought groceries 45 dollars"`. Track only surplus after obligations, plan long-term goals on a Gantt timeline, and route 10% of verified surplus to vetted causes via **PayPal Payouts**. Principal savings are never touched. Every payout requires two-step confirmation.
+Type, speak, or photograph money transactions. Track only surplus after obligations, plan long-term goals on a Gantt timeline, and route 10% of verified surplus to vetted causes via **PayPal Payouts**. Principal savings are never touched. Every payout requires two-step confirmation.
 
 > **Sandbox only. No real money moves.**
 
@@ -31,55 +31,49 @@ Type money like you text — `"spent 20 on coffee"` or `"bought groceries 45 dol
 
 | Access | Credentials | What you see |
 |---|---|---|
-| **Admin** | name `admin` · password `financial-os` | Seeded demo data (Jul–Nov 2026): 116 transactions, 3 goals, 2 oracles, donation history |
-| **New session** | `https://financial.saturumah.net/signup` — pick a name, get a 5-char password | Empty slate. Data is isolated per session. |
+| **Admin** | name `admin` · password `financial-os` | Seeded demo data (Jul–Nov 2026): 100+ transactions, 3 goals, 2 oracles, 5 surplus periods |
+| **New session** | [financial.saturumah.net/signup](https://financial.saturumah.net/signup) — pick a name, get a 5-char password | Empty slate. Isolated per session. |
 
-**Live frontend:** https://financial.saturumah.net
-**Live backend:** https://financial-api.saturumah.net/health
+**Live frontend:** https://financial.saturumah.net · **API:** https://financial-api.saturumah.net/health
 
-> **First request after 15 min idle** may take ~50s (Render free tier). Subsequent requests: 100–300ms.
+> **First request after 15 min idle** may take ~50s (Render free tier). Subsequent: 100–300ms.
 
 ---
 
 ## Demo Showcase: AI Receipt Scanning
 
-Below is a mock receipt used to test the 4th AI modality (Vision). The app uses **Groq Qwen 3.8 27B** (with OCR.space fallback) to extract the text, and our rule-based parser automatically structures it into a transaction.
-
 <p align="center">
   <img src="docs/assets/mock-receipt.png" alt="Mock Receipt" width="350">
 </p>
 
-**Test result:**
-- **Extracted text:** `"spent 9 dollars on coffee and a butter croissant at Kopi Kenangan"`
-- **Parsed transaction:** `$9.00` · `expense` · `food` · `Kopi Kenangan` · `2026-11-07`
-- **Latency:** ~1.0 second (Groq API)
+**AI vision** (Groq Qwen 3.8 27B + OCR.space fallback) extracts merchant and total. The rule-based parser auto-structures it into a transaction.
 
-> **Disclaimer:** The receipt image shown above is a **synthetic mock created for demonstration purposes**. The store name, address, items, and prices are fictional. Any resemblance to actual receipts, stores, or transactions is purely coincidental. This is not real financial data. We are not liable for any similarities to real-world entities.
+> **Disclaimer:** The receipt is a synthetic mock. Store name, items, and prices are fictional. Any resemblance to actual receipts or transactions is coincidental.
 
 ---
 
 ## Hackathon 2026
 
-Built for the [**PayPal AI Hackathon 2026**](https://paypalaihackathon.devpost.com/) between **Oct 1 – Nov 12, 2026**, solo, targeting:
+Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/) between **Oct 1 – Nov 12, 2026**, solo, targeting:
 
-- 🎯 **Most Impactful** — ethical surplus model, principal untouched, human-in-the-loop
-- 🎯 **Most Creative** — parser rejects plans and cancellations; Surplus Oracle prediction game
+- 🎯 **Most Impactful** — ethical surplus, principal untouched, human-in-the-loop
+- 🎯 **Most Creative** — parser rejects plans & cancellations; multi-transaction parsing; Surplus Oracle
 - 🎯 **Best Demo Delivery** — end-to-end flow within 3 minutes
 - 🎯 **Best Use of Bryntum** — Gantt timeline gates PayPal payouts
 - 🎯 **Best Use of APIMatic** — generated TypeScript SDK from PayPal OpenAPI
 - 🎯 **Best Use of PayPal + AI** — 4 AI modalities feeding a live payout pipeline
 
 **AI tools used** (per submission rules):
-- **Groq (Qwen 3.8 27B)** → OCR vision extraction (primary path)
-- **OCR.space** → OCR fallback path (traditional OCR, no LLM)
-- **Gemini 3.8 Flash** via OpenRouter → scoped in-app assistant (primary path)
-- **Gemini 3 Flash Preview** via Google AI Studio → assistant fallback (proven live when OpenRouter was unavailable during final submission week)
+- **Gemini 3.8 Flash** via OpenRouter → scoped assistant (primary)
+- **Gemini 3 Flash Preview** via Google AI Studio → assistant fallback (proven live during submission week)
+- **Qwen 3.8 27B** via Groq → OCR vision extraction (primary)
+- **OCR.space** → OCR fallback (traditional, no LLM)
 
 ---
 
 ## Why this exists
 
-Most finance apps treat every leftover dollar as "disposable." Financial OS introduces **Ethical Surplus** — surplus calculated *after* obligations (rent, bills, savings goals), never touching principal savings. Users predict next month's surplus, plan long-term goals, and route 10% to vetted causes. Every allocation requires explicit two-step confirmation.
+Most finance apps treat every leftover dollar as "disposable". Financial OS introduces **Ethical Surplus** — surplus calculated *after* obligations, never touching principal. Every allocation requires explicit two-step confirmation.
 
 **No auto-donate. No guilt trip. No touching your rent money.**
 
@@ -87,104 +81,108 @@ Most finance apps treat every leftover dollar as "disposable." Financial OS intr
 
 ## Core concepts
 
-**Anti-Budget Parser** — Natural-language input in English or Bahasa Indonesia. Rejects plans (`"i want to buy a bike for 500 dollars"`), cancellations (`"never mind the coffee"`), and negations — the journal reflects what *actually happened*, not intentions.
+**Anti-Budget Parser** — Natural-language input in English or Bahasa Indonesia. Rejects plans (`"i want to buy a bike for 500 dollars"` → `planned_input`), cancellations (`"never mind the coffee"` → `negated_input`), and negations. Supports **multiple transactions** in one sentence: `"i get 5000 from freelance and 2000 from bonus then pay rent 1500"` → 3 separate transactions. Uses **First-Verb-Wins** logic for context: `"i get pay 500"` = income; `"i pay rent 500"` = expense.
 
-**Ethical Surplus** — Only surplus after obligations can be distributed. Cascade formula, month-to-month:
+**Ethical Surplus** — Only surplus after obligations can be distributed:
 
 ```
 closing = opening + income − expense − horizon_bills − donations
 ```
 
-Each month's closing becomes the next month's opening. `horizon_bills` = committed future obligations extracted from active Horizon goals. `donations` = successful payouts tagged to that period.
+Each month's closing becomes the next month's opening. `horizon_bills` = committed obligations from active Horizon goals.
 
-**Surplus Oracle** — Predict next week's or next month's surplus. When achieved, mark it done — celebration modal included. Low-stakes gamification of a serious decision.
+**Surplus Oracle** — Predict next week's/month's surplus. Mark achieved when hit — celebration modal.
 
-**Financial Horizon** — Long-term goals rendered on a **Bryntum Gantt 8** timeline. Each active goal contributes `monthly_saving` to `horizon_bills`, which is subtracted from each month's distributable surplus. **The Gantt gates the payout.**
+**Financial Horizon** — Long-term goals on **Bryntum Gantt 8**. Each active goal contributes `monthly_saving` to `horizon_bills`, subtracted from each month's distributable surplus. **The Gantt gates the payout.** Product search powered by **Channel3** API — pick a real product, price auto-fills the goal.
 
-**Impact Wallet** — Verified surplus (last closed month) plus in-progress (current month) plus 6-month history. A payout moves money from verified surplus to a vetted cause via **PayPal Payouts sandbox**. Two-step confirm. Log preserves audit trail after soft-delete.
+**Impact Wallet** — Verified surplus (last closed month) plus in-progress (current month) plus 6-month history. 8 vetted causes (Red Cross, Direct Relief, UNICEF, WCK, Water.org, MSF, Rainforest Alliance, Save the Children). Two-step confirm. Log preserves audit trail after soft-delete. Live disaster/news feed from USGS + Google News.
 
-**Scoped AI Assistant** — Floating "?" panel explains app features. Refuses coding, general advice, jailbreaks, and off-topic prompts. Prompt is canary-protected; leaks are detected server-side and blocked before rendering.
+**Scoped AI Assistant** — Floating "?" panel explains the app. Refuses coding, advice, jailbreaks, off-topic. Canary-protected prompt. Dual-provider (OpenRouter primary, Gemini fallback).
 
-**Multi-Tenant Demo** — Every visitor gets an isolated session. Data is scoped per `session_id` on every table. Admin session owns the seeded baseline; new sessions start empty.
+**Multi-Tenant Demo** — Every visitor gets an isolated session. Data scoped per `session_id`.
+
+**Live Preview** — As you type in `/journal/new`, results appear below within 500ms — before saving. Edit any line (amount, type, category) inline via pencil icon.
 
 ---
 
 ## Features
 
 ### Input
-- **Natural-language parser** — English + Bahasa Indonesia, USD-first, rejects plans/negations/cancellations
-- **Voice input** — Web Speech API with continuous mode, audio meter, and per-error diagnostics
-- **Amount editor** — inline correction when ASR misfires or parser misses a number
-- **OCR receipt scan** — Groq Qwen 3.8 27B vision (primary) + OCR.space fallback auto-fills the entry from a photo
+- **Natural-language parser** — EN + ID, USD-first, rejects plans/negations/cancellations, multi-transaction
+- **Voice input** — Web Speech API, continuous mode, audio meter, per-error diagnostics
+- **OCR receipt scan** — Groq Qwen 3.8 (primary) + OCR.space fallback
+- **Live Preview** — Debounced parse preview with inline pencil edit
+- **Batch save** — Atomic `BEGIN/COMMIT` insert for all edited previews
 
 ### Tracking
-- **Journal** — pagination (20 / 50 / 100 / all), inline edit, delete with undo window, PDF export
-- **Ledger** — Grid and Notebook views, 36 filter combinations (view × type × group × range × projection), Opening / Closing cascade columns, status legend (ACTUAL / PROJECTED / MIXED), PDF export
-- **Projections** — forecast rows flagged `PROJECTED` and excluded from "actual" aggregates
+- **Journal** — pagination, inline edit, delete, PDF export, **Current Balance** card, IN/OUT badges
+- **Ledger** — Grid/Notebook views, 36 filter combos, Opening/Closing cascade, status legend, PDF
+- **Projections** — forecast rows flagged `PROJECTED`, excluded from actuals
 
 ### Planning
-- **Goals** — add / edit / delete, auto-duration (`ceil(target / monthly_saving)`), progress bars, typed confirmation on delete
-- **Financial Horizon** — **Bryntum Gantt 8** with custom fields: `targetAmount`, `monthlySaving`, `interestRate`, `loanTermMonths`, `progress`, `startDate`, `endDate`, `duration`
-- **Surplus Oracle** — predict, edit, delete, mark achieved, celebration modal
+- **Goals** — add/edit/delete, auto-duration, progress bars, typed delete confirm
+- **Financial Horizon** — Bryntum Gantt 8, custom fields, **Channel3 product search**, sandbox purchase flow
+- **Surplus Oracle** — predict, edit, achieve, celebration modal
 
 ### Impact
-- **Verified surplus** (last closed month) + **in-progress** (current month)
+- **Verified + In-Progress** surplus cards
 - **6-month history** strip
-- **Next-month Horizon commitment** warning banner
-- **Donation log** with soft-delete (audit trail preserved)
-- **PayPal Payouts** via APIMatic-generated TypeScript SDK — sandbox, two-step confirm, batch ID surfaced
+- **8 real donation orgs** with direct website links
+- **PayPal Payouts** (sandbox, APIMatic SDK) — two-step confirm, batch ID surfaced
+- **Live Global Alerts** — USGS earthquakes + Google News from partner orgs
 
 ### AI (4 modalities)
-- **Text** — rule-based parser (40/40 tests)
-- **Voice** — Web Speech API, continuous capture
-- **Vision** — Groq Qwen 3.8 27B (primary) + OCR.space fallback
-- **Chat** — scoped assistant, dual-provider (OpenRouter primary + Gemini native fallback)
+- **Text** — rule parser (40/40 tests + multi-parser)
+- **Voice** — Web Speech API
+- **Vision** — Groq Qwen 3.8 27B + OCR.space fallback
+- **Chat** — scoped assistant (OpenRouter + Gemini fallback)
 
 ### UI
 - **Dark mode** — CSS variables, 300ms smooth inversion, anti-flash inline script
-- **Wallet favicon** — SVG, PayPal blue
 - **Responsive** — mobile card list / desktop table
-- **WCAG AA** — contrast tokens audited, screen-reader labels on icon-only links
+- **WCAG AA** — contrast tokens, aria-labels
 - **5 legal pages** — privacy, terms, legal, security, support
 
 ---
 
 ## Demo access & multi-tenant
 
-Every visitor signs up with a **name only** — no email, no PII. The system generates a **5-character password** (A–Z excluding O/I/L, 2–9). Data is fully isolated via `session_id` on `transactions`, `goals`, `surplus_oracles`, `payouts`, and `surplus_periods`.
+Name-only signup (no email, no PII). 5-char generated password. Isolated via `session_id` on `transactions`, `goals`, `surplus_oracles`, `payouts`, `surplus_periods`.
 
-| Flow | Endpoint | Notes |
-|---|---|---|
-| Signup | `POST /demo/signup` | `{ name }` → `{ sessionId, password }` |
-| Login | `POST /demo/login` | `{ name, password }` → sets `fos_session_id` cookie |
-| Reset | `POST /demo/reset` | Wipes data for **current session only** |
+| Flow | Endpoint |
+|---|---|
+| Signup | `POST /demo/signup` |
+| Login | `POST /demo/login` |
+| Reset | `POST /demo/reset` |
 
-**Cookies:** `fos_session_id` (httpOnly) + `fos_name`, `fos_is_admin` (readable, for UI).
+**Cookies:** `fos_session_id` (httpOnly) + `fos_name`, `fos_is_admin` (readable).
 
 ---
 
-## Sponsor tools — honest fit
+## Sponsor tools
 
-| Tool | Used for | Status |
+| Tool | Purpose | Status |
 |---|---|---|
-| **PayPal Payouts** | Impact Wallet distribution (sandbox) | ✅ Live |
-| **APIMatic** | Generated TypeScript SDK from PayPal OpenAPI | ✅ Live |
-| **Bryntum Gantt 8** | Financial Horizon timeline | ✅ Live |
-| **Elastic Cloud** | Transaction search index (query layer implemented, writes deferred to v2) | 🟡 Provisioned |
-| **OpenRouter** | AI assistant primary provider | ✅ Live |
-| **Google AI Studio** | Assistant fallback (Gemini 3 Flash Preview) | ✅ Live |
+| **PayPal Payouts** | Impact Wallet (sandbox) | ✅ Live |
+| **APIMatic** | TypeScript SDK from PayPal OpenAPI | ✅ Live |
+| **Bryntum Gantt 8** | Financial Horizon | ✅ Live |
+| **Channel3** | Product catalog for Horizon goals | ✅ Live |
+| **Elastic Cloud** | Search index (query layer; writes deferred to v2) | 🟡 Provisioned |
+| **OpenRouter** | AI assistant primary | ✅ Live |
+| **Google AI Studio** | Assistant fallback | ✅ Live |
 | **Groq** | OCR vision (Qwen 3.8 27B) | ✅ Live |
-| **OCR.space** | OCR fallback path | ✅ Live |
+| **OCR.space** | OCR fallback | ✅ Live |
+| **USGS** | Earthquake alerts feed | ✅ Live |
 
 ---
 
 ## Tech stack
 
-**Frontend** — Next.js 14.2 (App Router) · TypeScript strict · Tailwind CSS 3.4 · lucide-react · jspdf · @bryntum/gantt-react-enterprise 8
+**Frontend:** Next.js 14.2 (App Router) · TypeScript strict · Tailwind CSS 3.4 · lucide-react · jspdf · @bryntum/gantt-react-enterprise 8 · @channel3/sdk
 
-**Backend** — Fastify 4 · TypeScript strict (ESM) · PostgreSQL 16 (Neon) · ioredis (Upstash) · Elastic Cloud · PayPal Payouts API · OpenRouter · Groq · Google AI Studio · bcrypt
+**Backend:** Fastify 4 · TypeScript strict (ESM) · PostgreSQL 16 (Neon) · ioredis (Upstash) · Elastic Cloud · PayPal Payouts · OpenRouter · Groq · Google AI Studio · bcrypt
 
-**Infra** — Vercel (frontend) · Render (backend) · Neon (Postgres) · Upstash (Redis) · Cloudflare (DNS) · UptimeRobot (keep-alive)
+**Infra:** Vercel (frontend) · Render (backend) · Neon (Postgres) · Upstash (Redis) · Cloudflare (DNS) · UptimeRobot (keep-alive)
 
 ---
 
@@ -193,7 +191,7 @@ Every visitor signs up with a **name only** — no email, no PII. The system gen
 ```
 Browser
   │
-  ├── Server Components ──▶ Backend (direct, API_URL + X-Session-Id)
+  ├── Server Components ──▶ Backend (API_URL + X-Session-Id)
   │
   └── Client Components ──▶ /api/proxy/* ──▶ Backend
                           (Vercel Node)         │
@@ -202,7 +200,9 @@ Browser
                                                  ├── Elastic Cloud
                                                  ├── PayPal Payouts
                                                  ├── Groq (OCR)
-                                                 └── OpenRouter / Gemini (Chat)
+                                                 ├── Channel3 (products)
+                                                 ├── USGS (earthquakes)
+                                                 └── OpenRouter / Gemini
 ```
 
 ---
@@ -212,23 +212,19 @@ Browser
 ```bash
 git clone https://github.com/setuju/financial-os.git
 cd financial-os
-
-# 1. Infra
 cp infra/.env.example infra/.env
 docker compose -f infra/docker-compose.yml --env-file infra/.env up -d
-
-# 2. Backend
-cd backend
-pnpm install
-pnpm migrate
-SEED_CONFIRM=yes-wipe-demo-data pnpm seed
-pnpm dev
-
-# 3. Frontend (new terminal)
-cd frontend
-pnpm install
-pnpm dev
+cd backend && pnpm install && pnpm migrate && pnpm dev
+cd ../frontend && pnpm install && pnpm dev
 ```
+
+---
+
+## Environment variables
+
+**Backend (Render):** `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `REDIS_URL`, `ELASTIC_URL`, `ELASTIC_API_KEY`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY`
+
+**Frontend (Vercel):** `API_URL`, `BRYNTUM_LICENSE_KEY`, `CHANNEL3_API_KEY`
 
 ---
 
@@ -238,45 +234,64 @@ Base: `https://financial-api.saturumah.net`
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/health` | PG + Redis + uptime |
-| `POST` | `/demo/signup` | Create isolated session |
-| `POST` | `/demo/login` | Authenticate session |
-| `POST` | `/demo/reset` | Wipe current session data |
+| `GET` | `/health` | PG + Redis status |
+| `POST` | `/demo/signup` | Create session |
+| `POST` | `/demo/login` | Login |
+| `POST` | `/demo/reset` | Reset current session data |
 | `GET` | `/transactions` | List (paginated) |
 | `POST` | `/transactions` | Create (natural language) |
+| `POST` | `/transactions/preview` | **Parse without save** (for Live Preview) |
+| `POST` | `/transactions/batch` | **Save multiple** (from Live Preview edits) |
 | `PUT` | `/transactions/:id` | Update (re-parse) |
 | `DELETE` | `/transactions/:id` | Delete |
-| `GET` | `/transactions/search` | Elastic search |
-| `GET` | `/reports/summary` | Aggregated buckets |
-| `GET` | `/goals` | List goals |
-| `POST` | `/goals` | Create goal |
+| `GET` | `/reports/summary` | Bucketed aggregates |
+| `GET`/`POST` | `/goals` | List / create |
+| `DELETE` | `/goals/:id` | Delete |
 | `GET` | `/surplus/current` | Income/expense/surplus |
-| `POST` | `/surplus/predict` | Create Oracle prediction |
+| `POST` | `/surplus/predict` | Oracle create |
 | `GET` | `/impact/receivers` | Vetted causes |
 | `GET` | `/impact/surplus` | Verified + in-progress + history |
 | `POST` | `/impact/payout` | PayPal Payouts (sandbox) |
 | `POST` | `/receipts/ocr` | Groq Vision extraction |
 | `POST` | `/assistant/chat` | Scoped AI chat |
 
+**Postman:** `docs/postman/financial-os.postman_collection.json`
+
+---
+
+## Testing
+
+```bash
+cd backend && pnpm test       # 40/40 parser tests
+cd backend && pnpm typecheck
+cd frontend && pnpm typecheck
+```
+
 ---
 
 ## Ethics & security
 
-- **Sandbox only** — no real money moves.
-- **Human-in-the-loop** — every payout requires two-step confirmation.
-- **Principal untouched** — savings goals are subtracted before surplus is calculated.
-- **Verbatim raw text preserved** — for audit.
-- **Parser rejects plans** — "i want to buy a bike" is not a transaction.
-- **Scoped AI** — refuses coding, advice, off-topic, and jailbreaks.
-- **No secrets in source** — env vars only.
-- **`dangerouslySetInnerHTML` audited** — used only for JSON-LD and static theme script.
+- **Sandbox only** — no real money moves
+- **Human-in-the-loop** — two-step confirm for all payouts
+- **Principal untouched** — savings subtracted before surplus
+- **Verbatim raw text** preserved for audit
+- **Parser rejects plans** — intention ≠ transaction
+- **Soft-delete** — audit trail preserved
+- **Scoped AI** — refuses non-Financial-OS topics
+- **No secrets in source** — env vars only
+
+---
+
+## Roadmap
+
+**Shipped:** Parser V8 (multi-transaction, context-aware) · Live Preview with inline edit · Channel3 product search + sandbox purchase · 8 real donation orgs · USGS + Google News feed · Current Balance card · Batch insert API · All previous features
+
+**Planned (v2):** Dashboard charts (distributions, top categories, surplus trend, donation log) · Rate limiting · Elasticsearch indexing pipeline · PayPal live mode · Mobile app
 
 ---
 
 ## License
 
 [MIT](LICENSE) © 2026 Jack ([setuju](https://github.com/setuju))
-
----
 
 **Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)** · Solo developer · [Jack@SatuRumah.net](mailto:Jack@SatuRumah.net)
