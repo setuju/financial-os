@@ -54,7 +54,7 @@ export default function NewTransactionForm() {
           setPreviewTxs(data.transactions || []);
           setParseError(null);
         }
-      } catch (err) {
+      } catch {
         setParseError('Network error. Is backend awake?');
       } finally {
         setIsParsing(false);
