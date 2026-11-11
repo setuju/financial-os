@@ -36,7 +36,7 @@ import Card from '@/components/ui/Card';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatCurrency = (value: any) => `$${Number(value || 0).toFixed(2)}`;
 
-const COLORS = ['var(--accent)', 'var(--success)', 'var(--danger)', 'var(--warning)', '#8b5cf6', '#ec4899'];
+const COLORS = ['#0070ba', '#059669', '#e11d48', '#d97706', '#8b5cf6', '#ec4899', '#64748b', '#0ea5e9'];
 
 interface Props {
   summaryData: SummaryResponse | null;
@@ -72,13 +72,13 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={flowData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="name" stroke="var(--ink-soft)" fontSize={12} />
-              <YAxis stroke="var(--ink-soft)" fontSize={12} tickFormatter={(v) => `$${v}`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+              <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
+              <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `$${v}`} />
               <RechartsTooltip formatter={formatCurrency} />
               <Legend />
-              <Bar dataKey="Income" fill="var(--success)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Expense" fill="var(--danger)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Income" fill="#059669" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Expense" fill="#e11d48" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -146,15 +146,15 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
             <AreaChart data={surplusData}>
               <defs>
                 <linearGradient id="colorSurplus" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0070ba" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#0070ba" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="name" stroke="var(--ink-soft)" fontSize={12} />
-              <YAxis stroke="var(--ink-soft)" fontSize={12} tickFormatter={(v) => `$${v}`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+              <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
+              <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `$${v}`} />
               <RechartsTooltip formatter={formatCurrency} />
-              <Area type="monotone" dataKey="Surplus" stroke="var(--accent)" fillOpacity={1} fill="url(#colorSurplus)" />
+              <Area type="monotone" dataKey="Surplus" stroke="#0070ba" fillOpacity={1} fill="url(#colorSurplus)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -166,11 +166,11 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={donationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="name" stroke="var(--ink-soft)" fontSize={12} />
-              <YAxis stroke="var(--ink-soft)" fontSize={12} tickFormatter={(v) => `$${v}`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+              <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
+              <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `$${v}`} />
               <RechartsTooltip formatter={formatCurrency} />
-              <Bar dataKey="Amount" fill="var(--accent)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Amount" fill="#0070ba" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -65,8 +65,8 @@ export default async function Home() {
 
   const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts] = await Promise.all([
     serverGetReportSummary({ from: fmt(sixMonthsAgo), to: fmt(now), groupBy: 'month', type: 'all', includeProjections: false }),
-    serverGetReportCategories({ from: fmt(new Date(now.getFullYear(), now.getMonth(), 1)), to: fmt(now), type: 'income' }),
-    serverGetReportCategories({ from: fmt(new Date(now.getFullYear(), now.getMonth(), 1)), to: fmt(now), type: 'expense' }),
+    serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'income' }),
+    serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'expense' }),
     serverGetImpactSurplus(),
     serverGetImpactPayouts(),
   ]);
