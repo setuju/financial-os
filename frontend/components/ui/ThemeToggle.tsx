@@ -62,7 +62,7 @@ export default function ThemeToggle() {
         className="rounded-md p-2 text-ink-soft"
         disabled
       >
-        <Sun className="h-4 w-4" />
+        <Moon className="h-4 w-4" />
       </button>
     );
   }

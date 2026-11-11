@@ -52,29 +52,6 @@ html[data-theme='light'] {
   --warning-soft: 254 243 199;
 }
 
-/* ─── Design tokens (dark) ─── */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --surface-default: 10 10 11;
-    --surface-raised: 24 24 27;
-    --surface-sunken: 39 39 42;
-    --line: 39 39 42;
-    --line-strong: 63 63 70;
-    --ink: 250 250 250;
-    --ink-soft: 161 161 170;
-    --ink-faint: 161 161 170;
-    --accent: 59 159 219;
-    --accent-hover: 74 174 234;
-    --accent-soft: 12 40 60;
-    --success: 52 211 153;
-    --success-soft: 6 78 59;
-    --danger: 251 113 133;
-    --danger-soft: 76 5 25;
-    --warning: 251 191 36;
-    --warning-soft: 69 26 3;
-  }
-}
 
 html[data-theme='dark'] {
   color-scheme: dark;

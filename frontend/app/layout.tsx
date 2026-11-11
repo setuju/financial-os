@@ -108,7 +108,7 @@ export default function RootLayout({
 
               <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){d.setAttribute('data-theme',t);}}catch(e){}})();`,
+            __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'){d.setAttribute('data-theme','dark');}else{d.setAttribute('data-theme','light');}}catch(e){}})();`,
           }}
         />
       </head>
