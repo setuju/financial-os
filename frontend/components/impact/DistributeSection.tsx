@@ -19,6 +19,7 @@ interface Props {
 
 export default function DistributeSection({ receivers, verifiedSurplus, sourcePeriod }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [useCurrentMonth, setUseCurrentMonth] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,6 +43,7 @@ export default function DistributeSection({ receivers, verifiedSurplus, sourcePe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiverId: effectiveId,
+          useCurrentMonth,
           amount: Number(amount),
           sourcePeriod,
         }),
@@ -155,6 +157,19 @@ export default function DistributeSection({ receivers, verifiedSurplus, sourcePe
             </div>
           )}
 
+          
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-surface-sunken px-3 py-2">
+            <input
+              type="checkbox"
+              id="useCurrentMonth"
+              checked={useCurrentMonth}
+              onChange={(e) => setUseCurrentMonth(e.target.checked)}
+              className="h-4 w-4 rounded border-line text-accent focus:ring-accent"
+            />
+            <label htmlFor="useCurrentMonth" className="text-xs text-ink-soft cursor-pointer">
+              Use this month&apos;s surplus (if last month is unavailable)
+            </label>
+          </div>
           <button
             onClick={handleDistribute}
             disabled={loading || !effectiveId || !amount}

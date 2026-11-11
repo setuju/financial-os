@@ -109,11 +109,18 @@ const VAR: Record<number, Array<[number, string, number, string]>> = {
   11: [
     [1, 'safeway groceries', 94.5, 'groceries'],
     [2, 'shell gas station', 48.2, 'transport'],
+    [3, 'freelance web design project', 1200, 'freelance'],
     [4, 'starbucks coffee', 7.15, 'food'],
     [5, 'chipotle mexican grill', 15.8, 'food'],
+    [6, 'netflix subscription', 15.49, 'subscription'],
     [7, 'whole foods market', 108.3, 'groceries'],
+    [8, 'dividend from index funds', 150.5, 'investment'],
     [9, 'trader joes groceries', 87.6, 'groceries'],
     [10, 'starbucks coffee', 6.9, 'food'],
+    [11, 'donation to Red Cross', 25, 'donation'],
+    [12, 'annual performance bonus', 1500, 'bonus'],
+    [13, 'planet fitness membership', 24.99, 'fitness'],
+    [14, 'amazon electronics', 98.99, 'shopping'],
   ],
 };
 
