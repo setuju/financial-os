@@ -31,6 +31,11 @@ import type {
 } from '@/lib/api';
 import Card from '@/components/ui/Card';
 
+
+// Helper to format tooltip values safely without triggering ESLint 'any' rule globally
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const formatCurrency = (value: any) => `$${Number(value || 0).toFixed(2)}`;
+
 const COLORS = ['var(--accent)', 'var(--success)', 'var(--danger)', 'var(--warning)', '#8b5cf6', '#ec4899'];
 
 interface Props {
@@ -70,7 +75,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
               <XAxis dataKey="name" stroke="var(--ink-soft)" fontSize={12} />
               <YAxis stroke="var(--ink-soft)" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <RechartsTooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+              <RechartsTooltip formatter={formatCurrency} />
               <Legend />
               <Bar dataKey="Income" fill="var(--success)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="Expense" fill="var(--danger)" radius={[4, 4, 0, 0]} />
@@ -99,7 +104,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <RechartsTooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+              <RechartsTooltip formatter={formatCurrency} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -126,7 +131,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <RechartsTooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+              <RechartsTooltip formatter={formatCurrency} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -148,7 +153,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
               <XAxis dataKey="name" stroke="var(--ink-soft)" fontSize={12} />
               <YAxis stroke="var(--ink-soft)" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <RechartsTooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+              <RechartsTooltip formatter={formatCurrency} />
               <Area type="monotone" dataKey="Surplus" stroke="var(--accent)" fillOpacity={1} fill="url(#colorSurplus)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -164,7 +169,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
               <XAxis dataKey="name" stroke="var(--ink-soft)" fontSize={12} />
               <YAxis stroke="var(--ink-soft)" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <RechartsTooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+              <RechartsTooltip formatter={formatCurrency} />
               <Bar dataKey="Amount" fill="var(--accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
