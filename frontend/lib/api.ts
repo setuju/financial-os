@@ -273,6 +273,33 @@ export async function getReportSummary(params: {
   }
 }
 
+
+// ---- Reports: Categories ----
+
+export type CategorySummary = { name: string; value: number };
+
+export async function getReportCategories(params: {
+  from: string;
+  to: string;
+  type: 'income' | 'expense';
+}): Promise<{ categories: CategorySummary[] } | null> {
+  const qs = new URLSearchParams({
+    from: params.from,
+    to: params.to,
+    type: params.type,
+  });
+  try {
+    const res = await fetch(`${API_URL}/reports/categories?${qs.toString()}`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { categories: CategorySummary[] };
+  } catch {
+    return null;
+  }
+}
+
 // ---- Goals ----
 
 export type Goal = {

@@ -37,6 +37,13 @@ declare module 'fastify' {
 type GroupBy = 'day' | 'week' | 'month' | 'year';
 type TxnType = 'income' | 'expense' | 'all';
 
+
+interface CategoryQuery {
+  from: string;
+  to: string;
+  type: 'income' | 'expense';
+}
+
 interface SummaryQuery {
   from: string;
   to: string;
@@ -164,6 +171,50 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       };
     },
   );
+
+  fastify.get<{ Querystring: CategoryQuery }>(
+    '/reports/categories',
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          required: ['from', 'to', 'type'],
+          properties: {
+            from: { type: 'string' },
+            to: { type: 'string' },
+            type: { type: 'string', enum: ['income', 'expense'] },
+          },
+        },
+      },
+    },
+    async (req) => {
+      const sid = req.sessionId;
+      const { from, to, type } = req.query;
+      const fromTs = `${from}T00:00:00.000Z`;
+      const toTs = `${to}T23:59:59.999Z`;
+
+      const res = await fastify.pg.query(
+        `SELECT category, COALESCE(SUM(amount), 0) AS total
+         FROM transactions
+         WHERE session_id = $1 
+           AND type = $2 
+           AND occurred_at >= $3 
+           AND occurred_at <= $4 
+           AND is_projection = false
+         GROUP BY category
+         ORDER BY total DESC`,
+        [sid, type, fromTs, toTs],
+      );
+
+      return { 
+        categories: res.rows.map((r) => ({ 
+          name: r.category, 
+          value: Number(r.total) 
+        })) 
+      };
+    },
+  );
+
 };
 
 export default reportsRoutes;

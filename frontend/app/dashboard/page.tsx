@@ -34,10 +34,17 @@ import {
   TrendingDown,
   Sparkles,
 } from 'lucide-react';
-import { serverGetSurplus as getSurplus } from '@/lib/api-server';
+import { 
+  serverGetSurplus as getSurplus,
+  serverGetReportSummary,
+  serverGetReportCategories,
+  serverGetImpactSurplus,
+  serverGetImpactPayouts
+} from '@/lib/api-server';
 import StatCard from '@/components/ui/StatCard';
 import OnboardingBanner from '@/components/layout/OnboardingBanner';
 import EmptyState from '@/components/ui/EmptyState';
+import DashboardCharts from '@/components/dashboard/DashboardCharts';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +57,20 @@ const usd = new Intl.NumberFormat('en-US', {
 
 export default async function Home() {
   const surplusData = await getSurplus();
+  
+  const now = new Date();
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(now.getMonth() - 6);
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts] = await Promise.all([
+    serverGetReportSummary({ from: fmt(sixMonthsAgo), to: fmt(now), groupBy: 'month', type: 'all', includeProjections: false }),
+    serverGetReportCategories({ from: fmt(new Date(now.getFullYear(), now.getMonth(), 1)), to: fmt(now), type: 'income' }),
+    serverGetReportCategories({ from: fmt(new Date(now.getFullYear(), now.getMonth(), 1)), to: fmt(now), type: 'expense' }),
+    serverGetImpactSurplus(),
+    serverGetImpactPayouts(),
+  ]);
+
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -139,7 +160,15 @@ export default async function Home() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-ink-faint">
+          <DashboardCharts 
+            summaryData={summaryData}
+            incomeCatData={incomeCatData}
+            expenseCatData={expenseCatData}
+            impactSurplus={impactSurplus}
+            payouts={payouts}
+          />
+
+          <p className="mt-10 text-center text-xs text-ink-faint">
             Powered by PayPal Payouts · Elasticsearch · Bryntum Gantt
           </p>
         </>

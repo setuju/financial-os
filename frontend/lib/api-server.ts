@@ -14,6 +14,7 @@ import type {
   SummaryResponse,
   ReportGroupBy,
   ReportType,
+  CategorySummary,
   ImpactSurplusResponse,
   PayoutRecord,
   ImpactReceiver,
@@ -89,6 +90,29 @@ export async function serverGetSurplus(): Promise<SurplusResponse | null> {
     );
     if (!res.ok) return null;
     return (await res.json()) as SurplusResponse;
+  } catch {
+    return null;
+  }
+}
+
+
+export async function serverGetReportCategories(params: {
+  from: string;
+  to: string;
+  type: 'income' | 'expense';
+}): Promise<{ categories: CategorySummary[] } | null> {
+  const qs = new URLSearchParams({
+    from: params.from,
+    to: params.to,
+    type: params.type,
+  });
+  try {
+    const res = await fetch(
+      `${API_URL}/reports/categories?${qs.toString()}`,
+      withSession({ signal: AbortSignal.timeout(20000) }),
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as { categories: CategorySummary[] };
   } catch {
     return null;
   }
