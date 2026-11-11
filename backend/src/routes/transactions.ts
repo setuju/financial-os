@@ -28,6 +28,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
 import { parseTransaction, parseMultipleTransactions } from '../surplus/parser.js';
+import { classifyCategoryWithAI } from '../services/astropods.js';
 import type { ParsedTransaction } from '../surplus/parser.js';
 import { updateTransaction } from '../repositories/transactions.js';
 import { invalidateSurplusPeriods } from '../repositories/surplus-periods.js';
@@ -77,7 +78,15 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         .filter((r): r is { ok: true; tx: ParsedTransaction } => r.ok)
         .map((r) => r.tx);
 
-      if (successfulTxs.length === 0) {
+      
+        // AI Fallback for 'other' categories
+        for (const tx of successfulTxs) {
+          if (tx.category === 'other') {
+            tx.category = await classifyCategoryWithAI(tx.rawText, tx.type) as any;
+          }
+        }
+
+        if (successfulTxs.length === 0) {
         const firstError = parseResults[0];
         return reply.code(400).send({
           error: firstError.ok ? 'invalid_input' : firstError.reason,

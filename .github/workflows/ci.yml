@@ -1,0 +1,67 @@
+# ┌────────────────────────────────────────────────────────────────────┐
+# │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
+# ├────────────────────────────────────────────────────────────────────┤
+# │  File      : .github/workflows/ci.yml
+# │  Purpose   : CI Pipeline for Backend and Frontend
+# │  Author    : Jack — Jack[at]SatuRumah[dot]Net
+# │  GitHub    : https://github.com/setuju
+# │  Website   : https://saturumah.net
+# │  Created   : 12-11-2026
+# │  License   : MIT
+# └────────────────────────────────────────────────────────────────────┘
+#
+# @author    Jack <Jack[at]SatuRumah[dot]Net>
+# @created   12-11-2026
+# @package   financial-os
+# @license   MIT
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: './backend/pnpm-lock.yaml'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck Backend
+        run: pnpm exec tsc --noEmit
+      - name: Run Tests
+        run: pnpm test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: './frontend/pnpm-lock.yaml'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck Frontend
+        run: pnpm exec tsc --noEmit

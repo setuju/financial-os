@@ -132,7 +132,7 @@ Each month's closing becomes the next month's opening. `horizon_bills` = committ
 - **Live Global Alerts** — USGS earthquakes + Google News from partner orgs
 
 ### AI (4 modalities)
-- **Text** — rule parser (40/40 tests + multi-parser)
+- **Text** — rule parser (16/16 tests + multi-parser)
 - **Voice** — Web Speech API
 - **Vision** — Groq Qwen 3.8 27B + OCR.space fallback
 - **Chat** — scoped assistant (OpenRouter + Gemini fallback)
@@ -262,7 +262,7 @@ Base: `https://financial-api.saturumah.net`
 ## Testing
 
 ```bash
-cd backend && pnpm test       # 40/40 parser tests
+cd backend && pnpm test       # 16/16 parser tests
 cd backend && pnpm typecheck
 cd frontend && pnpm typecheck
 ```
@@ -292,6 +292,6 @@ cd frontend && pnpm typecheck
 
 ## License
 
-[MIT](LICENSE) © 2026 Jack ([setuju](https://github.com/setuju))
+[MIT](LICENSE) · See [NOTICE](NOTICE) for copyright and reproduction terms. © 2026 Jack ([setuju](https://github.com/setuju))
 
 **Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)** · Solo developer · [Jack@SatuRumah.net](mailto:Jack@SatuRumah.net)

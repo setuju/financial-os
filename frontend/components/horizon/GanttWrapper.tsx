@@ -29,7 +29,7 @@
 
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
-import type { Goal } from './GoalsSection';
+import type { Goal } from '@/lib/api';
 
 const GanttInner = dynamic<{ licenseKey: string; goals: Goal[] }>(
   () => import('./GanttInner'),

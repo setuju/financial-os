@@ -49,11 +49,11 @@ export const metadata: Metadata = {
     template: '%s · Financial OS',
   },
   description:
-    'Track money with words. AI parser in English & Bahasa Indonesia, voice input, OCR receipts, ethical surplus cascade, and PayPal Payouts sandbox. Built for PayPal AI Hackathon 2026.',
+    'Track money with words. AI parser in English, voice input, OCR receipts, ethical surplus cascade, and PayPal Payouts sandbox. Built for PayPal AI Hackathon 2026.',
   keywords: [
     'personal finance', 'natural language finance', 'AI finance',
     'PayPal Payouts', 'ethical surplus', 'budget tracker',
-    'Bahasa Indonesia', 'OCR receipt scanner', 'Financial OS',
+    'OCR receipt scanner', 'Financial OS',
     'PayPal AI Hackathon',
   ],
   authors: [{ name: 'Jack', url: 'https://saturumah.net' }],

@@ -34,7 +34,7 @@ import type { GanttConfig, TaskModel } from '@bryntum/gantt-enterprise';
 
 import '@bryntum/gantt-enterprise/gantt.css';
 import '@bryntum/core-enterprise/svalbard.css';
-import type { Goal } from './GoalsSection';
+import type { Goal } from '@/lib/api';
 
 interface CustomTask extends TaskModel {
   targetAmount: number;

@@ -31,18 +31,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, X, AlertCircle, Loader2, Target, ShoppingBag } from 'lucide-react';
 import ProductSearchDialog, { type C3Product } from './ProductSearchDialog';
-
-export type Goal = {
-  id: string;
-  name: string;
-  target_amount: number;
-  monthly_saving: number;
-  interest_rate: number;
-  loan_term_months: number;
-  start_date: string;
-  duration_months: number;
-  progress_percent: number;
-};
+import type { Goal } from '@/lib/api';
 
 function monthYear(iso: string): string {
   try {

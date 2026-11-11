@@ -117,7 +117,7 @@ Live URLs:
 - Frontend: https://financial-os-nu.vercel.app
 - Backend: https://financial-os-api-lykz.onrender.com
 
-Tech: Next.js 14 + Fastify 4 + PostgreSQL (Neon) + Redis (Upstash) + Elastic Cloud + PayPal Payouts (APIMatic SDK) + Bryntum Gantt 8 + Gemini Vision (OCR, planned) + Web Speech API (voice, browser-native). Deploy: Vercel + Render. PayPal runs in Sandbox — no real money moves.
+Tech: Next.js 14 + Fastify 4 + PostgreSQL (Neon) + Redis (Upstash) + Elastic Cloud + PayPal Payouts (APIMatic SDK) + Bryntum Gantt 8 + Groq Vision (OCR) + Web Speech API (voice, browser-native). Deploy: Vercel + Render. PayPal runs in Sandbox — no real money moves.
 
 ### Pages
 
@@ -131,7 +131,7 @@ Latest 50 transactions, newest first. Mini stats: visible count, total in, total
 Three input methods:
 1. Type — natural language in English or Bahasa Indonesia. Examples: \`"spent 20 on coffee"\`, \`"received 500 bonus"\`, \`"paid 120 utilities"\`, \`"paid 120 utilities"\`.
 2. Voice — click mic, speak. Works on Chrome/Edge + mobile via Web Speech API.
-3. Receipt scan (planned) — upload photo, Gemini Vision extracts amount.
+3. Receipt scan — upload photo, Groq Vision extracts amount.
 
 Amount editor: after typing or speaking, if a number is detected, a card appears: "Detected amount: \$20.00 [pencil]". Click pencil to fix a wrong number from voice transcription. Enter saves, Escape cancels. Only the first number is replaced.
 
@@ -140,7 +140,7 @@ Parser rejects:
 - Cancellations: "i dont want to buy 250000", "change my mind", "cancel that" → error "This looks like a cancellation…"
 - No amount: "hello" → error "No amount found…"
 
-The parser is deterministic rule-based, not an LLM. It extracts amount (USD \$, IDR suffix rb/jt/k, thousand separators), verb (income: earn, received, salary, bonus; expense: spent, paid, bought, beli, jajan, bayar), and category (food, transport, utilities, shopping, health, entertainment, education, other).
+The parser is deterministic rule-based, not an LLM. It extracts amount (USD \$), verb (income: earn, received, salary, bonus; expense: spent, paid, bought), and category (food, transport, utilities, shopping, health, entertainment, education, other).
 
 **\`/ledger\` — Grouped reports**
 View toggle: Grid (Excel-style) ↔ Notebook (list style). Type filter: All / Income / Expense. Group by: Day / Week / Month / Year. Range: Last 7d / Last 30d / This month / Last month / This year / All time / Custom. Projections toggle: show/hide future-dated rows (marked Projected). Download PDF exports current filtered view with filter context in the header. Mini stats: total income, total expense, net. Ledger is aggregated — for raw transactions use \`/journal\`.
@@ -165,7 +165,7 @@ Powered by Bryntum Gantt 8 Enterprise. Custom task fields: targetAmount, monthly
 
 **Projections** = future-dated transactions marked Projected. They don't count toward current surplus; they are forecasting aids.
 
-**Parser** = deterministic rules (regex for amounts, keyword dicts for verbs and categories). No LLM. Bilingual: English + Bahasa Indonesia. Rejects plans and cancellations.
+**Parser** = deterministic rules (regex for amounts, keyword dicts for verbs and categories). No LLM. English only. Rejects plans and cancellations.
 
 ### Common questions
 
@@ -185,7 +185,7 @@ Powered by Bryntum Gantt 8 Enterprise. Custom task fields: targetAmount, monthly
 
 **What's the difference between Journal and Ledger?** Journal shows raw transactions (one row per entry). Ledger aggregates by day/week/month/year with filters.
 
-**How does the 10% number work?** It is 10% of current surplus (income minus expense). Example: surplus \$100 → \$10 goes to the impact recipient. Negative surplus blocks distribution.
+**How does the 10% number work?** We suggest 10% of your verified surplus, but you can adjust the amount up to the available balance. Negative surplus blocks distribution.
 
 **Can I export data?** Yes: \`/journal\` and \`/ledger\` both have a Download PDF button. The PDF captures the current view (with filters for Ledger).
 

@@ -15,12 +15,12 @@ export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: 'Financial OS — Natural-language finance with ethical surplus',
-  description: 'Track money with words in English or Bahasa Indonesia. Four AI modalities, ethical surplus cascade, PayPal Payouts sandbox. Built for PayPal AI Hackathon 2026.',
+  description: 'Track money with words in English. Four AI modalities, ethical surplus cascade, PayPal Payouts sandbox. Built for PayPal AI Hackathon 2026.',
   alternates: { canonical: '/' },
 };
 
 const FEATURES = [
-  { icon: ScanLine, title: 'Anti-Budget Parser', desc: 'Type or speak. English or Bahasa Indonesia. Rejects plans and cancellations.' },
+  { icon: ScanLine, title: 'Anti-Budget Parser', desc: 'Type or speak in English. Rejects plans and cancellations.' },
   { icon: Mic, title: 'Voice + OCR', desc: 'Speak transactions or scan receipts. Amount editor for corrections.' },
   { icon: Shield, title: 'Ethical Surplus', desc: 'Only surplus after obligations. Principal savings never touched.' },
   { icon: Heart, title: 'Impact Wallet', desc: 'Verified surplus routes to vetted causes via PayPal Payouts sandbox.' },
@@ -53,7 +53,7 @@ export default function LandingPage() {
     author: { '@type': 'Person', name: 'Jack', url: 'https://saturumah.net' },
     publisher: { '@type': 'Organization', name: 'SatuRumah', url: 'https://saturumah.net' },
     featureList: [
-      'Natural-language parser (English + Bahasa Indonesia)',
+      'Natural-language parser (English)',
       'Voice input via Web Speech API',
       'OCR receipt scan (Groq Qwen + OCR.space)',
       'Scoped AI assistant',

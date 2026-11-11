@@ -67,7 +67,8 @@ All notable changes to Financial OS. Format based on [Keep a Changelog](https://
 
 ### Changed — UI
 - Live Preview uses compact card layout with pencil edit
-- `AmountEditor` removed (superseded by inline edit)
+- `AmountEditor` permanently removed (superseded by inline edit in v0.6.0).
+- Cleaned up orphaned references to `AmountEditor` in `/features` page.
 - `IN:` / `OUT:` prefix universally applied (preview, journal table, PDF)
 
 ### Docs

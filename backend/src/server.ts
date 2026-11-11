@@ -64,8 +64,6 @@ export async function buildServer(): Promise<FastifyInstance> {
       'https://financial.saturumah.net',
       'https://financial-api.saturumah.net',
       'http://localhost:3000',
-      /\.vercel\.app$/,
-      /\.saturumah\.net$/,
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: false,

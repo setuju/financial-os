@@ -30,7 +30,8 @@ import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
 import Card from '@/components/ui/Card';
 import GanttWrapper from '@/components/horizon/GanttWrapper';
-import GoalsSection, { type Goal } from '@/components/horizon/GoalsSection';
+import GoalsSection from '@/components/horizon/GoalsSection';
+import type { Goal } from '@/lib/api';
 import { serverGetGoals as getGoals, serverGetPredictions as getPredictions } from '@/lib/api-server';
 import SurplusOracleCard from '@/components/SurplusOracleCard';
 
@@ -61,19 +62,7 @@ export default async function HorizonPage() {
     getGoals(),
     getPredictions(),
   ]);
-  const raw = goalsRes ?? [];
-  const rawGoals = raw as unknown as Array<Record<string, unknown>>;
-  const goals: Goal[] = rawGoals.map((g) => ({
-    id: String(g.id ?? ''),
-    name: String(g.name ?? ''),
-    target_amount: Number(g.target_amount ?? 0),
-    monthly_saving: Number(g.monthly_saving ?? 0),
-    interest_rate: Number(g.interest_rate ?? 0),
-    loan_term_months: Number(g.loan_term_months ?? 0),
-    start_date: String(g.start_date ?? ''),
-    duration_months: Number(g.duration_months ?? 0),
-    progress_percent: Number(g.progress_percent ?? 0),
-  }));
+  const goals: Goal[] = goalsRes ?? [];
 
   const totalMonthly = goals.reduce((s, g) => s + g.monthly_saving, 0);
 
