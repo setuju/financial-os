@@ -39,6 +39,7 @@ Type money like you text — `"spent 20 on coffee"` or `"bayar listrik 1.250.000
 - [Core concepts](#core-concepts)
 - [Features](#features)
 - [Sponsor tools](#sponsor-tools)
+- [Changelog](CHANGELOG.md)
 - [Tech stack](#tech-stack)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
@@ -274,7 +275,7 @@ Coverage: IDR/USD formats, negation/intent rejection, category detection, error 
 - **Soft-delete preserves audit trail**
 - **Scoped AI, canary-protected prompt**
 - **No secrets in source** — env vars only
-- **No `dangerouslySetInnerHTML`** — all React nodes
+- **`dangerouslySetInnerHTML` limited to 3 audited uses** — JSON-LD schema (2×) and theme inline script (static, no user input). All user-generated content rendered as React nodes.
 
 ---
 
@@ -296,16 +297,15 @@ PDF invoice OCR · User accounts + multi-tenant · Elasticsearch UI · Time-to-V
 
 **Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/)** · Solo developer · [penulis@live.com](mailto:penulis@live.com)
 
-## 🔐 Multi-Tenant Demo (In Progress)
+## 🔐 Multi-Tenant (Shipped)
 
-Financial OS is being upgraded from **single-user demo** to **multi-tenant demo**:
+- Each visitor signs up with a **name** (no email) → gets a generated **5-character password**
+- Data (transactions, goals, payouts) is **isolated per session** via `session_id` on every row
+- **Admin** session (`admin` / `financial-os`) sees the seeded baseline (116 transactions, 3 goals)
+- **Demo reset** via `/reset` (session-scoped, rate-limited) — admin re-seeds, users get empty slate
+- **Server components** pass `X-Session-Id` from cookie (via `lib/api-server.ts`); client components via `/api/proxy` middleware
+- Session cookie: `fos_session_id` (httpOnly) + `fos_name`, `fos_is_admin` (readable, for UI)
 
-- Each visitor signs up with a **name** → gets a generated **5-character password**
-- Data (transactions, goals, payouts) is **isolated per session**
-- **Admin** session (`admin` / `financial-os`) sees the seeded baseline
-- Demo reset via `/reset` (rate-limited) — no data loss for other users
-- **Status**: plan at [`docs/multitenant-plan.md`](docs/multitenant-plan.md), implementation in progress
+## 📝 Changelog
 
-Until multi-tenant ships:
-- Current mode is **shared demo** — all visitors see the same data
-- Any visitor can reset via `https://financial.saturumah.net/reset`
+Full version history: [CHANGELOG.md](CHANGELOG.md).
