@@ -20,9 +20,15 @@ export async function submitTransactions(formData: FormData) {
   });
   
   if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    const msg = errData.message || errData.error || 'failed';
-    console.log('Backend rejected batch:', msg);
+    const text = await res.text();
+    let msg = 'failed';
+    try {
+      const errData = JSON.parse(text);
+      msg = errData.message || errData.error || 'failed';
+    } catch {
+      msg = text.slice(0, 60) || 'failed';
+    }
+    console.error('Backend raw error:', text);
     redirect('/journal/new?error=' + encodeURIComponent(msg));
   }
   redirect('/journal');
