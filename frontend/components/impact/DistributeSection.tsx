@@ -8,6 +8,7 @@ interface Receiver {
   name: string;
   category: string;
   email: string;
+  url?: string;
 }
 
 interface Props {
@@ -91,18 +92,24 @@ export default function DistributeSection({ receivers, verifiedSurplus, sourcePe
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {receivers.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => { setSelectedId(r.id); setCustomEmail(''); }}
-                className={`flex flex-col items-start rounded-lg border p-3 text-left transition-all ${
-                  selectedId === r.id && !isCustom
-                    ? 'border-accent bg-accent-soft/30 ring-1 ring-accent'
-                    : 'border-line bg-surface hover:border-accent/50'
-                }`}
-              >
-                <span className="text-xs font-semibold text-ink">{r.name}</span>
-                <span className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-soft">{r.category}</span>
-              </button>
+              <div key={r.id} className="relative group">
+                <button
+                  onClick={() => { setSelectedId(r.id); setCustomEmail(''); }}
+                  className={`flex w-full flex-col items-start rounded-lg border p-3 text-left transition-all ${
+                    selectedId === r.id && !isCustom
+                      ? 'border-accent bg-accent-soft/30 ring-1 ring-accent'
+                      : 'border-line bg-surface hover:border-accent/50'
+                  }`}
+                >
+                  <span className="text-xs font-semibold text-ink">{r.name}</span>
+                  <span className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-soft">{r.category}</span>
+                </button>
+                {r.url && (
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-accent hover:underline">
+                    Visit Website ↗
+                  </a>
+                )}
+              </div>
             ))}
           </div>
 

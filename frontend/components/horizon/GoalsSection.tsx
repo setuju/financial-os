@@ -69,6 +69,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [purchaseModal, setPurchaseModal] = useState<Goal | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -336,7 +337,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
                       Target: ${Number(goal.target_amount).toLocaleString('en-US')} ·{' '}
                       ${Number(goal.monthly_saving).toLocaleString('en-US')}/mo ·{' '}
                       Ends {endDate(goal)}
-                      <button onClick={() => { router.push(`/impact?product=${encodeURIComponent(goal.name)}&amount=${goal.target_amount}`); }} className="ml-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-medium text-white hover:bg-accent-hover"><ShoppingBag className="h-3 w-3" /> Buy (Sandbox)</button>
+                      <button onClick={() => setPurchaseModal(goal)} className="ml-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-medium text-white hover:bg-accent-hover"><ShoppingBag className="h-3 w-3" /> Buy (Sandbox)</button>
                     </p>
                   </div>
                   {!isDeleting && (
@@ -420,6 +421,38 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
               </div>
             );
           })}
+        </div>
+      )}
+    
+      {purchaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-surface-raised p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-ink flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-accent" /> Sandbox Purchase
+              </h2>
+              <button onClick={() => setPurchaseModal(null)} className="text-ink-faint hover:text-ink">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mb-6 rounded-lg bg-surface p-4 text-center">
+              <p className="text-sm text-ink-soft">Item:</p>
+              <p className="text-lg font-semibold text-ink">{purchaseModal.name}</p>
+              <p className="mt-2 text-sm text-ink-soft">Total:</p>
+              <p className="text-2xl font-bold text-accent">${purchaseModal.target_amount}</p>
+            </div>
+            <p className="mb-6 text-xs text-center text-ink-faint">
+              This transaction is simulated via Channel3. No real money is moved.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setPurchaseModal(null)} className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-2 text-sm font-medium text-ink hover:bg-surface-sunken">
+                Cancel
+              </button>
+              <button onClick={() => { alert("Purchase Successful via Channel3 Sandbox!"); setPurchaseModal(null); }} className="flex-1 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover">
+                Confirm Purchase
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

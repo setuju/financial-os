@@ -38,14 +38,14 @@ declare module 'fastify' {
 }
 
 const VETTED_RECEIVERS = [
-  { id: "aidpulse", name: "AidPulse", category: "Disaster relief", email: "aidpulse-sandbox@example.com" },
-  { id: "caregrid", name: "CareGrid", category: "Community health", email: "caregrid-sandbox@example.com" },
-  { id: "opentreasury", name: "OpenTreasury", category: "Financial inclusion", email: "opentreasury-sandbox@example.com" },
-  { id: "cleanwater", name: "Clean Water Initiative", category: "Water & Sanitation", email: "cleanwater-sandbox@example.com" },
-  { id: "edufund", name: "EduFund Global", category: "Education", email: "edufund-sandbox@example.com" },
-  { id: "greenearth", name: "Green Earth Alliance", category: "Environment", email: "greenearth-sandbox@example.com" },
-  { id: "foodbank", name: "Community Food Bank", category: "Hunger Relief", email: "foodbank-sandbox@example.com" },
-  { id: "mentalhealth", name: "MindCare Network", category: "Mental Health", email: "mentalhealth-sandbox@example.com" },
+  { id: "redcross", name: "American Red Cross", category: "Disaster relief", email: "redcross-sandbox@example.com", url: "https://www.redcross.org/donate/donation.html/" },
+  { id: "directrelief", name: "Direct Relief", category: "Medical aid", email: "directrelief-sandbox@example.com", url: "https://www.directrelief.org/donate/" },
+  { id: "unicef", name: "UNICEF", category: "Children & Education", email: "unicef-sandbox@example.com", url: "https://www.unicef.org/donate" },
+  { id: "wck", name: "World Central Kitchen", category: "Hunger relief", email: "wck-sandbox@example.com", url: "https://wck.org/donate" },
+  { id: "waterorg", name: "Water.org", category: "Water & Sanitation", email: "waterorg-sandbox@example.com", url: "https://water.org/donate/" },
+  { id: "doctorswithoutborders", name: "Doctors Without Borders", category: "Healthcare", email: "msf-sandbox@example.com", url: "https://www.doctorswithoutborders.org/donate" },
+  { id: "rainforest", name: "Rainforest Alliance", category: "Environment", email: "rainforest-sandbox@example.com", url: "https://www.rainforest-alliance.org/donate/" },
+  { id: "savethechildren", name: "Save the Children", category: "Child welfare", email: "savechildren-sandbox@example.com", url: "https://www.savethechildren.org/us/ways-to-help/ways-to-give" },
 ];
 
 interface PayoutBody {
@@ -145,7 +145,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
 
       let receiver = VETTED_RECEIVERS.find((r) => r.id === receiverId);
       if (!receiver && receiverId.includes('@')) {
-        receiver = { id: receiverId, name: 'Custom Email', category: 'External', email: receiverId };
+        receiver = { id: receiverId, name: 'Custom Email', category: 'External', email: receiverId, url: '' };
       }
       if (!receiver) {
         return reply.code(400).send({ error: 'invalid_receiver' });
