@@ -336,7 +336,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
                       Target: ${Number(goal.target_amount).toLocaleString('en-US')} ·{' '}
                       ${Number(goal.monthly_saving).toLocaleString('en-US')}/mo ·{' '}
                       Ends {endDate(goal)}
-                      <button onClick={() => { window.location.href = `/impact?product=${encodeURIComponent(goal.name)}&amount=${goal.target_amount}`; }} className="ml-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-medium text-white hover:bg-accent-hover"><ShoppingBag className="h-3 w-3" /> Buy (Sandbox)</button>
+                      <button onClick={() => { router.push(`/impact?product=${encodeURIComponent(goal.name)}&amount=${goal.target_amount}`); }} className="ml-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-medium text-white hover:bg-accent-hover"><ShoppingBag className="h-3 w-3" /> Buy (Sandbox)</button>
                     </p>
                   </div>
                   {!isDeleting && (
