@@ -1,50 +1,8 @@
-/**
- * ┌────────────────────────────────────────────────────────────────────┐
- * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
- * ├────────────────────────────────────────────────────────────────────┤
- * │  File      : backend/src/surplus/parser.ts
- * │  Purpose   : Backend: parser
- * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 10-11-2026
- * │  License   : MIT
- * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
- */
-
-/**
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
- */
-
-/**
- * Anti-Budget parser: natural language (EN + ID) → structured transaction.
- *
- * Pure, deterministic, no I/O. Unit-tested in parser.test.ts.
- *
- * Design notes:
- * - USD-first. Explicit $ amount wins. Suffix rules (rb/jt/k) still work
- *   for IDR backward compat. Multiple-dot pattern (1.250.000) treated as
- *   IDR thousand; single-dot (250.000) treated as USD decimal.
- * - Negation ("dont want", "change my mind", "cancel") → rejected.
- * - Intent ("want to", "plan to", "hopefully", "going to buy") → rejected.
- * - Type via verb dictionary; default expense when no verb matches.
- * - Category via keyword dictionary; default 'other'.
- * - rawText preserved verbatim (Ethics #8: transparency).
- */
-
 export type TransactionType = 'income' | 'expense';
-export type TransactionCategory = 
-  | 'food' | 'groceries' | 'transport' | 'utilities' | 'shopping' 
-  | 'health' | 'fitness' | 'subscription' | 'entertainment' | 'education' 
+
+export type TransactionCategory =
+  | 'food' | 'groceries' | 'transport' | 'utilities' | 'shopping'
+  | 'health' | 'fitness' | 'subscription' | 'entertainment' | 'education'
   | 'travel' | 'investment' | 'debt' | 'gift' | 'income' | 'donation' | 'other';
 
 export interface ParsedTransaction {
@@ -53,27 +11,12 @@ export interface ParsedTransaction {
   category: TransactionCategory;
   occurredAt: Date;
   rawText: string;
-  source: 'rule';
-}
-
-export type ParseErrorReason =
-  | 'no_amount'
-  | 'invalid_input'
-  | 'zero_amount'
-  | 'negated_input'
-  | 'planned_input';
-
-export interface ParseError {
-  ok: false;
-  reason: ParseErrorReason;
-  rawText: string;
+  source: string;
 }
 
 export type ParseResult =
   | { ok: true; tx: ParsedTransaction }
-  | ParseError;
-
-// ---- Amount extraction ----
+  | { ok: false; reason: string; rawText: string };
 
 interface AmountMatch {
   value: number;
@@ -93,7 +36,6 @@ function roundToCents(n: number): number {
 }
 
 function extractAmount(text: string): AmountMatch | null {
-  // 0) Explicit USD: $20, $120.50, $1,500, $1,250,000.00
   const usdRe = /\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)/;
   const usdMatch = text.match(usdRe);
   if (usdMatch) {
@@ -103,7 +45,6 @@ function extractAmount(text: string): AmountMatch | null {
     }
   }
 
-  // 1) number + IDR suffix (rb/ribu/k/jt/juta): dot/comma is decimal
   const suffixRe = /(\d+(?:[.,]\d+)?)\s*(jt|juta|rb|ribu|k)\b/i;
   const suffixMatch = text.match(suffixRe);
   if (suffixMatch) {
@@ -116,7 +57,6 @@ function extractAmount(text: string): AmountMatch | null {
     }
   }
 
-  // 2) IDR multiple-dot thousands: 1.250.000 (2+ groups only)
   const idrThousandRe = /\b(\d{1,3}(?:\.\d{3}){2,}(?:,\d+)?)\b/;
   const idrMatch = text.match(idrThousandRe);
   if (idrMatch) {
@@ -127,7 +67,6 @@ function extractAmount(text: string): AmountMatch | null {
     }
   }
 
-  // 3) US comma thousands: 1,500 or 1,250,000
   const usThousandRe = /\b(\d{1,3}(?:,\d{3})+)\b/;
   const usMatch = text.match(usThousandRe);
   if (usMatch) {
@@ -137,7 +76,6 @@ function extractAmount(text: string): AmountMatch | null {
     }
   }
 
-  // 4) plain integer / decimal (250.000 = 250.00 in USD context)
   const plainRe = /\b(\d+(?:[.,]\d+)?)\b/;
   const plainMatch = text.match(plainRe);
   if (plainMatch) {
@@ -145,35 +83,27 @@ function extractAmount(text: string): AmountMatch | null {
     if (Number.isFinite(num) && num > 0) {
       return { value: roundToCents(num), rawMatch: plainMatch[0] };
     }
-    if (num === 0) return null;
   }
 
   return null;
 }
 
-// ---- Semantic guards ----
-
 const NEGATION_RES: RegExp[] = [
-  /\b(?:don'?t|do not|doesn'?t|does not|didn'?t|did not)\s+(?:want|need|buy|purchase|plan|get)\b/i,
-  /\bnot\s+(?:buying|purchasing|going to buy|spending|getting)\b/i,
   /\b(?:cancel(?:led|ed)?|forget it|never ?mind|change my mind|scrap that|no longer|no thanks|no need)\b/i,
 ];
 
 const INTENT_RES: RegExp[] = [
   /\b(?:want to|wanna|plan to|planning to|would like to|i'?d like to|hoping to|hope to)\b/i,
-  /\b(?:going to|gonna|will)\s+(?:buy|purchase|pay|spend|get)\b/i,
-  /\b(?:thinking (?:about|of) buying|considering buying)\b/i,
   /\b(?:hopefully|maybe i|might buy|perhaps i)\b/i,
 ];
 
 function detectNegation(text: string): boolean {
   return NEGATION_RES.some((re) => re.test(text));
 }
+
 function detectIntent(text: string): boolean {
   return INTENT_RES.some((re) => re.test(text));
 }
-
-// ---- Type detection ----
 
 const INCOME_VERBS = [
   'gave me', 'gave', 'gifted', 'won', 'got', 'received', 'earned', 'deposited',
@@ -184,51 +114,47 @@ const INCOME_VERBS = [
 
 const EXPENSE_VERBS = [
   'spent', 'paid', 'bought', 'buy', 'purchase', 'purchased', 'cost', 'expense', 'outcome',
-  'bills', 'fee', 'tax', 'debt', 'loan', 'fine', 'premium', 'installment',
+  'bills', 'fee', 'tax', 'debt', 'loan', 'fine', 'premium', 'installment', 'pay',
   'beli', 'bayar', 'jajan', 'keluar'
 ];
 
 function detectType(text: string): TransactionType {
   const lower = text.toLowerCase();
+
+  let minIncomeIdx = Infinity;
   for (const v of INCOME_VERBS) {
-    if (lower.includes(v)) return 'income';
+    const idx = lower.indexOf(v);
+    if (idx !== -1 && idx < minIncomeIdx) minIncomeIdx = idx;
   }
+
+  let minExpenseIdx = Infinity;
   for (const v of EXPENSE_VERBS) {
-    if (lower.includes(v)) return 'expense';
+    const idx = lower.indexOf(v);
+    if (idx !== -1 && idx < minExpenseIdx) minExpenseIdx = idx;
   }
+
+  if (minIncomeIdx < minExpenseIdx) return 'income';
+  if (minExpenseIdx < minIncomeIdx) return 'expense';
+
   return 'expense';
 }
 
-// ---- Category detection ----
-
-// Order matters — more specific categories checked first.
 const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]> = {
-  // Kategori Income & Investasi (Arus Masuk)
   income: ['paycheck', 'salary', 'wage', 'deposit', 'bonus', 'gaji', 'upah', 'pendapatan', 'paypal'],
   investment: ['dividend', 'interest', 'profit', 'stock', 'invest', 'saham', 'bunga', 'crypto', 'capital gain', 'yield'],
-  
-  // Kategori Pengeluaran (Arus Keluar)
   debt: ['loan', 'debt', 'tax', 'fine', 'premium', 'installment', 'utang', 'pajak', 'denda', 'tagihan'],
   donation: ['donation', 'donate', 'charity', 'unicef', 'redcross', 'relief', 'donasi'],
   gift: ['gift', 'hadiah'],
-  
-  // Kategori Rumah Tangga & Belanja
   groceries: ['groceries', 'grocery', 'supermarket', 'safeway', 'trader joe', 'whole foods', 'pasar', 'sayur', 'buah', 'sembako'],
   food: ['makan', 'jajan', 'kopi', 'warteg', 'resto', 'restoran', 'nasi', 'minum', 'food', 'coffee', 'lunch', 'dinner', 'restaurant', 'meal', 'drink', 'cafe'],
   utilities: ['listrik', 'air', 'internet', 'pulsa', 'token', 'wifi', 'utilities', 'electricity', 'water', 'utility', 'bill', 'rent', 'sewa', 'pajak bumi'],
   shopping: ['belanja', 'shopee', 'tokopedia', 'baju', 'sepatu', 'bike', 'motor', 'mobil', 'shopping', 'clothes', 'shoes', 'shop', 'store', 'amazon', 'target', 'buy'],
-  
-  // Kategori Transportasi & Perjalanan
   transport: ['bensin', 'grab', 'gojek', 'parkir', 'ojek', 'taksi', 'taxi', 'bus', 'kereta', 'transport', 'fuel', 'gas', 'uber', 'ride', 'commute'],
   travel: ['flight', 'hotel', 'airbnb', 'vacation', 'plane ticket', 'tiket pesawat', 'liburan', 'penerbangan'],
-  
-  // Kategori Gaya Hidup & Kesehatan
   fitness: ['planet fitness', 'gym', 'yoga', 'workout', 'sport', 'fitness'],
   health: ['obat', 'dokter', 'rumah sakit', 'klinik', 'health', 'medicine', 'doctor', 'pharmacy', 'hospital', 'dental'],
   entertainment: ['nonton', 'bioskop', 'cinema', 'game', 'entertainment', 'movie', 'concert', 'konser', 'netflix', 'spotify'],
   subscription: ['netflix', 'spotify', 'subscription', 'hulu', 'disney+', 'icloud', 'langganan'],
-  
-  // Kategori Pendidikan
   education: ['buku', 'kursus', 'sekolah', 'kuliah', 'education', 'book', 'course', 'tuition', 'school', 'university']
 };
 
@@ -241,8 +167,6 @@ function detectCategory(text: string): TransactionCategory {
   }
   return 'other';
 }
-
-// ---- Main parser ----
 
 export function parseTransaction(
   rawText: string,
@@ -260,9 +184,6 @@ export function parseTransaction(
     return { ok: false, reason: 'zero_amount', rawText };
   }
 
-  // Semantic guards run AFTER amount (so error messages are more specific):
-  // - "i dont want to buy X" has an amount X, but is a negation
-  // - "i want to buy X" has an amount X, but is an intent (plan)
   if (detectNegation(rawText)) {
     return { ok: false, reason: 'negated_input', rawText };
   }
@@ -270,12 +191,19 @@ export function parseTransaction(
     return { ok: false, reason: 'planned_input', rawText };
   }
 
+  const txType = detectType(rawText);
+  let txCat = detectCategory(rawText);
+
+  if (txType === 'expense' && (txCat === 'gift' || txCat === 'income' || txCat === 'investment')) {
+    txCat = 'other';
+  }
+
   return {
     ok: true,
     tx: {
       amount: amount.value,
-      type: detectType(rawText),
-      category: detectCategory(rawText),
+      type: txType,
+      category: txCat,
       occurredAt: now,
       rawText,
       source: 'rule',
@@ -283,7 +211,6 @@ export function parseTransaction(
   };
 }
 
-// ---- Multiple Parser (For complex sentences) ----
 export function parseMultipleTransactions(
   rawText: string,
   now: Date = new Date(),
@@ -292,7 +219,6 @@ export function parseMultipleTransactions(
     return [{ ok: false, reason: 'invalid_input', rawText: String(rawText) }];
   }
 
-  // Pecah kalimat menjadi kata-kata
   const words = rawText.split(/\s+/);
   const chunks: string[] = [];
   let currentChunk: string[] = [];
@@ -300,14 +226,12 @@ export function parseMultipleTransactions(
   for (const word of words) {
     currentChunk.push(word);
     
-    // Jika kata ini mengandung angka, ini adalah akhir dari sebuah transaksi
     if (/\d/.test(word)) {
       chunks.push(currentChunk.join(' '));
       currentChunk = [];
     }
   }
 
-  // Jika masih ada sisa kata tanpa angka di akhir, gabungkan ke chunk terakhir
   if (currentChunk.length > 0) {
     if (chunks.length > 0) {
       chunks[chunks.length - 1] += ' ' + currentChunk.join(' ');
@@ -316,12 +240,10 @@ export function parseMultipleTransactions(
     }
   }
 
-  // Jika hanya ada 1 chunk, langsung parse utuh
   if (chunks.length <= 1) {
     return [parseTransaction(rawText, now)];
   }
 
-  // Parse setiap chunk secara independen
   const results: ParseResult[] = [];
   for (const chunk of chunks) {
     const res = parseTransaction(chunk, now);
