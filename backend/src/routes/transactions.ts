@@ -86,28 +86,24 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const inserted: any[] = [];
-      for (const tx of successfulTxs) {
-        const transaction = await insertTransaction(fastify.pg, sid, {
-          userId: userId ?? null,
-          parsed: tx,
-        });
-        inserted.push(transaction);
-
-        fastify.elastic.index({
-          index: 'transactions',
-          id: transaction.id,
-          document: {
-            raw_text: transaction.raw_text,
-            category: transaction.category,
-            type: transaction.type,
-            amount: transaction.amount,
-            occurred_at: transaction.occurred_at,
-          },
-        }).catch((err: any) => {
-          fastify.log.error({ err }, 'Failed to index transaction to Elastic');
-        });
+      const client = await fastify.pg.connect();
+      
+      try {
+        await client.query('BEGIN');
+        for (const tx of successfulTxs) {
+          const transaction = await insertTransaction(client as any, sid, {
+            userId: userId ?? null,
+            parsed: tx,
+          });
+          inserted.push(transaction);
+        }
+        await client.query('COMMIT');
+      } catch (dbErr) {
+        await client.query('ROLLBACK');
+        throw dbErr;
+      } finally {
+        client.release();
       }
-
       await invalidateSurplusPeriods(fastify.pg, sid);
 
       return reply.code(201).send({ transaction: inserted[0], transactions: inserted });
@@ -141,6 +137,40 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
         fastify.log.error({ err: error }, 'Elastic search failed');
         return reply.code(500).send({ error: 'search_failed' });
       }
+    }
+  );
+
+  
+  fastify.post<{ Body: { text: string } }>(
+    '/transactions/preview',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['text'],
+          additionalProperties: false,
+          properties: {
+            text: { type: 'string', minLength: 1, maxLength: 500 },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const { text } = req.body;
+      const parseResults = parseMultipleTransactions(text);
+      const successfulTxs = parseResults
+        .filter((r): r is { ok: true; tx: ParsedTransaction } => r.ok)
+        .map((r) => r.tx);
+
+      if (successfulTxs.length === 0) {
+        const firstError = parseResults[0];
+        return reply.code(400).send({
+          error: firstError.ok ? 'invalid_input' : firstError.reason,
+          rawText: text,
+        });
+      }
+
+      return reply.send({ transactions: successfulTxs });
     }
   );
 

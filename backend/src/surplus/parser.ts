@@ -177,9 +177,9 @@ function detectIntent(text: string): boolean {
 
 const INCOME_VERBS = [
   'gave me', 'gave', 'gifted', 'won', 'got', 'received', 'earned', 'deposited',
-  'salary', 'wage', 'paycheck', 'pay', 'profit', 'dividend', 'interest', 'rent',
+  'salary', 'wage', 'paycheck', 'profit', 'dividend', 'interest', 'rent',
   'royalty', 'grant', 'subsidy', 'allowance', 'bonus', 'cashback', 'refund',
-  'dapat', 'dikasih', 'gaji', 'menang', 'terima', 'income', 'revenue'
+  'dapat', 'dikasih', 'gaji', 'menang', 'terima', 'income', 'revenue', 'get'
 ];
 
 const EXPENSE_VERBS = [
@@ -210,7 +210,7 @@ const CATEGORY_KEYWORDS: Record<Exclude<TransactionCategory, 'other'>, string[]>
   // Kategori Pengeluaran (Arus Keluar)
   debt: ['loan', 'debt', 'tax', 'fine', 'premium', 'installment', 'utang', 'pajak', 'denda', 'tagihan'],
   donation: ['donation', 'donate', 'charity', 'unicef', 'redcross', 'relief', 'donasi'],
-  gift: ['gift', 'mom', 'dad', 'granpa', 'grandma', 'brother', 'sister', 'donation', 'hadiah', 'donasi', 'beri uang', 'kasih uang'],
+  gift: ['gift', 'hadiah'],
   
   // Kategori Rumah Tangga & Belanja
   groceries: ['groceries', 'grocery', 'supermarket', 'safeway', 'trader joe', 'whole foods', 'pasar', 'sayur', 'buah', 'sembako'],

@@ -1,34 +1,7 @@
-/**
- * ┌────────────────────────────────────────────────────────────────────┐
- * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
- * ├────────────────────────────────────────────────────────────────────┤
- * │  File      : frontend/components/journal/NewTransactionForm.tsx
- * │  Purpose   : Component: NewTransactionForm
- * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 10-11-2026
- * │  License   : MIT
- * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/frontend
- * @license   MIT
- */
-
-/**
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/frontend
- * @license   MIT
- */
-
 'use client';
 
-import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { submitTransaction } from '@/app/journal/new/actions';
 import VoiceButton from './VoiceButton';
 import SubmitButton from './SubmitButton';
@@ -42,9 +15,54 @@ const EXAMPLES = [
   'bought groceries for 95',
 ];
 
+interface PreviewTx {
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  rawText: string;
+}
+
 export default function NewTransactionForm() {
   const [text, setText] = useState('');
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  
+  const [previewTxs, setPreviewTxs] = useState<PreviewTx[]>([]);
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!text.trim()) {
+      setPreviewTxs([]);
+      setParseError(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsParsing(true);
+      setParseError(null);
+      try {
+        const res = await fetch('/api/proxy/transactions/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setParseError(data.error || 'Failed to parse input');
+          setPreviewTxs([]);
+        } else {
+          setPreviewTxs(data.transactions || []);
+          setParseError(null);
+        }
+      } catch (err) {
+        setParseError('Network error. Is backend awake?');
+      } finally {
+        setIsParsing(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [text]);
 
   return (
     <form action={submitTransaction}>
@@ -62,7 +80,7 @@ export default function NewTransactionForm() {
           maxLength={500}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="spent 20 dollars on coffee this morning"
+          placeholder="e.g. i got 1000 from mom and buy coffee 5"
           className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
         <VoiceButton onTranscript={setText} onError={setVoiceError} />
@@ -85,6 +103,42 @@ export default function NewTransactionForm() {
         </div>
       )}
 
+      <div className="mb-5 mt-6 rounded-xl border border-line bg-surface-raised p-5 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <Sparkles className="h-4 w-4 text-accent" />
+            Live Preview
+          </h3>
+          {isParsing && <Loader2 className="h-4 w-4 animate-spin text-ink-faint" />}
+        </div>
+
+        {parseError ? (
+          <p className="text-sm text-danger">{parseError}</p>
+        ) : previewTxs.length === 0 && text.trim() ? (
+          <p className="text-sm text-ink-faint">Typing...</p>
+        ) : previewTxs.length === 0 ? (
+          <p className="text-sm text-ink-faint">Your parsed transactions will appear here as you type.</p>
+        ) : (
+          <ul className="space-y-2">
+            {previewTxs.map((tx, i) => (
+              <li key={i} className="flex items-center justify-between rounded-lg border border-line bg-surface p-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className={`font-mono font-semibold ${tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                  </span>
+                  <span className="rounded bg-surface-sunken px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-ink-soft">
+                    {tx.category}
+                  </span>
+                </div>
+                <span className="truncate text-xs text-ink-soft max-w-[200px] italic">
+                  &quot;{tx.rawText}&quot;
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <AmountEditor text={text} onChange={setText} />
 
       <div className="mb-5 rounded-lg bg-surface-sunken p-3">
@@ -101,11 +155,12 @@ export default function NewTransactionForm() {
         </ul>
       </div>
 
-      <SubmitButton />
+      <div className={!previewTxs.length ? 'opacity-50 pointer-events-none' : ''}>
+        <SubmitButton />
+      </div>
 
       <p className="mt-4 text-center text-xs text-ink-faint">
-        Your raw input is stored verbatim alongside the parsed transaction —
-        you can always audit exactly what you typed.
+        Your raw input is stored verbatim alongside the parsed transaction — you can always audit exactly what you typed.
       </p>
     </form>
   );
