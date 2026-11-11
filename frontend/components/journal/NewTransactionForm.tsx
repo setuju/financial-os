@@ -7,8 +7,6 @@ import VoiceButton from './VoiceButton';
 import SubmitButton from './SubmitButton';
 import ReceiptScanButton from './ReceiptScanButton';
 
-const EXAMPLES = ['spent 20 dollars on coffee', 'received 500 bonus', 'bought groceries for 95'];
-
 interface PreviewTx {
   amount: number;
   type: 'income' | 'expense';
@@ -18,7 +16,6 @@ interface PreviewTx {
 
 export default function NewTransactionForm() {
   const [text, setText] = useState('');
-  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [previewTxs, setPreviewTxs] = useState<PreviewTx[]>([]);
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -54,7 +51,7 @@ export default function NewTransactionForm() {
       <label htmlFor="text" className="mb-2 block text-sm font-medium text-ink">What happened?</label>
       <div className="mb-2 flex gap-2">
         <input type="text" name="text" id="text" required autoFocus maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. i got 1000 from mom and buy coffee 5" className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink focus:border-accent focus:outline-none" />
-        <VoiceButton onTranscript={setText} onError={setVoiceError} />
+        <VoiceButton onTranscript={setText} />
       </div>
       <ReceiptScanButton onExtracted={setText} />
       
