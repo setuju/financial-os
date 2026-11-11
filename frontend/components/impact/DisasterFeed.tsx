@@ -25,7 +25,7 @@ export default function DisasterFeed() {
     <div className="mt-8 rounded-xl border border-line bg-surface-raised p-5">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
         <AlertTriangle className="h-4 w-4 text-amber-500" />
-        Live Disaster Updates (ReliefWeb / UN OCHA)
+        Live Global Alerts & Partner News
       </h3>
       <ul className="space-y-3">
         {disasters.map((d) => (
