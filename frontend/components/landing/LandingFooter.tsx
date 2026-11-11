@@ -16,7 +16,7 @@ export default function LandingFooter() {
             </p>
           </div>
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Product</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Product</h4>
             <ul className="mt-3 space-y-2 text-sm">
               <li><Link href="/login" className="text-ink-soft hover:text-ink">Sign in</Link></li>
               <li>

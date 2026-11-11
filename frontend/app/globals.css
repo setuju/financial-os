@@ -40,7 +40,7 @@ html[data-theme='light'] {
   --line-strong: 212 212 216;
   --ink: 24 24 27;
   --ink-soft: 82 82 91;
-  --ink-faint: 161 161 170;
+  --ink-faint: 113 113 122;
   --accent: 0 112 186;
   --accent-hover: 0 94 166;
   --accent-soft: 230 242 250;
@@ -63,7 +63,7 @@ html[data-theme='light'] {
     --line-strong: 63 63 70;
     --ink: 250 250 250;
     --ink-soft: 161 161 170;
-    --ink-faint: 82 82 91;
+    --ink-faint: 161 161 170;
     --accent: 59 159 219;
     --accent-hover: 74 174 234;
     --accent-soft: 12 40 60;

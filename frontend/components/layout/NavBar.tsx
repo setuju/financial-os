@@ -82,6 +82,7 @@ export default function NavBar({ status }: { status: HealthStatus }) {
         <Link
           href="/dashboard"
           className="flex items-center gap-2 text-sm font-semibold text-ink"
+          aria-label="Financial OS home"
         >
           <Wallet className="h-5 w-5 text-accent" />
           <span className="hidden sm:inline">Financial OS</span>
