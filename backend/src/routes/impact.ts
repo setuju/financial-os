@@ -54,7 +54,8 @@ interface PayoutBody {
   amount: number;
   currency?: string;
   note?: string;
-  sourcePeriod?: string;  // YYYY-MM-DD, defaults to last month
+  sourcePeriod?: string;
+  useCurrentMonth?: boolean;  // YYYY-MM-DD, defaults to last month
 }
 
 const impactRoutes: FastifyPluginAsync = async (fastify) => {
@@ -133,6 +134,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
             currency: { type: 'string', default: 'USD' },
             note: { type: 'string' },
             sourcePeriod: { type: 'string' },
+            useCurrentMonth: { type: 'boolean' },
           },
         },
       },
@@ -142,6 +144,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       const {
         receiverId, amount, currency = 'USD', note = 'Financial OS Impact',
         sourcePeriod,
+        useCurrentMonth,
       } = req.body;
 
       let receiver = VETTED_RECEIVERS.find((r) => r.id === receiverId);
@@ -152,7 +155,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(400).send({ error: 'invalid_receiver' });
       }
 
-      const source = sourcePeriod || lastMonth();
+      const source = sourcePeriod || (useCurrentMonth ? currentMonth() : lastMonth());
 
       // Validate: source month surplus must have enough remaining
       const period = await getSurplusPeriod(fastify.pg, sid, source);
@@ -208,7 +211,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
             amount: amount,
             type: 'expense',
             category: 'other',
-            occurredAt: new Date(),
+            occurredAt: new Date(source + 'T12:00:00Z'),
             rawText: `Donation to ${receiver.name}`,
             source: 'rule',
           }

@@ -9,6 +9,15 @@ interface FeedItem {
   type: 'earthquake' | 'news';
 }
 
+interface UsgsFeature {
+  id: string;
+  properties: {
+    title: string;
+    time: number;
+    url: string;
+  };
+}
+
 function extractTag(xml: string, tag: string): string {
   const cdataRegex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`, 'i');
   const normalRegex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i');
@@ -53,7 +62,8 @@ async function fetchEarthquakes(): Promise<FeedItem[]> {
     const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson', { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.features || []).slice(0, 3).map((f: any) => ({
+    const features = (data.features || []) as UsgsFeature[];
+    return features.slice(0, 3).map((f: UsgsFeature) => ({
       id: f.id,
       title: f.properties.title,
       source: 'USGS Earthquake Hazards Program',
