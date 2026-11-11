@@ -42,6 +42,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  other: { google: 'notranslate' },
   metadataBase: new URL('https://financial.saturumah.net'),
   title: {
     default: 'Financial OS — Natural-language finance with ethical surplus',
@@ -102,13 +103,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" translate="no" suppressHydrationWarning>
               <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}else{var m=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',m?'dark':'light');}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`,
           }}
         />
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
     </html>

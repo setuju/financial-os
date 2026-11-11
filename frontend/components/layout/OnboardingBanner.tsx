@@ -14,8 +14,10 @@ const STEPS = [
 
 export default function OnboardingBanner() {
   const [dismissed, setDismissed] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     try {
       setDismissed(localStorage.getItem(KEY) === '1');
     } catch {
@@ -32,7 +34,7 @@ export default function OnboardingBanner() {
     setDismissed(true);
   }
 
-  if (dismissed) return null;
+  if (!mounted || dismissed) return null;
 
   return (
     <div className="mb-6 rounded-lg border border-accent/30 bg-accent-soft/40 p-5">
