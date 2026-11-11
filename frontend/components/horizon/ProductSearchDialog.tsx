@@ -1,17 +1,32 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 import { useState } from 'react';
 import { Search, Loader2, X } from 'lucide-react';
 
-type Product = any;
+export interface C3Offer {
+  price?: number;
+  currency?: string;
+  merchant?: string;
+}
+
+export interface C3Product {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  brand?: string;
+  merchant?: string;
+  offers?: C3Offer[];
+  [key: string]: unknown;
+}
 
 interface Props {
-  onSelectProduct: (product: Product) => void;
+  onSelectProduct: (product: C3Product) => void;
   onClose: () => void;
 }
 
 export default function ProductSearchDialog({ onSelectProduct, onClose }: Props) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
+  const [results, setResults] = useState<C3Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +44,8 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setResults(data.products || []);
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error(err);
       setError('Failed to search products. Please try again.');
     } finally {
       setLoading(false);
@@ -68,14 +84,14 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
         {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
         <div className="max-h-96 space-y-3 overflow-y-auto">
-          {results.map((product: any) => (
+          {results.map((product: C3Product) => (
             <div
               key={product.id}
               onClick={() => onSelectProduct(product)}
               className="flex cursor-pointer items-center gap-4 rounded-lg border border-line p-3 transition-colors hover:border-accent hover:bg-surface-sunken"
             >
               {product.imageUrl && (
-                <img src={product.imageUrl} alt={product.title} className="h-16 w-16 rounded object-cover" />
+                               <img src={product.imageUrl} alt={product.title} className="h-16 w-16 rounded object-cover" />
               )}
               <div className="flex-1">
                 <p className="text-sm font-medium text-ink">{product.title}</p>
