@@ -38,9 +38,14 @@ declare module 'fastify' {
 }
 
 const VETTED_RECEIVERS = [
-  { id: 'aidpulse', name: 'AidPulse', category: 'Disaster relief', email: 'aidpulse-sandbox@example.com' },
-  { id: 'caregrid', name: 'CareGrid', category: 'Community health', email: 'caregrid-sandbox@example.com' },
-  { id: 'opentreasury', name: 'OpenTreasury', category: 'Financial inclusion', email: 'opentreasury-sandbox@example.com' },
+  { id: "aidpulse", name: "AidPulse", category: "Disaster relief", email: "aidpulse-sandbox@example.com" },
+  { id: "caregrid", name: "CareGrid", category: "Community health", email: "caregrid-sandbox@example.com" },
+  { id: "opentreasury", name: "OpenTreasury", category: "Financial inclusion", email: "opentreasury-sandbox@example.com" },
+  { id: "cleanwater", name: "Clean Water Initiative", category: "Water & Sanitation", email: "cleanwater-sandbox@example.com" },
+  { id: "edufund", name: "EduFund Global", category: "Education", email: "edufund-sandbox@example.com" },
+  { id: "greenearth", name: "Green Earth Alliance", category: "Environment", email: "greenearth-sandbox@example.com" },
+  { id: "foodbank", name: "Community Food Bank", category: "Hunger Relief", email: "foodbank-sandbox@example.com" },
+  { id: "mentalhealth", name: "MindCare Network", category: "Mental Health", email: "mentalhealth-sandbox@example.com" },
 ];
 
 interface PayoutBody {

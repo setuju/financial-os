@@ -55,7 +55,7 @@ export default function LandingPage() {
     featureList: [
       'Natural-language parser (English + Bahasa Indonesia)',
       'Voice input via Web Speech API',
-      'OCR receipt scan (Gemini Vision)',
+      'OCR receipt scan (Groq Qwen + OCR.space)',
       'Scoped AI assistant',
       'Financial Horizon (Bryntum Gantt)',
       'Surplus Oracle',

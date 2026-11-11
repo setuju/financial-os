@@ -17,6 +17,9 @@ importers:
       '@bryntum/gantt-react-enterprise':
         specifier: 8.0.0
         version: 8.0.0
+      '@channel3/sdk':
+        specifier: ^4.9.0
+        version: 4.9.0
       jspdf:
         specifier: ^4.2.1
         version: 4.2.1
@@ -106,6 +109,10 @@ packages:
   '@bryntum/scheduler-react-enterprise@8.0.0':
     resolution: {integrity: sha512-eyJ9PrkjFh5vmIDFhdNFz/ORMNzY193M8b0miLd/TkbdVtqhLSEbbsTuYr4DMYp+HhyGLLRSD55wwqk2soSwjg==}
     engines: {node: '>=0.10.0'}
+
+  '@channel3/sdk@4.9.0':
+    resolution: {integrity: sha512-3Cdsk0OfWWiclNKQH27iQ48ieCFwgTvBliqHPG//KRIXg2o3ZKxIyHuIt59n3fglnId0/XrLNjvFiwCPNE61Bw==}
+    engines: {node: '>=18.0.0'}
 
   '@eslint-community/eslint-utils@4.10.1':
     resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
@@ -1930,6 +1937,8 @@ snapshots:
       '@bryntum/core-react-enterprise': 8.0.0
       '@bryntum/grid-react-enterprise': 8.0.0
       '@bryntum/scheduler-enterprise': 8.0.0
+
+  '@channel3/sdk@4.9.0': {}
 
   '@eslint-community/eslint-utils@4.10.1(eslint@8.57.1(supports-color@7.2.0))':
     dependencies:

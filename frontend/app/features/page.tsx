@@ -29,7 +29,7 @@ const GROUPS: Array<{ label: string; features: Feature[] }> = [
   { label: 'Input — capture money in natural language', features: [
     { icon: FileText, title: 'Anti-Budget Parser', tagline: 'Type or speak. No forms.', body: 'Natural language in English or Bahasa Indonesia. Extracts amount (USD or IDR), type, and category (12 categories). Rejects plans and cancellations.', tooltip: 'Try "spent 20 on coffee" or "bayar listrik 1.250.000"' },
     { icon: Mic, title: 'Voice Input', tagline: 'Speak transactions hands-free.', body: 'Browser-native Web Speech API. After speaking, an inline AmountEditor lets you correct ASR misfires before submitting.', tooltip: 'Click mic → speak → review amount → submit' },
-    { icon: ScanLine, title: 'OCR Receipt Scan', tagline: 'Photograph or upload. Auto-fill.', body: 'Upload a receipt image. Gemini 3 Flash (Google AI Studio) extracts merchant, items, and total. Values pre-fill the form for review — image not stored on our servers.', tooltip: 'Receipt images are not stored on our servers' },
+    { icon: ScanLine, title: 'OCR Receipt Scan', tagline: 'Photograph or upload. Auto-fill.', body: 'Upload a receipt image. Groq Qwen 3.8 27B (with OCR.space fallback) extracts merchant, items, and total. Values pre-fill the form for review — image not stored on our servers.', tooltip: 'Receipt images are not stored on our servers' },
   ]},
   { label: 'Tracking — review and audit', features: [
     { icon: BookOpen, title: 'Journal', tagline: 'Every transaction, one list.', body: 'Newest-first with pagination (20/50/100/all), inline edit (re-parses raw text), soft-delete with audit trail. PDF export as A4 report.', tooltip: 'Raw text preserved verbatim for audit' },

@@ -29,7 +29,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, X, AlertCircle, Loader2, Target } from 'lucide-react';
+import { Plus, Trash2, X, AlertCircle, Loader2, Target, ShoppingBag } from 'lucide-react';
+import ProductSearchDialog from './ProductSearchDialog';
 
 export type Goal = {
   id: string;
@@ -67,6 +68,7 @@ function endDate(goal: Goal): string {
 export default function GoalsSection({ goals }: { goals: Goal[] }) {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -93,6 +95,11 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.target_amount, form.monthly_saving]);
+
+  const handleProductSelect = (product: any) => {
+    setForm((prev) => ({ ...prev, name: product.title || product.name || String(product), target_amount: String(product.offers?.[0]?.price || product.offers?.[0]?.amount || product.price || 0) }));
+    setIsProductDialogOpen(false);
+  };
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -195,6 +202,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
         </div>
       )}
 
+      {isProductDialogOpen && <ProductSearchDialog onSelectProduct={handleProductSelect} onClose={() => setIsProductDialogOpen(false)} />}
       {showAdd && (
         <form
           onSubmit={handleAdd}
@@ -328,6 +336,7 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
                       Target: ${Number(goal.target_amount).toLocaleString('en-US')} ·{' '}
                       ${Number(goal.monthly_saving).toLocaleString('en-US')}/mo ·{' '}
                       Ends {endDate(goal)}
+                      <button onClick={() => { window.location.href = `/impact?product=${encodeURIComponent(goal.name)}&amount=${goal.target_amount}`; }} className="ml-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-medium text-white hover:bg-accent-hover"><ShoppingBag className="h-3 w-3" /> Buy (Sandbox)</button>
                     </p>
                   </div>
                   {!isDeleting && (

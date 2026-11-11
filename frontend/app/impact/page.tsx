@@ -48,7 +48,7 @@ function monthLabel(iso: string): string {
   }
 }
 
-export default async function ImpactWallet() {
+export default async function ImpactWallet({ searchParams }: { searchParams: { product?: string; amount?: string } }) {
   const [surplus, receivers, payouts, horizon] = await Promise.all([
     getImpactSurplus(),
     getImpactReceivers(),
@@ -65,6 +65,12 @@ export default async function ImpactWallet() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      {searchParams?.product && (
+        <div className="mb-4 rounded-lg border border-accent bg-accent-soft/40 p-4 text-sm text-ink">
+          <p className="font-medium text-accent">🛒 Simulating Purchase: {searchParams.product}</p>
+          <p className="mt-1 text-xs text-ink-soft">Amount: ${searchParams.amount}. Proceed to distribute your ethical surplus to complete the sandbox transaction.</p>
+        </div>
+      )}
       <PageHeader
         title="Impact Wallet"
         description="Distribute verified surplus from last month to vetted causes via PayPal Payouts."
