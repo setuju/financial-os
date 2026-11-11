@@ -171,8 +171,9 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      try {
-        const response = await paypalClient.createBatchPayout({
+      let response;
+        try {
+          response = await paypalClient.createBatchPayout({
           body: {
             senderBatchHeader: {
               senderBatchId: `batch_${Date.now()}`,
@@ -190,32 +191,63 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           },
         });
 
+        } catch (paypalErr: unknown) {
+          fastify.log.error({ err: paypalErr }, 'PayPal payout failed');
+          await createPayout(fastify.pg, sid, {
+            amount,
+            currency,
+            receiverEmail: receiver.email,
+            status: 'failed',
+            sourcePeriod: source,
+          });
+          return reply.code(500).send({
+            error: 'paypal_payout_failed',
+            message: paypalErr instanceof Error ? paypalErr.message : 'Unknown error',
+          });
+        }
+
         const batchId = response.batchHeader?.payoutBatchId || null;
 
-        const payout = await createPayout(fastify.pg, sid, {
-          amount,
-          currency,
-          receiverEmail: receiver.email,
-          status: 'success',
-          paypalBatchId: batchId || undefined,
-          sourcePeriod: source,
-        });
+        const client = await fastify.pg.connect();
+        let payout;
+        try {
+          await client.query('BEGIN');
+
+          payout = await createPayout(client as any, sid, {
+            amount,
+            currency,
+            receiverEmail: receiver.email,
+            status: 'success',
+            paypalBatchId: batchId || undefined,
+            sourcePeriod: source,
+          });
+
+          await insertTransaction(client as any, sid, {
+            userId: null,
+            parsed: {
+              amount: amount,
+              type: 'expense',
+              category: 'donation',
+              occurredAt: new Date(),
+              rawText: `Donation to ${receiver.name}`,
+              source: 'payout',
+            }
+          });
+
+          await client.query('COMMIT');
+        } catch (dbErr: unknown) {
+          await client.query('ROLLBACK');
+          fastify.log.error({ err: dbErr }, 'DB insert failed after PayPal success');
+          return reply.code(500).send({
+            error: 'db_error_after_payout',
+            message: 'Payout succeeded but database recording failed.',
+          });
+        } finally {
+          client.release();
+        }
 
         // Cascade recompute: source month + all forward months
         await cascadeFrom(fastify.pg, sid, source);
-
-        // Catat donasi sebagai pengeluaran (Expense) di Jurnal
-        await insertTransaction(fastify.pg, sid, {
-          userId: null,
-          parsed: {
-            amount: amount,
-            type: 'expense',
-            category: 'donation',
-            occurredAt: new Date(),
-            rawText: `Donation to ${receiver.name}`,
-            source: 'rule',
-          }
-        });
         // Invalidate cache agar surplus langsung terpotong
         await invalidateSurplusPeriods(fastify.pg, sid);
 
@@ -225,20 +257,7 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
           surplus_updated: true,
           source_period: source,
         });
-      } catch (error: unknown) {
-        fastify.log.error({ err: error }, 'PayPal payout failed');
-        await createPayout(fastify.pg, sid, {
-          amount,
-          currency,
-          receiverEmail: receiver.email,
-          status: 'failed',
-          sourcePeriod: source,
-        });
-        return reply.code(500).send({
-          error: 'paypal_payout_failed',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
+      
     },
   );
 

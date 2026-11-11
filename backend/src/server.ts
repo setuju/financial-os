@@ -45,7 +45,6 @@ import demoRoutes from './routes/admin';
 import rootRoutes from './routes/root';
 import { ensureAdminSession } from './repositories/demo-sessions.js';
 import { verifySession } from './repositories/demo-sessions.js';
-import { ADMIN_UUID } from './repositories/demo-sessions.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -56,6 +55,7 @@ declare module 'fastify' {
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: config.logLevel },
+    bodyLimit: 4 * 1024 * 1024, // 4MB for OCR receipts
   });
   await app.register(rateLimit, { max: 100, timeWindow: '1 minute' });
   await app.register(cors, {
@@ -85,7 +85,12 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // B3: attachSession hook — req.sessionId from X-Session-Id header (fallback ADMIN_UUID)
   app.decorateRequest('sessionId', '');
-  app.addHook('preHandler', async (req) => {
+  app.addHook('preHandler', async (req, reply) => {
+    const publicPaths = ['/health', '/demo/login', '/demo/signup'];
+    const reqPath = req.url.split('?')[0];
+    if (publicPaths.includes(reqPath)) return;
+    if (req.method === 'GET' && reqPath === '/') return; // root.ts is public
+
     const hdr = req.headers['x-session-id'];
     if (typeof hdr === 'string' && hdr.length > 0) {
       const s = await verifySession(app.pg, hdr);
@@ -94,7 +99,7 @@ export async function buildServer(): Promise<FastifyInstance> {
         return;
       }
     }
-    req.sessionId = ADMIN_UUID;
+    return reply.code(401).send({ error: 'session_required' });
   });
   await app.register(elasticPlugin);
   await app.register(redisPlugin);

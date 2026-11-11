@@ -43,7 +43,7 @@ export interface TransactionRow {
   type: 'income' | 'expense';
   category: string;
   occurred_at: Date;
-  source: 'rule' | 'llm';
+  source: 'rule' | 'llm' | 'manual_edit' | 'payout';
   created_at: Date;
 }
 
@@ -65,7 +65,7 @@ interface RawRow {
   type: 'income' | 'expense';
   category: string;
   occurred_at: Date;
-  source: 'rule' | 'llm';
+  source: 'rule' | 'llm' | 'manual_edit' | 'payout';
   created_at: Date;
 }
 
