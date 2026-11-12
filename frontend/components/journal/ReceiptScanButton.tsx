@@ -22,16 +22,24 @@ const DIRECT_API_URL =
 
 async function resizeToDataUrl(file: File): Promise<string> {
   // Android Chrome may hand back HEIC; canvas can't decode it.
-  // Sometimes file.type is empty on Android, so we check filename too.
   const isHeic = /heic|heif/i.test(file.type) || /\.heic$|\.heif$/i.test(file.name);
   if (isHeic) {
     throw new Error('image_format_heic');
   }
+
+  // Use FileReader to get a data: URL instead of URL.createObjectURL.
+  // The blob: URL was being blocked by our own Content-Security-Policy
+  // (img-src 'self' data: https:), causing a silent img.onerror.
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('file_reader_failed'));
+    reader.readAsDataURL(file);
+  });
+
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const url = URL.createObjectURL(file);
     img.onload = () => {
-      URL.revokeObjectURL(url);
       let { width, height } = img;
       const maxSide = Math.max(width, height);
       if (maxSide > MAX_DIM) {
@@ -47,8 +55,8 @@ async function resizeToDataUrl(file: File): Promise<string> {
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
     };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image_load_failed')); };
-    img.src = url;
+    img.onerror = () => reject(new Error('image_load_failed'));
+    img.src = dataUrl;
   });
 }
 
