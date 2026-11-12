@@ -167,13 +167,26 @@ export async function runSeed(
 
   // Wipe only this session's data. Order matters for FK: payouts → oracles → periods → goals → tx
   const tables = ['payouts', 'surplus_oracles', 'surplus_periods', 'goals', 'transactions'];
-  for (const t of tables) {
-    await pool.query(`DELETE FROM ${t} WHERE session_id = $1`, [sessionId]);
-  }
+      for (const t of tables) {
+      await pool.query(`DELETE FROM ${t} WHERE session_id = $1`, [sessionId]);
+    }
+    
+    // Wipe Elasticsearch data for this session to prevent duplicates
+    if (esClient) {
+      try {
+        await esClient.deleteByQuery({
+          index: 'transactions',
+          query: { term: { session_id: sessionId } },
+          refresh: true
+        });
+      } catch (err) {
+        console.error('[Seed ES Cleanup] Failed to delete old ES data:', err);
+      }
+    }
 
-  if (!withData) {
-    return { transactions: 0, goals: 0, oracles: 0, periods: 0 };
-  }
+    if (!withData) {
+      return { transactions: 0, goals: 0, oracles: 0, periods: 0 };
+    }
 
   // ─── Build transactions ───
   const txs: Tx[] = [

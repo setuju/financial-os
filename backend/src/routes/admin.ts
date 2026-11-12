@@ -98,7 +98,7 @@ const demoRoutes: FastifyPluginAsync = async (fastify) => {
     }
     const isAdmin = session.id === ADMIN_UUID;
     try {
-      const result = await runSeed(fastify.pg, session.id, { withData: isAdmin });
+      const result = await runSeed(fastify.pg, session.id, { withData: isAdmin }, fastify.elastic);
       return {
         ok: true,
         sessionId: session.id,
