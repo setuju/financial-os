@@ -101,6 +101,9 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
       name: product.title, 
       target_amount: String(cleanPrice) 
     }));
+    
+    // Buka form dan tutup modal
+    setShowAdd(true); 
     setIsProductDialogOpen(false);
   };
 
