@@ -9,8 +9,22 @@ interface Props {
 
 const MAX_DIM = 1024;
 const JPEG_QUALITY = 0.75;
+const OCR_TIMEOUT_MS = 120_000;
+
+// Direct backend URL — bypasses Vercel function overhead (Hobby plan caps
+// at 10s; OCR.space + Groq fallback can legitimately exceed that).
+// CORS is verified: origin allowlist + allowedHeaders include x-session-id.
+const DIRECT_API_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3001'
+    : 'https://financial-api.saturumah.net');
 
 async function resizeToDataUrl(file: File): Promise<string> {
+  // Android Chrome may hand back HEIC; canvas can't decode it.
+  if (/heic|heif/i.test(file.type) || /\.heic$|\.heif$/i.test(file.name)) {
+    throw new Error('image_format_heic');
+  }
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -36,6 +50,17 @@ async function resizeToDataUrl(file: File): Promise<string> {
   });
 }
 
+async function getSessionId(): Promise<string | null> {
+  try {
+    const r = await fetch('/api/session-id', { cache: 'no-store' });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { id?: string };
+    return j.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ReceiptScanButton({ onExtracted }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,33 +70,77 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
     if (!file) return;
     setError(null);
     setLoading(true);
+    const t0 = performance.now();
+
     try {
       const dataUrl = await resizeToDataUrl(file);
-      const res = await fetch('/api/proxy/receipts/ocr', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl }),
-        signal: AbortSignal.timeout(65_000),
-      });
-      const data = await res.json().catch(() => ({}));
-      
-      if (!res.ok || !data.extractedText) {
-        if (data.error === 'ocr_unconfigured') setError('Vision AI is not configured.');
-        else if (data.error === 'receipt_unreadable') setError('Could not read that image.');
-        else setError('Failed to extract text. Try again.');
+      const payloadKb = Math.round(dataUrl.length / 1024);
+
+      const sessionId = await getSessionId();
+      if (!sessionId) {
+        setError('Session expired. Log in again.');
         return;
       }
+
+      const res = await fetch(`${DIRECT_API_URL}/receipts/ocr`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-session-id': sessionId,
+        },
+        body: JSON.stringify({ image: dataUrl }),
+        signal: AbortSignal.timeout(OCR_TIMEOUT_MS),
+      });
+
+      const elapsedMs = Math.round(performance.now() - t0);
+      const data = (await res.json().catch(() => ({}))) as {
+        extractedText?: string;
+        error?: string;
+        reason?: string;
+      };
+
+      if (!res.ok || !data.extractedText) {
+        // Diagnostic visible on mobile — shows HTTP status, error code,
+        // elapsed time, payload size. Screenshot-able.
+        if (data.error === 'ocr_unconfigured') {
+          setError(`Vision AI not configured (${elapsedMs}ms)`);
+        } else if (data.error === 'receipt_unreadable') {
+          setError(`Unreadable image (${payloadKb}KB, ${elapsedMs}ms)`);
+        } else if (data.error === 'ocr_upstream_error') {
+          const reason = (data.reason ?? '').slice(0, 60);
+          setError(`OCR upstream failed: ${reason} (${elapsedMs}ms)`);
+        } else {
+          setError(`HTTP ${res.status} (${elapsedMs}ms, ${payloadKb}KB)`);
+        }
+        return;
+      }
+
+      const elapsed2 = Math.round(performance.now() - t0);
+      // eslint-disable-next-line no-console
+      console.info(`[OCR] success in ${elapsed2}ms, ${payloadKb}KB`);
       onExtracted(data.extractedText);
     } catch (err: unknown) {
-      console.error('[OCR Upload Error]', err);
-      if (err instanceof Error && err.name === 'TimeoutError') {
-        setError('Request timed out. Backend might be waking up.');
+      const elapsedMs = Math.round(performance.now() - t0);
+      // eslint-disable-next-line no-console
+      console.error('[OCR Upload Error]', err, `(${elapsedMs}ms)`);
+      if (err instanceof Error) {
+        if (err.name === 'TimeoutError') {
+          setError(`Timed out after ${Math.round(elapsedMs / 1000)}s`);
+        } else if (err.message === 'image_format_heic') {
+          setError('HEIC photo not supported. Use camera or JPG/PNG.');
+        } else if (err.message === 'image_load_failed') {
+          setError('Could not decode image.');
+        } else if (err.message === 'no_canvas_ctx') {
+          setError('Browser canvas unavailable. Reload.');
+        } else {
+          setError(`${err.message.slice(0, 40)} (${elapsedMs}ms)`);
+        }
       } else {
-        setError('Connection failed. Image might be too large.');
+        setError(`Unknown error (${elapsedMs}ms)`);
       }
     } finally {
       setLoading(false);
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     }
   }
 
@@ -85,13 +154,13 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
         Scan Receipt
       </button>
-      
-      {/* Input transparan menutupi tombol untuk memicu kamera di mobile */}
+
       <input
         type="file"
         accept="image/*"
         capture="environment"
         onChange={handleFile}
+        disabled={loading}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         title=""
       />
