@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Loader2, X, Square } from 'lucide-react';
+import { Mic, X, Square } from 'lucide-react';
 
 interface SR {
   lang: string;
@@ -386,46 +386,15 @@ export default function VoiceButton({
   };
 
   if (support === 'unknown') return null;
-  const unsupported = support === 'unsupported';
-
   return (
     <>
       <button
         type="button"
         onClick={start}
-        disabled={phase !== 'idle' || unsupported}
-        title={
-          unsupported
-            ? 'Voice requires Chrome, Edge, or Safari'
-            : 'Speak your transaction(s)'
-        }
-        aria-label="Speak your transaction"
-        className={`flex items-center justify-center gap-2 rounded-lg border px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-          unsupported
-            ? 'border-line bg-surface-sunken text-ink-faint'
-            : phase === 'listening'
-              ? 'border-danger/50 bg-danger-soft text-danger'
-              : 'border-line-strong bg-surface-raised text-ink-soft hover:border-accent hover:text-accent'
-        }`}
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover disabled:opacity-70"
       >
-        {phase === 'requesting' ? (
-          <Loader2 className="h-5 w-5 animate-spin text-accent" />
-        ) : phase === 'listening' ? (
-          <Mic className="h-5 w-5 animate-pulse" />
-        ) : unsupported ? (
-          <MicOff className="h-5 w-5" />
-        ) : (
-          <Mic className="h-5 w-5" />
-        )}
-        <span className="hidden text-sm font-medium sm:inline">
-          {phase === 'requesting'
-            ? 'Allow mic…'
-            : phase === 'listening'
-              ? 'Listening'
-              : unsupported
-                ? 'N/A'
-                : 'Speak'}
-        </span>
+        <Mic className="h-4 w-4" />
+        Speak
       </button>
 
       {phase === 'listening' && (
