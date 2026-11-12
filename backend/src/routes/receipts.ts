@@ -40,7 +40,7 @@ function parseImage(body: OcrBody): ParsedImage | null {
 }
 
 async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<string> {
-  const model = 'google/gemini-flash-1.5';
+  const model = 'openai/gpt-4o-mini';
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: {
@@ -87,9 +87,12 @@ function extractTotalAndMerchant(rawText: string): { total: number | null; merch
   // 1. Ekstrak item (baris yang diakhiri harga, abaikan total/tax/cash)
   for (const line of lines) {
     if (/total|tax|subtotal|change|cash|thank|date|time/i.test(line)) continue;
-    const match = line.match(/^(.+?)\s+\$?\s*(\d+(?:[.,]\d{2})?)$/);
-    if (match) {
-      const itemName = match[1].trim();
+    const parts = line.split(/\s+/);
+    const lastWord = parts[parts.length - 1].replace(/[^\d.,]/g, '');
+    const price = parseFloat(lastWord.replace(',', '.'));
+    // Cek jika kata terakhir adalah harga yang valid
+    if (!isNaN(price) && price > 0 && price < 10000) {
+      const itemName = parts.slice(0, -1).join(' ').replace(/\$/g, '').trim();
       if (itemName.length > 2 && itemName.length < 40) {
         items.push(itemName);
       }
