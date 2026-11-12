@@ -85,7 +85,7 @@ export default async function Home() {
           Financial OS
         </h1>
         <p className="mt-2 max-w-2xl text-base text-ink-soft">
-          Track money with words. Allocate ethical surplus via PayPal Payouts.
+          Track money with words. Allocate ethical surplus via PayPal Payouts. <br /><span className="text-sm text-ink-faint">Note: Balance here is raw Income minus Expense. Ethical Surplus (with obligations deducted) is on the Impact Wallet.</span>
         </p>
       </div>
 

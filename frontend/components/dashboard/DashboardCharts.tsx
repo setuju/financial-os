@@ -37,6 +37,13 @@ import Card from '@/components/ui/Card';
 const formatCurrency = (value: any) => `$${Number(value || 0).toFixed(2)}`;
 
 const COLORS = ['#0070ba', '#059669', '#e11d48', '#d97706', '#8b5cf6', '#ec4899', '#64748b', '#0ea5e9'];
+const CATEGORY_COLORS: Record<string, string> = {
+  income: '#0070ba', freelance: '#8b5cf6', investment: '#0ea5e9', bonus: '#f59e0b', pocket_money: '#10b981',
+  food: '#ec4899', groceries: '#22c55e', transport: '#6366f1', utilities: '#eab308', shopping: '#f97316',
+  health: '#ef4444', entertainment: '#d946ef', subscription: '#14b8a6', gift: '#f43f5e', donation: '#64748b', other: '#a1a1aa'
+};
+
+const getColor = (name: string, index: number) => CATEGORY_COLORS[name] || COLORS[index % COLORS.length];
 
 interface Props {
   summaryData: SummaryResponse | null;
@@ -74,7 +81,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
             <BarChart data={flowData} barGap={8}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
               <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
-              <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `$${v}`} />
+              <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `${v}`} domain={[0, 'auto']} />
               <RechartsTooltip formatter={formatCurrency} />
               <Legend />
               <Bar dataKey="Income" fill="#059669" radius={[4, 4, 0, 0]} />
@@ -101,7 +108,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
                 paddingAngle={5}
               >
                 {(incomeCatData?.categories || []).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} />
                 ))}
               </Pie>
               <RechartsTooltip formatter={formatCurrency} />
@@ -128,7 +135,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
                 paddingAngle={5}
               >
                 {(expenseCatData?.categories || []).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} />
                 ))}
               </Pie>
               <RechartsTooltip formatter={formatCurrency} />
