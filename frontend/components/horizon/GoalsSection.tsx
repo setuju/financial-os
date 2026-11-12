@@ -87,7 +87,14 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
   }, [form.target_amount, form.monthly_saving]);
 
   const handleProductSelect = (product: C3Product) => {
-    setForm((prev) => ({ ...prev, name: product.title, target_amount: String(product.offers?.[0]?.price || 0) }));
+    const rawPrice = product.offers?.[0]?.price;
+    const cleanPrice = rawPrice ? Number(String(rawPrice).replace(/[^0-9.]/g, '')) : 0;
+    
+    setForm((prev) => ({ 
+      ...prev, 
+      name: product.title, 
+      target_amount: String(cleanPrice) 
+    }));
     setIsProductDialogOpen(false);
   };
 
