@@ -27,6 +27,7 @@
 
 import type { FastifyPluginAsync } from 'fastify';
 import { ASSISTANT_PROMPT, ASSISTANT_CANARY, ASSISTANT_PROMPT_VERSION } from '../agents/assistant.prompt.js';
+import { buildAdvisorPrompt, ADVISOR_CANARY } from '../agents/advisors.prompt.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'google/gemini-3.8-flash';
@@ -61,6 +62,11 @@ function resolveModel(): string {
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+}
+
+
+interface AdvisorBody {
+  persona: 'financial' | 'cashier' | 'insider';
 }
 
 interface ChatBody {
@@ -275,6 +281,148 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
     },
     // Do NOT return canary or prompt content here.
   }));
+
+  fastify.post<{ Body: AdvisorBody }>(
+    '/assistant/advisor',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['persona'],
+          properties: {
+            persona: { type: 'string', enum: ['financial', 'cashier', 'insider'] },
+          },
+        },
+      },
+    },
+    async (req, reply) => {
+      const sid = req.sessionId;
+      const { persona } = req.body;
+
+      // 1. Cek apakah transaksi >= 100
+      const countRes = await fastify.pg.query(
+        'SELECT COUNT(*)::int AS count FROM transactions WHERE session_id = $1',
+        [sid]
+      );
+      const txCount = countRes.rows[0].count;
+      
+      if (txCount < 100) {
+        return reply.code(403).send({ 
+          error: 'insufficient_data', 
+          message: 'You have too low data to compute. Reach 100 transactions to unlock Financial Advisors.' 
+        });
+      }
+
+      // 2. Ambil data agregat untuk konteks AI
+      const metricsRes = await fastify.pg.query(`
+        SELECT 
+          COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE 0 END), 0) AS total_income,
+          COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) AS total_expense
+        FROM transactions WHERE session_id = $1 AND is_projection = false
+      `, [sid]);
+      
+      const income = Number(metricsRes.rows[0].total_income);
+      const expense = Number(metricsRes.rows[0].total_expense);
+      const balance = income - expense;
+      
+      const goalsRes = await fastify.pg.query(
+        'SELECT name, target_amount, monthly_saving FROM goals WHERE session_id = $1 LIMIT 3',
+        [sid]
+      );
+      const goals = goalsRes.rows.map(g => `${g.name} (Target: ${g.target_amount}, Monthly: ${g.monthly_saving})`).join(', ') || 'None';
+
+      const catRes = await fastify.pg.query(`
+        SELECT category, SUM(amount) as total FROM transactions 
+        WHERE session_id = $1 AND type = 'expense' AND is_projection = false
+        GROUP BY category ORDER BY total DESC LIMIT 3
+      `, [sid]);
+      const topCats = catRes.rows.map(c => `${c.category}: ${c.total}`).join(', ') || 'None';
+
+      const dataContext = `
+- Total Income: ${income.toFixed(2)}
+- Total Expense: ${expense.toFixed(2)}
+- Current Balance: ${balance.toFixed(2)}
+- Top Expense Categories: ${topCats}
+- Active Goals: ${goals}
+- Total Transactions: ${txCount}
+      `;
+
+      const prompt = buildAdvisorPrompt(persona, dataContext);
+
+      // 3. Panggil OpenRouter / Gemini (reuse logic from chat, simplified here for brevity)
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!openRouterKey && !geminiKey) {
+        return reply.code(503).send({ error: 'advisor_unconfigured' });
+      }
+
+      let replyText = '';
+      let provider = '';
+      let model = '';
+
+      if (openRouterKey) {
+        try {
+          const res = await fetch(OPENROUTER_URL, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openRouterKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://financial.saturumah.net',
+              'X-Title': 'Financial OS Advisor',
+            },
+            body: JSON.stringify({
+              model: resolveModel(),
+              messages: [{ role: 'system', content: prompt }, { role: 'user', content: 'Give me your advice.' }],
+              max_tokens: 300,
+              temperature: 0.7,
+            }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (res.ok) {
+            const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }>; model?: string };
+            replyText = data.choices?.[0]?.message?.content ?? '';
+            provider = 'openrouter';
+            model = data.model ?? resolveModel();
+          }
+        } catch {}
+      }
+
+      // Fallback Gemini
+      if (!replyText && geminiKey) {
+        try {
+          const res = await fetch(GEMINI_NATIVE_URL, {
+            method: 'POST',
+            headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: prompt }] },
+              contents: [{ role: 'user', parts: [{ text: 'Give me your advice.' }] }],
+              generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
+            }),
+            signal: AbortSignal.timeout(30000),
+          });
+          if (res.ok) {
+            const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+            replyText = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
+            provider = 'gemini';
+            model = GEMINI_NATIVE_MODEL;
+          }
+        } catch {}
+      }
+
+      if (!replyText) {
+        return reply.code(502).send({ error: 'advisor_upstream_error' });
+      }
+
+      // Canary check
+      if (replyText.includes(ADVISOR_CANARY)) {
+        fastify.log.error('ADVISOR CANARY LEAK DETECTED');
+        return reply.code(500).send({ error: 'internal_error' });
+      }
+
+      return { reply: replyText.trim(), provider, model };
+    }
+  );
+
 };
 
 export default assistantRoutes;

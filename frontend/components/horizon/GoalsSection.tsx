@@ -172,24 +172,34 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
         <h2 className="text-sm font-semibold text-ink">
           Goals ({goals.length})
         </h2>
-        <button
-          type="button"
-          onClick={() => {
-            setShowAdd((v) => !v);
-            setError(null);
-          }}
-          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
-        >
-          {showAdd ? (
-            <>
-              <X className="h-4 w-4" /> Cancel
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" /> Add goal
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsProductDialogOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-surface-raised px-3 py-1.5 text-sm font-medium text-ink shadow-sm transition-colors hover:bg-surface-sunken"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Search Product
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAdd((v) => !v);
+              setError(null);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover"
+          >
+            {showAdd ? (
+              <>
+                <X className="h-4 w-4" /> Cancel
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" /> Add goal
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {error && (
