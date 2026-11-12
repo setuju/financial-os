@@ -91,7 +91,7 @@ export default function AdvisorCards({ transactions }: { transactions: Transacti
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-accent" />
-          <h2 className="text-lg font-semibold text-ink">AI Financial Advisors</h2>
+          <h2 className="text-lg font-semibold text-ink">Intelegentia-Agentic Advisors (The F-OS Trio)</h2>
         </div>
         <span className="text-xs text-ink-faint">
           {isUnlocked ? 'Pro Feature Unlocked' : `Locked (${transactions.length}/100 tx)`}

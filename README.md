@@ -34,7 +34,7 @@ closing = opening + income − expense − horizon_bills − donations
 ```
 Each month's closing becomes the next month's opening. `horizon_bills` = committed obligations from active Horizon goals.
 
-**AI Financial Advisors (The AOS Trio)** — Hidden behind a 100-transaction gate (Easter Egg). Once unlocked, users get personalized, multi-perspective financial advice:
+**Intelegentia-Agentic Advisors (The F-OS Trio)** — Hidden behind a 100-transaction gate (Easter Egg). Once unlocked, users get personalized, multi-perspective financial advice:
 - **Financial-Advisor**: Macro-level auditor (risk, health score, runway).
 - **Ombar-The Cashier**: Frontline eyes (daily habits, leaks, coffee spending).
 - **Stephen-The Insider**: Brutally honest ex-employee (unrealistic goals, financial culture).
