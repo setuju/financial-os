@@ -244,6 +244,44 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+
+  fastify.get<{ Querystring: { q: string } }>(
+    '/reports/search',
+    {
+      schema: {
+        querystring: {
+          type: 'object',
+          required: ['q'],
+          properties: { q: { type: 'string' } },
+        },
+      },
+    },
+    async (req, reply) => {
+      const sid = req.sessionId;
+      const { q } = req.query;
+
+      try {
+        const result = await fastify.elastic.search({
+          index: 'transactions',
+          query: {
+            bool: {
+              must: [{ match: { raw_text: q } }],
+              filter: [{ term: { session_id: sid } }]
+            }
+          },
+          sort: [{ occurred_at: { order: 'desc' } }],
+          size: 50
+        });
+
+        const hits = result.hits.hits.map((h) => h._source);
+        return { transactions: hits };
+      } catch (err) {
+        fastify.log.error({ err }, 'Elastic search failed');
+        return reply.code(500).send({ error: 'search_failed' });
+      }
+    }
+  );
+
 };
 
 export default reportsRoutes;

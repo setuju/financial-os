@@ -21,8 +21,9 @@
 
 import { Info } from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
+import WordCloudModal from './WordCloudModal';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import Card from '@/components/ui/Card';
 import type { Transaction, Goal, SurplusMetrics } from '@/lib/api';
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export default function AdvancedStats({ transactions, goals, metrics, esWordCloud }: Props) {
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
   // 1. Top 5 Largest Expenses
   const topExpenses = useMemo(() => {
     return [...transactions]
@@ -192,18 +194,23 @@ export default function AdvancedStats({ transactions, goals, metrics, esWordClou
           {wordCloud.map(([word, count]) => {
             const size = Math.max(12, Math.min(24, 12 + count * 2));
             return (
-              <span
+              <button
                 key={word}
-                className="text-accent font-semibold opacity-80 hover:opacity-100 transition-opacity"
+                onClick={() => setSelectedWord(word)}
+                className="text-accent font-semibold opacity-80 hover:opacity-100 hover:underline transition-all"
                 style={{ fontSize: `${size}px` }}
-                title={`${count} occurrences`}
+                title={`Click to see ${count} transactions`}
               >
                 {word}
-              </span>
+              </button>
             );
           })}
         </div>
       </Card>
+      {/* Word Cloud Modal */}
+      {selectedWord && (
+        <WordCloudModal word={selectedWord} onClose={() => setSelectedWord(null)} />
+      )}
     </div>
   );
 }
