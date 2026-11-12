@@ -55,7 +55,15 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
         body: JSON.stringify({ query, limit: 5 }),
         signal: AbortSignal.timeout(15000),
       });
-      const data = await res.json();
+      
+      // Baca sebagai text dulu untuk mencegah crash jika server mengembalikan HTML
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error('Server returned an invalid response. (Check Vercel logs/API Key)');
+      }
       
       if (!res.ok) throw new Error(data.error || 'Failed to search products');
       setResults(data.products || []);
