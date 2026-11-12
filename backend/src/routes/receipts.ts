@@ -17,11 +17,11 @@ const MAX_BASE64_LENGTH = 3_000_000; // ~3MB base64
 const UPSTREAM_TIMEOUT_MS = 30_000;
 
 const VISION_PROMPT =
-  'Extract from this receipt: what was bought and the total amount paid. ' +
-  'Output ONE short natural-language sentence like: "spent 9 dollars on coffee at Kopi Kenangan". ' +
+  'Extract from this receipt: a brief list of the items bought and the total amount paid. ' +
+  'Output ONE short natural-language sentence like: "spent 9 dollars on coffee and croissant at Kopi Kenangan". ' +
   'Rules: (1) Use "spent" for purchases, "paid" for bills. ' +
   '(2) Use "dollars" as currency word (normalize even if receipt shows IDR). ' +
-  '(3) Include merchant name if visible. ' +
+  '(3) Include merchant name and a summary of the main items bought. ' +
   '(4) No preamble, no explanation, no formatting — ONLY the sentence.';
 
 interface OcrBody { image: string; mimeType?: string; }
@@ -81,12 +81,23 @@ async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<s
 }
 
 // --- OCR.SPACE (Fallback with Smarter Regex) ---
-function extractTotalAndMerchant(rawText: string): { total: number | null; merchant: string } {
+function extractTotalAndMerchant(rawText: string): { total: number | null; merchant: string; items: string[] } {
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const merchant = (lines[0] ?? '').slice(0, 60);
   let total: number | null = null;
+  let items: string[] = [];
 
-  // 1. Cari "TOTAL" dan ambil angka di baris itu ATAU 3 baris di bawahnya
+  // Ekstrak item: cari baris yang ada harga (misal "$4.50"), abaikan total/tax
+  for (const line of lines) {
+    if (/\$?\s*\d+(?:[.,]\d{2})/.test(line) && !/total|tax|subtotal|change|cash/i.test(line)) {
+      const itemName = line.replace(/\$?\s*\d+(?:[.,]\d{2})/g, '').trim();
+      if (itemName.length > 2) items.push(itemName);
+    }
+  }
+  // Batasi maksimal 3 item agar kalimat tidak terlalu panjang
+  items = items.slice(0, 3);
+
+  // Cari "TOTAL" dan ambil angka di baris itu ATAU 3 baris di bawahnya
   const totalIdx = lines.findIndex(l => /total/i.test(l));
   if (totalIdx !== -1) {
     const chunk = lines.slice(totalIdx, totalIdx + 4).join(' ');
@@ -118,7 +129,7 @@ function extractTotalAndMerchant(rawText: string): { total: number | null; merch
     if (nums.length) total = Math.max(...nums);
   }
 
-  return { total, merchant };
+  return { total, merchant, items };
 }
 
 async function callOcrSpace(img: ParsedImage, apiKey: string): Promise<string> {
@@ -143,10 +154,12 @@ async function callOcrSpace(img: ParsedImage, apiKey: string): Promise<string> {
   const raw = data.ParsedResults?.map((r: any) => r.ParsedText ?? '').join('\n') ?? '';
   if (!raw.trim()) throw new Error('ocrspace_empty');
 
-  const { total, merchant } = extractTotalAndMerchant(raw);
+  const { total, merchant, items } = extractTotalAndMerchant(raw);
   if (!total) throw new Error('ocrspace_no_total');
 
-  return `spent ${total} dollars${merchant ? ` at ${merchant}` : ''}`;
+  const itemsStr = items.length > 0 ? ` on ${items.join(' and ')}` : '';
+  const merchantStr = merchant ? ` at ${merchant}` : '';
+  return `spent ${total} dollars${itemsStr}${merchantStr}`;
 }
 
 const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
