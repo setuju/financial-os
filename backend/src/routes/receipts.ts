@@ -39,10 +39,7 @@ function parseImage(body: OcrBody): ParsedImage | null {
   return { base64: image, mimeType: mime };
 }
 
-// --- OPENROUTER VISION (Primary) ---
 async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<string> {
-  // Force a known-good vision model on OpenRouter.
-  // ASSISTANT_MODEL is for the text assistant, not guaranteed to support vision.
   const model = 'google/gemini-flash-1.5';
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -73,6 +70,7 @@ async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<s
   }
   const data = (await res.json()) as any;
   const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
+  
   // If OpenRouter just echoed "spent" or failed to see numbers, force fallback
   if (!reply || reply.split(' ').length < 2 || !/\d/.test(reply)) {
     throw new Error(`openrouter_invalid_reply: ${reply.slice(0, 50)}`);
@@ -80,53 +78,47 @@ async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<s
   return reply;
 }
 
-// --- OCR.SPACE (Fallback with Smarter Regex) ---
 function extractTotalAndMerchant(rawText: string): { total: number | null; merchant: string; items: string[] } {
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const merchant = (lines[0] ?? '').slice(0, 60);
   let total: number | null = null;
   let items: string[] = [];
 
-  // Ekstrak item: cari baris yang ada harga (misal "$4.50"), abaikan total/tax
+  // 1. Ekstrak item (baris yang diakhiri harga, abaikan total/tax/cash)
   for (const line of lines) {
-    if (/\$?\s*\d+(?:[.,]\d{2})/.test(line) && !/total|tax|subtotal|change|cash/i.test(line)) {
-      const itemName = line.replace(/\$?\s*\d+(?:[.,]\d{2})/g, '').trim();
-      if (itemName.length > 2) items.push(itemName);
+    if (/total|tax|subtotal|change|cash|thank|date|time/i.test(line)) continue;
+    const match = line.match(/^(.+?)\s+\$?\s*(\d+(?:[.,]\d{2})?)$/);
+    if (match) {
+      const itemName = match[1].trim();
+      if (itemName.length > 2 && itemName.length < 40) {
+        items.push(itemName);
+      }
     }
   }
-  // Batasi maksimal 3 item agar kalimat tidak terlalu panjang
   items = items.slice(0, 3);
 
-  // Cari "TOTAL" dan ambil angka di baris itu ATAU 3 baris di bawahnya
+  // 2. Ekstrak total (cari "TOTAL", ambil angka terbesar sebelum "CASH/THANK")
   const totalIdx = lines.findIndex(l => /total/i.test(l));
   if (totalIdx !== -1) {
-    const chunk = lines.slice(totalIdx, totalIdx + 4).join(' ');
+    let endIdx = lines.length;
+    for (let i = totalIdx + 1; i < lines.length; i++) {
+      if (/cash|thank|change/i.test(lines[i])) { endIdx = i; break; }
+    }
+    const chunk = lines.slice(totalIdx, endIdx).join(' ');
     const nums = chunk.match(/\$?\s*(\d+(?:[.,]\d{2})?)/g);
     if (nums) {
-      const parsed = nums
-        .map(n => parseFloat(n.replace(/[^\d.,]/g, '').replace(',', '.')))
-        .filter(n => !isNaN(n) && n > 0);
-      if (parsed.length) total = Math.max(...parsed); // Largest number in the chunk
+      const parsed = nums.map(n => parseFloat(n.replace(/[^\d.,]/g, '').replace(',', '.'))).filter(n => !isNaN(n) && n > 0);
+      if (parsed.length) total = Math.max(...parsed);
     }
   }
 
-  // 2. Jika gagal, cari angka dengan simbol '$' dan ambil yang terbesar
+  // 3. Fallback
   if (total === null) {
     const currencyMatches = rawText.match(/\$\s*(\d+(?:[.,]\d{2})?)/g);
     if (currencyMatches) {
       const nums = currencyMatches.map(s => parseFloat(s.replace(/[^\d.,]/g, '').replace(',', '.'))).filter(n => !isNaN(n));
       if (nums.length) total = Math.max(...nums);
     }
-  }
-
-  // 3. Fallback terakhir: angka apapun, abaikan tahun (1900-2100)
-  if (total === null) {
-    const all = rawText.match(/(?:\$)?\s*(\d+(?:[.,]\d{1,2})?)/g) ?? [];
-    const nums = all
-      .map((s) => parseFloat(s.replace(/[^\d.,]/g, '').replace(',', '.')))
-      .filter((n) => !isNaN(n) && n > 0)
-      .filter((n) => !(n >= 1900 && n <= 2100)); // ignore years
-    if (nums.length) total = Math.max(...nums);
   }
 
   return { total, merchant, items };
@@ -188,7 +180,6 @@ const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
       if (!img) return reply.code(422).send({ error: 'receipt_unreadable' });
 
       const attempts: Array<{ provider: string; fn: () => Promise<string> }> = [];
-      
       if (openRouterKey) attempts.push({ provider: 'openrouter_vision', fn: () => callOpenRouterVision(img, openRouterKey) });
       if (ocrSpaceKey) attempts.push({ provider: 'ocrspace', fn: () => callOcrSpace(img, ocrSpaceKey) });
 
