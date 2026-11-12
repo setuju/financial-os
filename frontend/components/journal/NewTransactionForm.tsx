@@ -50,8 +50,8 @@ export default function NewTransactionForm() {
       <input type="hidden" name="transactions" value={JSON.stringify(previewTxs)} />
       <label htmlFor="text" className="mb-2 block text-sm font-medium text-ink">What happened?</label>
       <div className="mb-2 flex gap-2">
-        <input type="text" name="text" id="text" required autoFocus maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. i got 1000 from mom and buy coffee 5" className="flex-1 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink focus:border-accent focus:outline-none" />
-        <VoiceButton onTranscript={setText} />
+        <input type="text" name="text" id="text" required autoFocus maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. i got 1000 from mom and buy coffee 5" className="flex-1 min-w-0 rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink focus:border-accent focus:outline-none" />
+        <div className="shrink-0"><VoiceButton onTranscript={setText} /></div>
       </div>
       <ReceiptScanButton onExtracted={setText} />
       

@@ -41,8 +41,10 @@ const HARD_TIMEOUT_MS = 60_000;
 function cleanSTT(text: string): string {
   let cleaned = text.trim();
   let prev = '';
+  let iterations = 0;
   // Terus ganti urutan kata yang berulang hingga stabil
-  while (prev !== cleaned) {
+  while (prev !== cleaned && iterations < 10) {
+    iterations++;
     prev = cleaned;
     // Regex ini mencari 1-4 kata yang diulang secara langsung (misal: "I I" -> "I", "I got I got" -> "I got")
     cleaned = cleaned.replace(/\b([\w']+(?:\s+[\w']+){0,3})\s+\1\b/gi, '$1');
@@ -130,6 +132,7 @@ export default function VoiceButton({
     setMicLevel(0);
     setElapsedMs(0);
     accumulatedRef.current = '';
+    sessionFinalRef.current = '';
     sessionFinalRef.current = '';
   };
 
@@ -288,7 +291,7 @@ export default function VoiceButton({
       let currentFinal = '';
       let currentInterim = '';
       
-      for (let i = 0; i < e.results.length; i++) {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
         const txt = (res[0]?.transcript ?? '').trim();
         if (!txt) continue;
@@ -296,13 +299,21 @@ export default function VoiceButton({
         else currentInterim += txt + ' ';
       }
 
-      const rawCombined = (accumulatedRef.current + ' ' + currentFinal).trim();
-      const cleanCombined = cleanSTT(rawCombined);
-      
-      const cleanInterim = cleanSTT(currentInterim);
+      // Cegah duplikasi pada browser mobile yang mengirim ulang seluruh teks
+      if (currentFinal.trim() !== sessionFinalRef.current) {
+        if (currentFinal.trim().startsWith(sessionFinalRef.current) && sessionFinalRef.current.length > 0) {
+          // Teks baru adalah perpanjangan dari teks lama
+          sessionFinalRef.current = currentFinal.trim();
+        } else if (currentFinal.length > 0) {
+          // Teks baru adalah potongan baru
+          accumulatedRef.current = (accumulatedRef.current + ' ' + currentFinal).trim();
+          sessionFinalRef.current = currentFinal.trim();
+        }
+      }
 
-      setAccumulated(cleanCombined);
-      setInterim(cleanInterim);
+      const combined = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim();
+      setAccumulated(cleanSTT(combined));
+      setInterim(cleanSTT(currentInterim));
     };
 
     rec.onerror = (e) => {
@@ -432,7 +443,7 @@ export default function VoiceButton({
                 onClick={cancel}
                 aria-label="Cancel voice input"
                 title="Cancel (discard)"
-                className="rounded-md p-1 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-md p-1 text-white/60 transition-colors hover:bg-surface-raised/10 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -444,7 +455,7 @@ export default function VoiceButton({
               className={`h-3 w-3 flex-shrink-0 ${micLevel > 5 ? 'text-emerald-400' : 'text-white/40'}`}
               aria-hidden
             />
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/15">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-raised/15">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-red-500 transition-[width] duration-100"
                 style={{ width: `${micLevel}%` }}
