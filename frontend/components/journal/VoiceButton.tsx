@@ -42,11 +42,9 @@ function cleanSTT(text: string): string {
   let cleaned = text.trim();
   let prev = '';
   let iterations = 0;
-  // Terus ganti urutan kata yang berulang hingga stabil
   while (prev !== cleaned && iterations < 10) {
     iterations++;
     prev = cleaned;
-    // Regex ini mencari 1-4 kata yang diulang secara langsung (misal: "I I" -> "I", "I got I got" -> "I got")
     cleaned = cleaned.replace(/\b([\w']+(?:\s+[\w']+){0,3})\s+\1\b/gi, '$1');
   }
   return cleaned.replace(/\s+/g, ' ').trim();
@@ -94,7 +92,11 @@ export default function VoiceButton({
   const lastResultTsRef = useRef(0);
   const accumulatedRef = useRef('');
   const sessionFinalRef = useRef('');
+  const interimRef = useRef('');
   const cancelledRef = useRef(false);
+  // Set BEFORE calling rec.stop() when we intend to COMMIT on onend
+  // (silence finalize, hard timeout) vs auto-restart on network blip.
+  const finalizeOnEndRef = useRef(false);
 
   const emitError = (msg: string | null) => onError?.(msg);
 
@@ -133,10 +135,10 @@ export default function VoiceButton({
     setElapsedMs(0);
     accumulatedRef.current = '';
     sessionFinalRef.current = '';
-    sessionFinalRef.current = '';
+    interimRef.current = '';
+    finalizeOnEndRef.current = false;
   };
 
-  
   const cancel = () => {
     cancelledRef.current = true;
     try {
@@ -171,7 +173,6 @@ export default function VoiceButton({
 
     setPhase('requesting');
 
-    // Device presence check
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const mics = devices.filter((d) => d.kind === 'audioinput');
@@ -230,7 +231,6 @@ export default function VoiceButton({
     }
     streamRef.current = stream;
 
-    // Audio meter
     try {
       const AC =
         window.AudioContext ??
@@ -275,15 +275,15 @@ export default function VoiceButton({
     const rec = new Ctor();
     recRef.current = rec;
     rec.lang = 'en-US';
-    rec.continuous = true; // KEY FIX: don't auto-stop after first phrase
+    rec.continuous = true;
     rec.interimResults = true;
 
     rec.onresult = (e: SREvent) => {
       lastResultTsRef.current = Date.now();
-      
+
       let currentFinal = '';
       let currentInterim = '';
-      
+
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
         const txt = (res[0]?.transcript ?? '').trim();
@@ -292,26 +292,27 @@ export default function VoiceButton({
         else currentInterim += txt + ' ';
       }
 
-      // Cegah duplikasi pada browser mobile yang mengirim ulang seluruh teks
       if (currentFinal.trim() !== sessionFinalRef.current) {
         if (currentFinal.trim().startsWith(sessionFinalRef.current) && sessionFinalRef.current.length > 0) {
-          // Teks baru adalah perpanjangan dari teks lama
           sessionFinalRef.current = currentFinal.trim();
         } else if (currentFinal.length > 0) {
-          // Teks baru adalah potongan baru
           accumulatedRef.current = (accumulatedRef.current + ' ' + currentFinal).trim();
           sessionFinalRef.current = currentFinal.trim();
         }
       }
 
       const combined = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim();
+      const cleanedInterim = cleanSTT(currentInterim);
       setAccumulated(cleanSTT(combined));
-      setInterim(cleanSTT(currentInterim));
+      setInterim(cleanedInterim);
+      // Sync ref immediately — used by stopAndInsert and onend-finalize
+      // to avoid stale-closure over React state.
+      interimRef.current = cleanedInterim;
     };
 
     rec.onerror = (e) => {
       if (e.error === 'aborted' || cancelledRef.current) return;
-      if (e.error === 'no-speech') return; // Abaikan hening, biarkan user bicara
+      if (e.error === 'no-speech') return;
       const msg = friendlyError(e.error);
       if (msg) emitError(msg);
     };
@@ -323,19 +324,25 @@ export default function VoiceButton({
         return;
       }
 
-      // Jika user belum menekan tombol Stop, tapi browser memutus koneksi
-      // (misal karena hening 3 detik), kita restart otomatis.
-      if (!cancelledRef.current) {
-        try {
-          rec.start();
-          return; // Jangan cleanup, jangan reset state
-        } catch {
-          // Jika gagal restart, biarkan jatuh ke cleanup di bawah
-        }
+      // Silence/timeout tick requested finalize — commit now.
+      if (finalizeOnEndRef.current) {
+        const final = cleanSTT((accumulatedRef.current + ' ' + interimRef.current).trim());
+        if (final) onTranscript(final);
+        cleanupSideEffects();
+        resetState();
+        return;
       }
 
-      // Commit teks dan bersihkan
-      const final = cleanSTT(accumulatedRef.current).trim();
+      // Otherwise browser dropped the connection (Android Chrome blip).
+      // Try to resume seamlessly without losing state.
+      try {
+        rec.start();
+        return;
+      } catch {
+        /* fall through to commit */
+      }
+
+      const final = cleanSTT((accumulatedRef.current + ' ' + interimRef.current).trim());
       if (final) onTranscript(final);
       cleanupSideEffects();
       resetState();
@@ -353,8 +360,8 @@ export default function VoiceButton({
         setElapsedMs(el);
         const sinceLast = Date.now() - lastResultTsRef.current;
 
-        // Auto-finalize: 3s silence AFTER having some accumulated text
         if (accumulatedRef.current && sinceLast > SILENCE_FINALIZE_MS) {
+          finalizeOnEndRef.current = true;
           try {
             rec.stop();
           } catch {
@@ -362,8 +369,8 @@ export default function VoiceButton({
           }
           return;
         }
-        // Hard timeout
         if (el >= HARD_TIMEOUT_MS) {
+          finalizeOnEndRef.current = true;
           try {
             rec.stop();
           } catch {
@@ -380,17 +387,17 @@ export default function VoiceButton({
 
 
   const stopAndInsert = () => {
-    cancelledRef.current = true; // Cegah auto-restart
+    cancelledRef.current = true;
     try {
       recRef.current?.stop();
     } catch {
       /* ignore */
     }
-    
-    // Ambil teks yang ada saat ini secara paksa
-    const final = cleanSTT(accumulatedRef.current + ' ' + interim).trim();
+
+    // Read from ref, not state — state can lag by one render tick.
+    const final = cleanSTT((accumulatedRef.current + ' ' + interimRef.current).trim());
     if (final) onTranscript(final);
-    
+
     cleanupSideEffects();
     resetState();
   };
