@@ -9,31 +9,40 @@ We combine a deterministic natural-language parser with an autonomous **F-OS Tri
 
 ---
 
-## 💎 Why Financial OS Stands Out
+## 💳 How We Used PayPal
+We deeply integrated the **PayPal Payouts REST API v1** to power our "Impact Wallet".
+- **SDK Generation:** We used **APIMatic** to auto-generate our TypeScript PayPal SDK directly from the OpenAPI spec.
+- **Meaningful Integration:** When a user's Ethical Surplus is verified, they can route a suggested 10% of those funds to vetted causes. The payout requires a strict two-step human-in-the-loop confirmation.
+- **Atomic Security:** We wrapped the API call in an atomic SQL transaction (`BEGIN/COMMIT/ROLLBACK`) so the ledger is never out of sync.
 
-- **Ethical Surplus Engine**: `closing = opening + income − expense − horizon_bills − donations`. Principal savings are protected automatically.
-- **Agentic Advisors (The F-OS Trio)**: Unlocked after 100 transactions, users receive personalized, autonomous financial guidance from three distinct AI personas powered by Astropods MCP:
-  - **Financial-Advisor**: Macro-level risk auditing and compliance.
-  - **Ombar-The Cashier**: Frontline street-smart detection of daily micro-leaks.
-  - **Sikitong**: Fearless, out-of-the-box diagnosis of financial habits.
-- **Elasticsearch-Powered Semantic Search**: Instant drill-down into transactions via a global search bar and an interactive word cloud, backed by PostgreSQL fallback.
-- **Channel3 Real-World Anchoring**: Users search real products directly through Channel3 to anchor long-term Horizon goals with actual market prices.
-- **Strict Zero-Trust Security**: Strict 401 enforcement, no admin UUID fallback, rate-limited endpoints, atomic payout transactions, and PII-free sandbox sessions.
+## 🤖 How We Used AI
+- **Agentic Advisors (The F-OS Trio):** Orchestrated via **Astropods MCP**. Unlocked after 100 transactions, users get personalized audits from three distinct personas.
+- **Scoped Assistant:** Powered by **OpenRouter (Gemini 3.8 Flash)**, secured with a canary string to prevent prompt injection.
+- **Vision OCR:** Powered by **Groq (Qwen 3.8 27B)** with an OCR.space fallback to automatically parse receipt images into structured data.
 
 ---
 
-## 🏆 Hackathon Alignment
-- **Best Overall & Best Use of PayPal + AI**: Deep integration with PayPal Payouts REST API v1 (OAuth2, batch payouts) and APIMatic-generated TypeScript SDK.
-- **Most Impactful**: Principal-protected ethical giving (with two-step human confirmation).
-- **Most Creative**: Bi-modal intent rejection parser + agentic trio that unlocks through gamified usage.
-- **Sponsor Tracks**: Bryntum Gantt 8 (Horizon goals), Channel3 (Product Search), Elastic Cloud (Aggregations), APIMatic (PayPal SDK).
+## 💎 Why Financial OS Stands Out
+- **Ethical Surplus Engine**: `closing = opening + income − expense − horizon_bills − donations`. Principal savings are protected automatically.
+- **Elasticsearch-Powered Semantic Search**: Instant drill-down into transactions via a global search bar and an interactive word cloud, backed by PostgreSQL fallback.
+- **Channel3 Real-World Anchoring**: Users search real products directly through Channel3 to anchor long-term Horizon goals with actual market prices.
+- **Strict Zero-Trust Security**: Strict 401 enforcement, no admin UUID fallback, rate-limited endpoints, and PII-free sandbox sessions.
+
+---
+
+## 🏆 Sponsor Tools Integrated
+- **Bryntum Gantt 8**: Powers the Financial Horizon goals.
+- **Channel3 API**: Enables real-world product search.
+- **Elastic Cloud**: Powers NLP Word Cloud and Global Search aggregations.
+- **APIMatic**: Generates the PayPal SDK.
+- **Astropods**: Orchestrates our AI agent workflows.
+- **Render**: Backend deployment.
 
 ---
 
 ## 🛠️ Architecture & Tech Stack
 - **Frontend**: Next.js 14 App Router, Tailwind CSS, Recharts, Lucide, Bryntum Gantt React.
 - **Backend**: Fastify 4 (TypeScript strict ESM), PostgreSQL (Neon), Redis (Upstash), Elasticsearch.
-- **AI & Payments**: OpenRouter/Gemini (Assistant), Groq/OCR.space (Vision), Astropods MCP, Channel3 API, PayPal Payouts v1 Sandbox.
 
 ---
 
