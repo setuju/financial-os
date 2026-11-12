@@ -10,27 +10,13 @@
  * │  Created   : 10-11-2026
  * │  License   : MIT
  * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
- */
-
-/**
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
  */
 
 import type { FastifyPluginAsync } from 'fastify';
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'qwen/qwen3.8-27b';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const OCR_SPACE_URL = 'https://api.ocr.space/parse/image';
-const MAX_BASE64_LENGTH = 3_000_000; // ~3MB base64 (~2.2MB image)
+const MAX_BASE64_LENGTH = 3_000_000; // ~3MB base64
 const UPSTREAM_TIMEOUT_MS = 30_000;
 
 const VISION_PROMPT =
@@ -69,78 +55,54 @@ function parseImage(body: OcrBody): ParsedImage | null {
   return { base64: image, mimeType: mime };
 }
 
-async function callGroq(img: ParsedImage, apiKey: string): Promise<string> {
-  const res = await fetch(GROQ_URL, {
+// --- GEMINI VISION ---
+async function callGemini(img: ParsedImage, apiKey: string): Promise<string> {
+  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: VISION_PROMPT },
-            {
-              type: 'image_url',
-              image_url: { url: `data:${img.mimeType};base64,${img.base64}` },
-            },
-          ],
-        },
-      ],
-      temperature: 1,
-      top_p: 1,
-      max_completion_tokens: 200,
-      stream: false,
+      contents: [{
+        parts: [
+          { text: VISION_PROMPT },
+          { inline_data: { mime_type: img.mimeType, data: img.base64 } }
+        ]
+      }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 100 }
     }),
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`groq_${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`gemini_${res.status}: ${text.slice(0, 200)}`);
   }
 
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
-  if (!reply) throw new Error('groq_empty_reply');
+  const data = (await res.json()) as any;
+  const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (!reply) throw new Error('gemini_empty_reply');
   return reply;
 }
 
+// --- OCR.SPACE (Fallback) ---
 function extractTotalAndMerchant(rawText: string): { total: number | null; merchant: string } {
-  const lines = rawText
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-
+  const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const merchant = (lines[0] ?? '').slice(0, 60);
-
   let total: number | null = null;
+
   for (const line of lines) {
     if (/total/i.test(line)) {
       const m = line.match(/(\d+(?:[.,]\d+)?)/);
       if (m) {
         const num = parseFloat(m[1].replace(',', '.'));
-        if (Number.isFinite(num) && num > 0) {
-          total = num;
-          break;
-        }
+        if (Number.isFinite(num) && num > 0) { total = num; break; }
       }
     }
   }
-
   if (total === null) {
     const all = rawText.match(/\d+(?:[.,]\d+)?/g) ?? [];
-    const nums = all
-      .map((s) => parseFloat(s.replace(',', '.')))
-      .filter((n) => Number.isFinite(n) && n > 0);
+    const nums = all.map((s) => parseFloat(s.replace(',', '.'))).filter((n) => Number.isFinite(n) && n > 0);
     if (nums.length) total = Math.max(...nums);
   }
-
   return { total, merchant };
 }
 
@@ -159,32 +121,18 @@ async function callOcrSpace(img: ParsedImage, apiKey: string): Promise<string> {
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`ocrspace_${res.status}: ${text.slice(0, 200)}`);
-  }
+  if (!res.ok) throw new Error(`ocrspace_${res.status}`);
 
-  const data = (await res.json()) as {
-    IsErroredOnProcessing?: boolean;
-    ErrorMessage?: string | string[];
-    ParsedResults?: Array<{ ParsedText?: string }>;
-  };
+  const data = (await res.json()) as any;
+  if (data.IsErroredOnProcessing) throw new Error(`ocrspace_errored: ${data.ErrorMessage}`);
 
-  if (data.IsErroredOnProcessing) {
-    const msg = Array.isArray(data.ErrorMessage)
-      ? data.ErrorMessage.join('; ')
-      : data.ErrorMessage;
-    throw new Error(`ocrspace_errored: ${msg ?? 'unknown'}`);
-  }
-
-  const raw = data.ParsedResults?.map((r) => r.ParsedText ?? '').join('\n') ?? '';
+  const raw = data.ParsedResults?.map((r: any) => r.ParsedText ?? '').join('\n') ?? '';
   if (!raw.trim()) throw new Error('ocrspace_empty');
 
   const { total, merchant } = extractTotalAndMerchant(raw);
   if (!total) throw new Error('ocrspace_no_total');
 
-  const merchantPart = merchant ? ` at ${merchant}` : '';
-  return `spent ${total} dollars${merchantPart}`;
+  return `spent ${total} dollars${merchant ? ` at ${merchant}` : ''}`;
 }
 
 const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -193,8 +141,7 @@ const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
     {
       schema: {
         body: {
-          type: 'object',
-          required: ['image'],
+          type: 'object', required: ['image'],
           properties: {
             image: { type: 'string', minLength: 100, maxLength: MAX_BASE64_LENGTH },
             mimeType: { type: 'string' },
@@ -203,26 +150,21 @@ const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
-      const groqKey = process.env.GROQ_API_KEY;
+      const geminiKey = process.env.GEMINI_API_KEY;
       const ocrSpaceKey = process.env.OCR_SPACE_KEY;
 
-      if (!groqKey && !ocrSpaceKey) {
-        return reply.code(503).send({
-          error: 'ocr_unconfigured',
-          message: 'Neither GROQ_API_KEY nor OCR_SPACE_KEY is set.',
-        });
+      if (!geminiKey && !ocrSpaceKey) {
+        return reply.code(503).send({ error: 'ocr_unconfigured', message: 'No OCR provider configured.' });
       }
 
       const img = parseImage(req.body);
-      if (!img) {
-        return reply.code(422).send({
-          error: 'receipt_unreadable',
-          message: 'Invalid or too-large image payload.',
-        });
-      }
+      if (!img) return reply.code(422).send({ error: 'receipt_unreadable' });
 
       const attempts: Array<{ provider: string; fn: () => Promise<string> }> = [];
-      if (groqKey) attempts.push({ provider: 'groq', fn: () => callGroq(img, groqKey) });
+      
+      // Prioritize Gemini (Stable, High Accuracy)
+      if (geminiKey) attempts.push({ provider: 'gemini', fn: () => callGemini(img, geminiKey) });
+      // Fallback to OCR.space
       if (ocrSpaceKey) attempts.push({ provider: 'ocrspace', fn: () => callOcrSpace(img, ocrSpaceKey) });
 
       const errors: string[] = [];
@@ -237,10 +179,7 @@ const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
 
-      return reply.code(502).send({
-        error: 'ocr_upstream_error',
-        reason: errors.join(' | ').slice(0, 500),
-      });
+      return reply.code(502).send({ error: 'ocr_upstream_error', reason: errors.join(' | ').slice(0, 500) });
     },
   );
 };

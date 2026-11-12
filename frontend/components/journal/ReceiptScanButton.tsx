@@ -22,7 +22,9 @@ const DIRECT_API_URL =
 
 async function resizeToDataUrl(file: File): Promise<string> {
   // Android Chrome may hand back HEIC; canvas can't decode it.
-  if (/heic|heif/i.test(file.type) || /\.heic$|\.heif$/i.test(file.name)) {
+  // Sometimes file.type is empty on Android, so we check filename too.
+  const isHeic = /heic|heif/i.test(file.type) || /\.heic$|\.heif$/i.test(file.name);
+  if (isHeic) {
     throw new Error('image_format_heic');
   }
   return new Promise((resolve, reject) => {
