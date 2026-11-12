@@ -36,6 +36,20 @@ type Phase = 'idle' | 'requesting' | 'listening';
 const SILENCE_FINALIZE_MS = 3000;
 const HARD_TIMEOUT_MS = 60_000;
 
+
+// Membersihkan pengulangan kata akibat bug Web Speech API mobile
+function cleanSTT(text: string): string {
+  let cleaned = text.trim();
+  let prev = '';
+  // Terus ganti urutan kata yang berulang hingga stabil
+  while (prev !== cleaned) {
+    prev = cleaned;
+    // Regex ini mencari 1-4 kata yang diulang secara langsung (misal: "I I" -> "I", "I got I got" -> "I got")
+    cleaned = cleaned.replace(/\b([\w']+(?:\s+[\w']+){0,3})\s+\1\b/gi, '$1');
+  }
+  return cleaned.replace(/\s+/g, ' ').trim();
+}
+
 function friendlyError(code: string): string {
   switch (code) {
     case 'not-allowed':
@@ -274,7 +288,6 @@ export default function VoiceButton({
       let currentFinal = '';
       let currentInterim = '';
       
-      // Bangun ulang teks dari e.results
       for (let i = 0; i < e.results.length; i++) {
         const res = e.results[i];
         const txt = (res[0]?.transcript ?? '').trim();
@@ -283,21 +296,13 @@ export default function VoiceButton({
         else currentInterim += txt + ' ';
       }
 
-      // Deteksi jika browser me-reset buffer (teks saat ini lebih pendek dari sebelumnya)
-      if (currentFinal.length < sessionFinalRef.current.length) {
-        // Pindahkan teks sesi lama ke accumulatedRef
-        accumulatedRef.current = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim() + ' ';
-        sessionFinalRef.current = '';
-      }
+      const rawCombined = (accumulatedRef.current + ' ' + currentFinal).trim();
+      const cleanCombined = cleanSTT(rawCombined);
+      
+      const cleanInterim = cleanSTT(currentInterim);
 
-      // Simpan transkrip final sesi saat ini
-      if (currentFinal.trim()) {
-        sessionFinalRef.current = currentFinal.trim();
-      }
-
-      const displayFinal = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim();
-      setAccumulated(displayFinal);
-      setInterim(currentInterim.trim());
+      setAccumulated(cleanCombined);
+      setInterim(cleanInterim);
     };
 
     rec.onerror = (e) => {
@@ -318,7 +323,7 @@ export default function VoiceButton({
         accumulatedRef.current = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim() + ' ';
         sessionFinalRef.current = '';
       }
-      const final = accumulatedRef.current.trim();
+      const final = cleanSTT(accumulatedRef.current).trim();
       if (final) onTranscript(final);
       cleanupSideEffects();
       resetState();
