@@ -2,22 +2,14 @@
  * ┌────────────────────────────────────────────────────────────────────┐
  * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
  * ├────────────────────────────────────────────────────────────────────┤
- * │  File      : frontend/app/page.tsx
- * │  Purpose   : Page: /page.tsx
+ * │  File      : frontend/app/dashboard/page.tsx
+ * │  Purpose   : Dashboard page (Charts, Stats, Quick Links)
  * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
  * │  GitHub    : https://github.com/setuju
  * │  Website   : https://saturumah.net
  * │  Created   : 10-11-2026
  * │  License   : MIT
  * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/frontend
- * @license   MIT
- */
-
-/**
  *
  * @author    Jack <Jack[at]SatuRumah[dot]Net>
  * @created   10-11-2026
@@ -34,17 +26,20 @@ import {
   TrendingDown,
   Sparkles,
 } from 'lucide-react';
-import { 
+import {
   serverGetSurplus as getSurplus,
   serverGetReportSummary,
   serverGetReportCategories,
   serverGetImpactSurplus,
-  serverGetImpactPayouts
+  serverGetImpactPayouts,
+  serverGetTransactions,
+  serverGetGoals
 } from '@/lib/api-server';
 import StatCard from '@/components/ui/StatCard';
 import OnboardingBanner from '@/components/layout/OnboardingBanner';
 import EmptyState from '@/components/ui/EmptyState';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
+import AdvancedStats from '@/components/dashboard/AdvancedStats';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,20 +52,21 @@ const usd = new Intl.NumberFormat('en-US', {
 
 export default async function Home() {
   const surplusData = await getSurplus();
-  
+
   const now = new Date();
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(now.getMonth() - 6);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts] = await Promise.all([
+  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts, transactions, goals] = await Promise.all([
     serverGetReportSummary({ from: fmt(sixMonthsAgo), to: fmt(now), groupBy: 'month', type: 'all', includeProjections: false }),
     serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'income' }),
     serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'expense' }),
     serverGetImpactSurplus(),
     serverGetImpactPayouts(),
+    serverGetTransactions(200),
+    serverGetGoals(),
   ]);
-
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -85,7 +81,10 @@ export default async function Home() {
           Financial OS
         </h1>
         <p className="mt-2 max-w-2xl text-base text-ink-soft">
-          Track money with words. Allocate ethical surplus via PayPal Payouts. <br /><span className="text-sm text-ink-faint">Note: Balance here is raw Income minus Expense. Ethical Surplus (with obligations deducted) is on the Impact Wallet.</span>
+          Track money with words. Allocate ethical surplus via PayPal Payouts. <br />
+          <span className="text-sm text-ink-faint">
+            Note: Balance here is raw Income minus Expense. Ethical Surplus (with obligations deducted) is on the Impact Wallet.
+          </span>
         </p>
       </div>
 
@@ -111,7 +110,7 @@ export default async function Home() {
               tone="danger"
             />
             <StatCard
-              label="Current surplus"
+              label="Current Balance"
               value={usd.format(surplusData.metrics.currentSurplus)}
               icon={<Sparkles className="h-4 w-4" />}
               tone={surplusData.metrics.currentSurplus >= 0 ? 'success' : 'danger'}
@@ -166,6 +165,12 @@ export default async function Home() {
             expenseCatData={expenseCatData}
             impactSurplus={impactSurplus}
             payouts={payouts}
+          />
+
+          <AdvancedStats 
+            transactions={transactions || []}
+            goals={goals || []}
+            metrics={surplusData.metrics}
           />
 
           <p className="mt-10 text-center text-xs text-ink-faint">
