@@ -77,6 +77,7 @@ export default function VoiceButton({
   const startTsRef = useRef(0);
   const lastResultTsRef = useRef(0);
   const accumulatedRef = useRef('');
+  const sessionFinalRef = useRef('');
   const cancelledRef = useRef(false);
 
   const emitError = (msg: string | null) => onError?.(msg);
@@ -115,6 +116,7 @@ export default function VoiceButton({
     setMicLevel(0);
     setElapsedMs(0);
     accumulatedRef.current = '';
+    sessionFinalRef.current = '';
   };
 
   const finalize = () => {
@@ -268,21 +270,34 @@ export default function VoiceButton({
 
     rec.onresult = (e: SREvent) => {
       lastResultTsRef.current = Date.now();
-      let newFinal = '';
-      let interimText = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      
+      let currentFinal = '';
+      let currentInterim = '';
+      
+      // Bangun ulang teks dari e.results
+      for (let i = 0; i < e.results.length; i++) {
         const res = e.results[i];
         const txt = (res[0]?.transcript ?? '').trim();
         if (!txt) continue;
-        if (res.isFinal) newFinal += txt + ' ';
-        else interimText += txt + ' ';
+        if (res.isFinal) currentFinal += txt + ' ';
+        else currentInterim += txt + ' ';
       }
-      if (newFinal) {
-        accumulatedRef.current =
-          (accumulatedRef.current + ' ' + newFinal).trim() + ' ';
-        setAccumulated(accumulatedRef.current.trim());
+
+      // Deteksi jika browser me-reset buffer (teks saat ini lebih pendek dari sebelumnya)
+      if (currentFinal.length < sessionFinalRef.current.length) {
+        // Pindahkan teks sesi lama ke accumulatedRef
+        accumulatedRef.current = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim() + ' ';
+        sessionFinalRef.current = '';
       }
-      setInterim(interimText.trim());
+
+      // Simpan transkrip final sesi saat ini
+      if (currentFinal.trim()) {
+        sessionFinalRef.current = currentFinal.trim();
+      }
+
+      const displayFinal = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim();
+      setAccumulated(displayFinal);
+      setInterim(currentInterim.trim());
     };
 
     rec.onerror = (e) => {
@@ -296,6 +311,12 @@ export default function VoiceButton({
         cleanupSideEffects();
         resetState();
         return;
+      }
+      
+      // Commit teks dari sesi yang baru saja berakhir
+      if (sessionFinalRef.current) {
+        accumulatedRef.current = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim() + ' ';
+        sessionFinalRef.current = '';
       }
       const final = accumulatedRef.current.trim();
       if (final) onTranscript(final);
