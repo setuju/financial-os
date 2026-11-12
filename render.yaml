@@ -29,6 +29,7 @@ projects:
       - key: REDIS_URL
         sync: false
       region: singapore
-      buildCommand: pnpm install --filter backend && pnpm --filter backend migrate
-      startCommand: pnpm --filter backend start
+      buildCommand: pnpm install && pnpm migrate
+      startCommand: pnpm start
       autoDeployTrigger: commit
+      rootDir: backend/
