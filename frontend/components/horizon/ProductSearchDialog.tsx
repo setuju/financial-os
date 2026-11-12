@@ -25,7 +25,10 @@ import { Search, Loader2, X, AlertCircle } from 'lucide-react';
 export interface C3Product {
   id: string;
   title: string;
-  offers?: Array<{ price?: string | number; currency?: string }>;
+  offers?: Array<{
+    price?: number | string | { price: number | string; compare_at_price?: number | string; currency?: string };
+    currency?: string;
+  }>;
   image_url?: string;
 }
 
@@ -55,17 +58,19 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
         body: JSON.stringify({ query, limit: 5 }),
         signal: AbortSignal.timeout(15000),
       });
-      
-      // Baca sebagai text dulu untuk mencegah crash jika server mengembalikan HTML
+
       const text = await res.text();
       let data;
       try {
         data = JSON.parse(text);
       } catch {
-        throw new Error('Server returned an invalid response. (Check Vercel logs/API Key)');
+        throw new Error('Server returned an invalid response. Please check Vercel logs.');
       }
-      
-      if (!res.ok) throw new Error(data.error || 'Failed to search products');
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to search products');
+      }
+
       setResults(data.products || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Network error');
@@ -76,10 +81,7 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div 
-        className="w-full max-w-lg rounded-xl bg-surface-raised p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="w-full max-w-lg rounded-xl bg-surface-raised p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-ink">Search Real Products</h3>
           <button onClick={onClose} className="rounded p-1 text-ink-faint hover:bg-surface-sunken">
@@ -118,7 +120,14 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
             <p className="text-center text-sm text-ink-faint py-8">No products found. Try another keyword.</p>
           )}
           {results.map((p) => {
-            const price = p.offers?.[0]?.price;
+            const rawPrice = p.offers?.[0]?.price;
+            let priceStr = '';
+            if (typeof rawPrice === 'object' && rawPrice !== null && 'price' in rawPrice) {
+              priceStr = String((rawPrice as { price: string | number }).price);
+            } else if (typeof rawPrice === 'string' || typeof rawPrice === 'number') {
+              priceStr = String(rawPrice);
+            }
+
             return (
               <button
                 key={p.id}
@@ -127,7 +136,7 @@ export default function ProductSearchDialog({ onSelectProduct, onClose }: Props)
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{p.title}</p>
-                  {price && <p className="text-xs text-ink-soft">${price}</p>}
+                  {priceStr && <p className="text-xs text-ink-soft">${priceStr}</p>}
                 </div>
               </button>
             );

@@ -88,8 +88,14 @@ export default function GoalsSection({ goals }: { goals: Goal[] }) {
 
   const handleProductSelect = (product: C3Product) => {
     const rawPrice = product.offers?.[0]?.price;
-    const cleanPrice = rawPrice ? Number(String(rawPrice).replace(/[^0-9.]/g, '')) : 0;
-    
+    let cleanPrice = 0;
+
+    if (typeof rawPrice === 'object' && rawPrice !== null && 'price' in rawPrice) {
+      cleanPrice = Number(String((rawPrice as { price: string | number }).price).replace(/[^0-9.]/g, ''));
+    } else if (typeof rawPrice === 'string' || typeof rawPrice === 'number') {
+      cleanPrice = Number(String(rawPrice).replace(/[^0-9.]/g, ''));
+    }
+
     setForm((prev) => ({ 
       ...prev, 
       name: product.title, 
