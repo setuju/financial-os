@@ -2,7 +2,7 @@
 # │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
 # ├────────────────────────────────────────────────────────────────────┤
 # │  File      : .github/workflows/ci.yml
-# │  Purpose   : CI Pipeline for Backend and Frontend
+# │  Purpose   : CI Pipeline for Backend and Frontend (Monorepo)
 # │  Author    : Jack — Jack[at]SatuRumah[dot]Net
 # │  GitHub    : https://github.com/setuju
 # │  Website   : https://saturumah.net
@@ -26,9 +26,6 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -38,19 +35,15 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: './backend/pnpm-lock.yaml'
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install Dependencies (Backend)
+        run: cd backend && pnpm install
       - name: Typecheck Backend
-        run: pnpm exec tsc --noEmit
+        run: cd backend && pnpm exec tsc --noEmit
       - name: Run Tests
-        run: pnpm test
+        run: cd backend && pnpm test
 
   frontend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -60,8 +53,7 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: './frontend/pnpm-lock.yaml'
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install Dependencies (Frontend)
+        run: cd frontend && pnpm install
       - name: Typecheck Frontend
-        run: pnpm exec tsc --noEmit
+        run: cd frontend && pnpm exec tsc --noEmit
