@@ -28,6 +28,7 @@ ${dataContext}
 Rules:
 - Write a comprehensive, encouraging analysis of around 300 words.
 - Break your response into 2-3 readable paragraphs.
+- Ensure your response is complete and ends with proper punctuation.
 - Be encouraging, positive, and constructive.
 - Be direct, human, and highly personalized.
 - Never output raw JSON. Speak naturally.
@@ -48,7 +49,7 @@ You are a frontline cashier. You see the small leaks, daily habits, and operatio
 Focus on the "Top Expense Categories" and "Transaction Frequency". Point out if they are spending too much on small things (like coffee or food) or if their habits are bleeding them dry.
 `;
   }
-  if (persona === 'insider') {
+  if (persona === 'sikitong') {
     return base + `
 Your Persona: **Sikitong**
 You are an ex-employee who resigned gracefully and has no fear of management. You give brutally honest, out-of-the-box diagnoses about their financial culture and habits without sugarcoating.

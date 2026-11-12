@@ -391,7 +391,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
             body: JSON.stringify({
               model: resolveModel(),
               messages: [{ role: 'system', content: prompt }, { role: 'user', content: 'Give me your advice.' }],
-              max_tokens: 800,
+              max_tokens: 2000,
               temperature: 0.7,
             }),
             signal: AbortSignal.timeout(30000),
@@ -414,7 +414,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: prompt }] },
               contents: [{ role: 'user', parts: [{ text: 'Give me your advice.' }] }],
-              generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
+              generationConfig: { maxOutputTokens: 2000, temperature: 0.7 },
             }),
             signal: AbortSignal.timeout(30000),
           });

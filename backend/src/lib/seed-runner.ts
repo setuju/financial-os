@@ -4,6 +4,7 @@
  * Called by: scripts/seed-demo.ts (CLI), routes/admin.ts (POST /demo/reset).
  */
 import type pg from 'pg';
+import type { Client as ElasticClient } from '@elastic/elasticsearch';
 import { ensureSurplusPeriods, currentMonth } from '../repositories/surplus-periods.js';
 
 interface Tx {
@@ -160,6 +161,7 @@ export async function runSeed(
   pool: pg.Pool,
   sessionId: string,
   opts: SeedOptions = {},
+  esClient?: ElasticClient,
 ): Promise<SeedResult> {
   const withData = opts.withData ?? true;
 
@@ -237,10 +239,25 @@ export async function runSeed(
     for (const t of chunk) {
       params.push(t.rawText, t.amount, t.type, t.category, t.occurredAt, t.isProjection ?? false, sessionId);
     }
-    await pool.query(
-      `INSERT INTO transactions (raw_text, amount, type, category, occurred_at, is_projection, session_id) VALUES ${placeholders}`,
-      params,
-    );
+    const res = await pool.query(
+            `INSERT INTO transactions (raw_text, amount, type, category, occurred_at, is_projection, session_id) VALUES ${placeholders} RETURNING id, raw_text, amount, type, category, occurred_at`,
+            params,
+          );
+
+          if (esClient && res.rows.length > 0) {
+            const operations = res.rows.flatMap((doc) => [
+              { index: { _index: 'transactions', _id: doc.id } },
+              { 
+                raw_text: doc.raw_text, 
+                category: doc.category, 
+                type: doc.type, 
+                amount: Number(doc.amount), 
+                occurred_at: doc.occurred_at, 
+                session_id: sessionId 
+              }
+            ]);
+            await esClient.bulk({ operations }).catch(err => console.error('[Seed ES Sync] Bulk failed:', err));
+          }
   }
 
   // ─── Goals ───
