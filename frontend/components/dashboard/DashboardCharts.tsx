@@ -71,7 +71,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
         <h3 className="mb-4 text-sm font-semibold text-ink">Income vs Expense (Monthly)</h3>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={flowData}>
+            <BarChart data={flowData} barGap={8}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
               <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
               <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `$${v}`} />
@@ -163,16 +163,20 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
       {/* 5. Donation Log (Bar) */}
       <Card>
         <h3 className="mb-4 text-sm font-semibold text-ink">Donation Log</h3>
-        <div className="h-[250px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={donationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-              <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
-              <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `$${v}`} />
-              <RechartsTooltip formatter={formatCurrency} />
-              <Bar dataKey="Amount" fill="#0070ba" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="h-[250px] w-full flex items-center justify-center">
+          {donationData.length === 0 ? (
+            <p className="text-sm text-ink-faint">No donations yet. Distribute surplus from the Impact Wallet.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={donationData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                <XAxis dataKey="name" stroke="#52525b" fontSize={12} />
+                <YAxis stroke="#52525b" fontSize={12} tickFormatter={(v) => `${v}`} />
+                <RechartsTooltip formatter={formatCurrency} />
+                <Bar dataKey="Amount" fill="#0070ba" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </Card>
     </div>

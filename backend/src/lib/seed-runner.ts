@@ -174,7 +174,12 @@ export async function runSeed(
   }
 
   // ─── Build transactions ───
-  const txs: Tx[] = [];
+  const txs: Tx[] = [
+    { rawText: 'freelance web design project', amount: 1200, type: 'income', category: 'freelance', occurredAt: '2026-11-03T10:00:00Z' },
+    { rawText: 'dividend from index funds', amount: 150.5, type: 'income', category: 'investment', occurredAt: '2026-11-08T10:00:00Z' },
+    { rawText: 'bonus from boss', amount: 500, type: 'income', category: 'bonus', occurredAt: '2026-11-10T10:00:00Z' },
+    { rawText: 'received pocket money from mom', amount: 200, type: 'income', category: 'pocket_money', occurredAt: '2026-11-12T10:00:00Z' },
+  ];
 
   for (const md of PAYCHECKS) {
     txs.push({

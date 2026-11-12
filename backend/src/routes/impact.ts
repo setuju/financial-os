@@ -289,11 +289,13 @@ const impactRoutes: FastifyPluginAsync = async (fastify) => {
       const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
       try {
         const p = await getSurplusPeriod(fastify.pg, sid, ym);
-        history.push({
-          period: ym,
-          closing_surplus: Number(p.closing_surplus),
-          status: p.status,
-        });
+        if (Number(p.total_income) > 0 || Number(p.total_expense) > 0) {
+          history.push({
+            period: ym,
+            closing_surplus: Number(p.closing_surplus),
+            status: p.status,
+          });
+        }
       } catch {
         // skip months without data
       }
