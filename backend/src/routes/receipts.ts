@@ -5,16 +5,13 @@
  * │  File      : backend/src/routes/receipts.ts
  * │  Purpose   : API route: receipts
  * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 10-11-2026
  * │  License   : MIT
  * └────────────────────────────────────────────────────────────────────┘
  */
 
 import type { FastifyPluginAsync } from 'fastify';
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OCR_SPACE_URL = 'https://api.ocr.space/parse/image';
 const MAX_BASE64_LENGTH = 3_000_000; // ~3MB base64
 const UPSTREAM_TIMEOUT_MS = 30_000;
@@ -27,82 +24,89 @@ const VISION_PROMPT =
   '(3) Include merchant name if visible. ' +
   '(4) No preamble, no explanation, no formatting — ONLY the sentence.';
 
-interface OcrBody {
-  image: string; // data URL or raw base64
-  mimeType?: string;
-}
-
-interface ParsedImage {
-  base64: string;
-  mimeType: string;
-}
+interface OcrBody { image: string; mimeType?: string; }
+interface ParsedImage { base64: string; mimeType: string; }
 
 function parseImage(body: OcrBody): ParsedImage | null {
   let image = (body.image ?? '').trim();
   if (!image) return null;
   let mime = body.mimeType || 'image/jpeg';
-
   const dataUrlRe = /^data:([^;]+);base64,(.+)$/i;
   const m = image.match(dataUrlRe);
-  if (m) {
-    mime = m[1];
-    image = m[2];
-  }
-
+  if (m) { mime = m[1]; image = m[2]; }
   if (image.length < 100 || image.length > MAX_BASE64_LENGTH) return null;
   if (!/^image\/(png|jpeg|jpg|webp)$/i.test(mime)) mime = 'image/jpeg';
-
   return { base64: image, mimeType: mime };
 }
 
-// --- GEMINI VISION ---
-async function callGemini(img: ParsedImage, apiKey: string): Promise<string> {
-  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+// --- OPENROUTER VISION (Primary) ---
+async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<string> {
+  const model = process.env.ASSISTANT_MODEL || 'google/gemini-3.8-flash';
+  const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://financial.saturumah.net',
+      'X-Title': 'Financial OS'
+    },
     body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: VISION_PROMPT },
-          { inline_data: { mime_type: img.mimeType, data: img.base64 } }
+      model,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: VISION_PROMPT },
+          { type: 'image_url', image_url: { url: `data:${img.mimeType};base64,${img.base64}` } }
         ]
       }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 100 }
+      temperature: 0.1,
+      max_tokens: 100,
     }),
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`gemini_${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`openrouter_${res.status}: ${text.slice(0, 200)}`);
   }
-
   const data = (await res.json()) as any;
-  const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  if (!reply) throw new Error('gemini_empty_reply');
+  const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
+  if (!reply) throw new Error('openrouter_empty_reply');
   return reply;
 }
 
-// --- OCR.SPACE (Fallback) ---
+// --- OCR.SPACE (Fallback with Smarter Regex) ---
 function extractTotalAndMerchant(rawText: string): { total: number | null; merchant: string } {
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const merchant = (lines[0] ?? '').slice(0, 60);
   let total: number | null = null;
 
-  for (const line of lines) {
-    if (/total/i.test(line)) {
-      const m = line.match(/(\d+(?:[.,]\d+)?)/);
-      if (m) {
-        const num = parseFloat(m[1].replace(',', '.'));
-        if (Number.isFinite(num) && num > 0) { total = num; break; }
-      }
+  // 1. Cari "TOTAL" lalu 50 karakter apapun, lalu tangkap angka desimal
+  const totalMatch = rawText.match(/\btotal\b[\s\S]{0,50}?\$?(\d+(?:[.,]\d{2})?)/i);
+  if (totalMatch) {
+    const num = parseFloat(totalMatch[1].replace(',', '.'));
+    if (!isNaN(num) && num > 0) total = num;
+  }
+
+  // 2. Jika gagal, cari angka dengan simbol '$' dan ambil yang terbesar
+  if (total === null) {
+    const currencyMatches = rawText.match(/\$\s*(\d+(?:[.,]\d{2})?)/g);
+    if (currencyMatches) {
+      const nums = currencyMatches.map(s => parseFloat(s.replace(/[^\d.,]/g, '').replace(',', '.'))).filter(n => !isNaN(n));
+      if (nums.length) total = Math.max(...nums);
     }
   }
+
+  // 3. Fallback terakhir: angka apapun, abaikan tahun (1900-2100)
   if (total === null) {
-    const all = rawText.match(/\d+(?:[.,]\d+)?/g) ?? [];
-    const nums = all.map((s) => parseFloat(s.replace(',', '.'))).filter((n) => Number.isFinite(n) && n > 0);
+    const all = rawText.match(/(?:\$)?\s*(\d+(?:[.,]\d{1,2})?)/g) ?? [];
+    const nums = all
+      .map((s) => parseFloat(s.replace(/[^\d.,]/g, '').replace(',', '.')))
+      .filter((n) => !isNaN(n) && n > 0)
+      .filter((n) => !(n >= 1900 && n <= 2100)); // ignore years
     if (nums.length) total = Math.max(...nums);
   }
+
   return { total, merchant };
 }
 
@@ -122,7 +126,6 @@ async function callOcrSpace(img: ParsedImage, apiKey: string): Promise<string> {
   });
 
   if (!res.ok) throw new Error(`ocrspace_${res.status}`);
-
   const data = (await res.json()) as any;
   if (data.IsErroredOnProcessing) throw new Error(`ocrspace_errored: ${data.ErrorMessage}`);
 
@@ -150,10 +153,10 @@ const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (req, reply) => {
-      const geminiKey = process.env.GEMINI_API_KEY;
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
       const ocrSpaceKey = process.env.OCR_SPACE_KEY;
 
-      if (!geminiKey && !ocrSpaceKey) {
+      if (!openRouterKey && !ocrSpaceKey) {
         return reply.code(503).send({ error: 'ocr_unconfigured', message: 'No OCR provider configured.' });
       }
 
@@ -162,9 +165,7 @@ const receiptsRoutes: FastifyPluginAsync = async (fastify) => {
 
       const attempts: Array<{ provider: string; fn: () => Promise<string> }> = [];
       
-      // Prioritize Gemini (Stable, High Accuracy)
-      if (geminiKey) attempts.push({ provider: 'gemini', fn: () => callGemini(img, geminiKey) });
-      // Fallback to OCR.space
+      if (openRouterKey) attempts.push({ provider: 'openrouter_vision', fn: () => callOpenRouterVision(img, openRouterKey) });
       if (ocrSpaceKey) attempts.push({ provider: 'ocrspace', fn: () => callOcrSpace(img, ocrSpaceKey) });
 
       const errors: string[] = [];
