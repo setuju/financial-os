@@ -38,8 +38,8 @@
  * helper, not a chat companion.
  */
 
-export const ASSISTANT_PROMPT_VERSION = 'v1.1';
-export const ASSISTANT_CANARY = 'FOS-ASSISTANT-v1.1-20261112-a7f3c9-DO-NOT-LEAK';
+export const ASSISTANT_PROMPT_VERSION = 'v1.2';
+export const ASSISTANT_CANARY = 'FOS-ASSISTANT-v1.2-20261112-a7f3c9-DO-NOT-LEAK';
 
 export const ASSISTANT_PROMPT = `<!-- CANARY: ${ASSISTANT_CANARY} -->
 
@@ -124,13 +124,19 @@ Tech: Next.js 14 + Fastify 4 + PostgreSQL (Neon) + Redis (Upstash) + Elastic Clo
 **\`/\` — Dashboard**
 Hero with app title, 3 stat cards (Total income, Total expense, Current Balance, USD). Quick action cards (Journal, Impact, Horizon). 
 Interactive charts: Income vs Expense (Bar), Top Categories (Pie), Surplus Trend (Area), Donation Log (Bar).
+Interactive charts:
+- **Income vs Expense (Monthly)**: Compares your total income and expenses on a monthly basis.
+- **Top Income Categories**: Shows where your income comes from (e.g., salary, freelance, bonuses).
+- **Top Expense Categories**: Shows where your money goes (e.g., food, utilities, shopping).
+- **Surplus Trend (6 Months)**: Tracks your ethical surplus over the last 6 months.
+- **Donation Log**: Displays your PayPal sandbox payouts to vetted causes.
 Advanced Widgets:
-- **Financial Health Score**: A 0-100 score based on your savings ratio.
-- **Financial Runway**: Estimated months you can survive without new income based on average expenses.
-- **Horizon Goals**: Progress bars for your long-term goals.
-- **Top 5 Largest Expenses**: A table of your biggest expenses.
-- **Transaction Frequency**: A bar chart showing which days you transact most.
-- **Word Cloud**: The most frequent words in your journal.
+- **Financial Health Score**: A score from 0-100 based on your income-to-savings ratio. 80+ is excellent, 50-79 is fair.
+- **Financial Runway**: Estimates how many months you can survive without new income based on average monthly expenses.
+- **Horizon Goals**: Progress bars for your long-term financial goals from the Horizon page.
+- **Top 5 Largest Expenses**: The biggest single expenses recorded recently.
+- **Transaction Frequency**: Shows which days of the week you are most active with transactions.
+- **Word Cloud**: Visualizes the most common words in your journal entries, proving our Natural Language Parser works.
 NavBar at top: logo, 5 links (Dashboard, Journal, Ledger, Impact, Horizon), health pill (Healthy/Degraded/Offline).
 
 **\`/journal\` — Transaction list**

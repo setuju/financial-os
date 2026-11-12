@@ -19,6 +19,8 @@
 
 'use client';
 
+import { Info } from 'lucide-react';
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area
@@ -80,7 +82,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
     <div className="mt-10 grid gap-6 sm:grid-cols-2">
       {/* 1. Income vs Expense Flow (Bar) */}
       <Card className="col-span-1 sm:col-span-2">
-        <h3 className="mb-4 text-sm font-semibold text-ink">Income vs Expense (Monthly)</h3>
+        <div className="flex items-center gap-1.5"><h3 className="text-sm font-semibold text-ink">Income vs Expense (Monthly)</h3><span title="Compares your total income and expenses on a monthly basis." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={flowData} barGap={8}>
@@ -98,7 +100,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
 
       {/* 2. Top Income (Pie) */}
       <Card>
-        <h3 className="mb-4 text-sm font-semibold text-ink">Top Income Categories</h3>
+        <div className="flex items-center gap-1.5"><h3 className="text-sm font-semibold text-ink">Top Income Categories</h3><span title="Shows where your income comes from (e.g., salary, freelance, bonuses)." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -125,7 +127,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
 
       {/* 3. Top Expense (Pie) */}
       <Card>
-        <h3 className="mb-4 text-sm font-semibold text-ink">Top Expense Categories</h3>
+        <div className="flex items-center gap-1.5"><h3 className="text-sm font-semibold text-ink">Top Expense Categories</h3><span title="Shows where your money goes (e.g., food, utilities, shopping)." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -152,7 +154,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
 
       {/* 4. Surplus Trend (Area) */}
       <Card>
-        <h3 className="mb-4 text-sm font-semibold text-ink">Surplus Trend (6 Months)</h3>
+        <div className="flex items-center gap-1.5"><h3 className="text-sm font-semibold text-ink">Surplus Trend (6 Months)</h3><span title="Tracks your ethical surplus (income minus expenses and obligations) over the last 6 months." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={surplusData}>
@@ -174,7 +176,7 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
 
       {/* 5. Donation Log (Bar) */}
       <Card>
-        <h3 className="mb-4 text-sm font-semibold text-ink">Donation Log</h3>
+        <div className="flex items-center gap-1.5"><h3 className="text-sm font-semibold text-ink">Donation Log</h3><span title="Displays your PayPal sandbox payouts to vetted causes." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
         <div className="h-[250px] w-full flex items-center justify-center">
           {donationData.length === 0 ? (
             <p className="text-sm text-ink-faint">No donations yet. Distribute surplus from the Impact Wallet.</p>
