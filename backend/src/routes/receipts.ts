@@ -41,7 +41,11 @@ function parseImage(body: OcrBody): ParsedImage | null {
 
 // --- OPENROUTER VISION (Primary) ---
 async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<string> {
-  const model = process.env.ASSISTANT_MODEL || 'google/gemini-3.8-flash';
+  const envModel = process.env.ASSISTANT_MODEL;
+  // Ignore aliases with ~ because OpenRouter rejects them for vision endpoints
+  const model = (envModel && envModel.includes('/') && !envModel.includes('~')) 
+    ? envModel 
+    : 'google/gemini-3.8-flash';
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: {
@@ -81,11 +85,15 @@ function extractTotalAndMerchant(rawText: string): { total: number | null; merch
   const merchant = (lines[0] ?? '').slice(0, 60);
   let total: number | null = null;
 
-  // 1. Cari "TOTAL" lalu 50 karakter apapun, lalu tangkap angka desimal
-  const totalMatch = rawText.match(/\btotal\b[\s\S]{0,50}?\$?(\d+(?:[.,]\d{2})?)/i);
-  if (totalMatch) {
-    const num = parseFloat(totalMatch[1].replace(',', '.'));
-    if (!isNaN(num) && num > 0) total = num;
+  // 1. Cari baris yang mengandung "TOTAL" (misal "TOTAL: $9.00")
+  const totalLine = lines.find(l => /total/i.test(l));
+  if (totalLine) {
+    const nums = totalLine.match(/\d+(?:[.,]\d{2})?/g);
+    if (nums) {
+      // Ambil angka TERAKHIR di baris tersebut (biasanya jumlah akhir)
+      const num = parseFloat(nums[nums.length - 1].replace(',', '.'));
+      if (!isNaN(num) && num > 0) total = num;
+    }
   }
 
   // 2. Jika gagal, cari angka dengan simbol '$' dan ambil yang terbesar
