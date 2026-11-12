@@ -20,6 +20,7 @@
 'use client';
 
 import { Info } from 'lucide-react';
+import Tooltip from '@/components/ui/Tooltip';
 
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -30,9 +31,10 @@ interface Props {
   transactions: Transaction[];
   goals: Goal[];
   metrics: SurplusMetrics;
+  esWordCloud?: Array<{ word: string; count: number }> | null;
 }
 
-export default function AdvancedStats({ transactions, goals, metrics }: Props) {
+export default function AdvancedStats({ transactions, goals, metrics, esWordCloud }: Props) {
   // 1. Top 5 Largest Expenses
   const topExpenses = useMemo(() => {
     return [...transactions]
@@ -78,6 +80,12 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
 
   // 5. Word Cloud (Kata terbanyak dari raw_text)
   const wordCloud = useMemo(() => {
+    // Jika data dari Elasticsearch tersedia, gunakan itu
+    if (esWordCloud && esWordCloud.length > 0) {
+      return esWordCloud.map(item => [item.word, item.count] as [string, number]);
+    }
+
+    // Fallback ke perhitungan lokal
     const stopWords = new Set(['the', 'and', 'from', 'with', 'for', 'your', 'this', 'that', 'have', 'was', 'were', 'are', 'but', 'not', 'you', 'all', 'any', 'can', 'out', 'get', 'has', 'him', 'his', 'how', 'man', 'one', 'our', 'out', 'own']);
     const wordCount: Record<string, number> = {};
     
@@ -93,7 +101,7 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
     return Object.entries(wordCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 15);
-  }, [transactions]);
+  }, [transactions, esWordCloud]);
 
   const scoreColor = healthScore >= 80 ? 'text-success' : healthScore >= 50 ? 'text-warning' : 'text-danger';
   const scoreBg = healthScore >= 80 ? 'bg-success-soft' : healthScore >= 50 ? 'bg-warning-soft' : 'bg-danger-soft';
@@ -102,7 +110,7 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
     <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {/* Financial Health Score */}
       <Card className="flex flex-col items-center justify-center text-center">
-        <div className="flex items-center justify-center gap-1.5 mb-2"><h3 className="text-sm font-semibold text-ink">Financial Health</h3><span title="A score from 0-100 based on your income-to-savings ratio. 80+ is excellent." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
+        <div className="flex items-center justify-center gap-1.5 mb-2"><h3 className="text-sm font-semibold text-ink">Financial Health</h3><Tooltip text="A score from 0-100 based on your income-to-savings ratio. 80+ is excellent."><Info className="h-3.5 w-3.5 text-ink-faint cursor-help cursor-help" /></Tooltip></div>
         <div className={`flex h-24 w-24 items-center justify-center rounded-full ${scoreBg} mb-2`}>
           <span className={`text-4xl font-bold ${scoreColor}`}>{healthScore}</span>
         </div>
@@ -111,14 +119,14 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
 
       {/* Financial Runway */}
       <Card className="flex flex-col items-center justify-center text-center">
-        <div className="flex items-center justify-center gap-1.5 mb-2"><h3 className="text-sm font-semibold text-ink">Financial Runway</h3><span title="Estimates how many months you can survive without new income based on average monthly expenses." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
+        <div className="flex items-center justify-center gap-1.5 mb-2"><h3 className="text-sm font-semibold text-ink">Financial Runway</h3><Tooltip text="Estimates how many months you can survive without new income based on average monthly expenses."><Info className="h-3.5 w-3.5 text-ink-faint cursor-help cursor-help" /></Tooltip></div>
         <p className="text-4xl font-bold text-accent mb-1">{runwayMonths}</p>
         <p className="text-xs text-ink-soft">Months you can survive<br/>without new income</p>
       </Card>
 
       {/* Goals Progress */}
       <Card>
-        <div className="flex items-center gap-1.5 mb-3"><h3 className="text-sm font-semibold text-ink">Horizon Goals</h3><span title="Progress bars for your long-term financial goals from the Horizon page." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
+        <div className="flex items-center gap-1.5 mb-3"><h3 className="text-sm font-semibold text-ink">Horizon Goals</h3><Tooltip text="Progress bars for your long-term financial goals from the Horizon page."><Info className="h-3.5 w-3.5 text-ink-faint cursor-help cursor-help" /></Tooltip></div>
         {goals.length === 0 ? (
           <p className="text-xs text-ink-faint">No goals set.</p>
         ) : (
@@ -140,7 +148,7 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
 
       {/* Top 5 Expenses */}
       <Card className="lg:col-span-2">
-        <div className="flex items-center gap-1.5 mb-3"><h3 className="text-sm font-semibold text-ink">Top 5 Largest Expenses</h3><span title="The biggest single expenses recorded recently." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
+        <div className="flex items-center gap-1.5 mb-3"><h3 className="text-sm font-semibold text-ink">Top 5 Largest Expenses</h3><Tooltip text="The biggest single expenses recorded recently."><Info className="h-3.5 w-3.5 text-ink-faint cursor-help cursor-help" /></Tooltip></div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-xs uppercase text-ink-faint">
@@ -163,7 +171,7 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
 
       {/* Transaction Frequency */}
       <Card>
-        <div className="flex items-center gap-1.5 mb-4"><h3 className="text-sm font-semibold text-ink">Transaction Frequency</h3><span title="Shows which days of the week you are most active with transactions." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
+        <div className="flex items-center gap-1.5 mb-4"><h3 className="text-sm font-semibold text-ink">Transaction Frequency</h3><Tooltip text="Shows which days of the week you are most active with transactions."><Info className="h-3.5 w-3.5 text-ink-faint cursor-help cursor-help" /></Tooltip></div>
         <div className="h-[180px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={frequencyData}>
@@ -179,7 +187,7 @@ export default function AdvancedStats({ transactions, goals, metrics }: Props) {
 
       {/* Word Cloud */}
       <Card className="lg:col-span-3">
-        <div className="flex items-center gap-1.5 mb-4"><h3 className="text-sm font-semibold text-ink">Most Frequent Words</h3><span title="Visualizes the most common words in your journal entries, proving our Natural Language Parser works." className="cursor-help inline-flex items-center"><Info className="h-3.5 w-3.5 text-ink-faint cursor-help" /></span></div>
+        <div className="flex items-center gap-1.5 mb-4"><h3 className="text-sm font-semibold text-ink">Most Frequent Words</h3><Tooltip text="Visualizes the most common words in your journal entries, proving our Natural Language Parser works."><Info className="h-3.5 w-3.5 text-ink-faint cursor-help cursor-help" /></Tooltip></div>
         <div className="flex flex-wrap gap-2 items-center justify-center py-4">
           {wordCloud.map(([word, count]) => {
             const size = Math.max(12, Math.min(24, 12 + count * 2));

@@ -34,7 +34,8 @@ import {
   serverGetImpactPayouts,
   serverGetTransactions,
   serverGetGoals,
-  serverGetAdvisorHistory
+  serverGetAdvisorHistory,
+  serverGetWordCloud
 } from '@/lib/api-server';
 import StatCard from '@/components/ui/StatCard';
 import OnboardingBanner from '@/components/layout/OnboardingBanner';
@@ -60,7 +61,7 @@ export default async function Home() {
   sixMonthsAgo.setMonth(now.getMonth() - 6);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts, transactions, goals, advisorHistory] = await Promise.all([
+  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts, transactions, goals, advisorHistory, esWordCloud] = await Promise.all([
     serverGetReportSummary({ from: fmt(sixMonthsAgo), to: fmt(now), groupBy: 'month', type: 'all', includeProjections: false }),
     serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'income' }),
     serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'expense' }),
@@ -69,6 +70,7 @@ export default async function Home() {
     serverGetTransactions(200),
     serverGetGoals(),
     serverGetAdvisorHistory(),
+    serverGetWordCloud(),
   ]);
 
   return (
@@ -174,6 +176,7 @@ export default async function Home() {
             transactions={transactions || []}
             goals={goals || []}
             metrics={surplusData.metrics}
+            esWordCloud={esWordCloud}
           />
 
           <AdvisorCards transactions={transactions || []} initialData={advisorHistory} />

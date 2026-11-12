@@ -57,6 +57,7 @@ export default fp(
             type: { type: 'keyword' },
             amount: { type: 'float' },
             occurred_at: { type: 'date' },
+              session_id: { type: 'keyword' },
           },
         },
       });

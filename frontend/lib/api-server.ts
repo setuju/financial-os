@@ -134,6 +134,17 @@ export async function serverGetAdvisorHistory(): Promise<Record<string, { conten
 }
 
 
+
+export async function serverGetWordCloud(): Promise<Array<{ word: string; count: number }> | null> {
+  try {
+    const res = await fetch(`${API_URL}/reports/word-cloud`, withSession({ signal: AbortSignal.timeout(10000) }));
+    if (!res.ok) return null;
+    const data = await res.json() as { words: Array<{ word: string; count: number }> };
+    return data.words;
+  } catch { return null; }
+}
+
+
 export async function serverGetGoals(): Promise<Goal[] | null> {
   try {
     const res = await fetch(

@@ -215,6 +215,35 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+
+  fastify.get('/reports/word-cloud', async (req, reply) => {
+    const sid = req.sessionId;
+    try {
+      const esResult = await fastify.elastic.search({
+        index: 'transactions',
+        size: 0,
+        query: {
+          bool: { filter: [{ term: { session_id: sid } }] }
+        },
+        aggs: {
+          top_words: {
+            terms: {
+              field: 'raw_text',
+              size: 15,
+              min_doc_count: 1
+            }
+          }
+        }
+      });
+      
+      const buckets = (esResult.aggregations?.top_words as { buckets: Array<{ key: string; doc_count: number }> })?.buckets || [];
+      return { words: buckets.map(b => ({ word: b.key, count: b.doc_count })) };
+    } catch (err) {
+      fastify.log.error({ err }, 'Elastic word cloud failed');
+      return reply.code(500).send({ error: 'word_cloud_failed' });
+    }
+  });
+
 };
 
 export default reportsRoutes;
