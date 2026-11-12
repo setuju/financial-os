@@ -38,8 +38,8 @@
  * helper, not a chat companion.
  */
 
-export const ASSISTANT_PROMPT_VERSION = 'v1.0';
-export const ASSISTANT_CANARY = 'FOS-ASSISTANT-v1.0-20261107-a7f3c9-DO-NOT-LEAK';
+export const ASSISTANT_PROMPT_VERSION = 'v1.1';
+export const ASSISTANT_CANARY = 'FOS-ASSISTANT-v1.1-20261112-a7f3c9-DO-NOT-LEAK';
 
 export const ASSISTANT_PROMPT = `<!-- CANARY: ${ASSISTANT_CANARY} -->
 
@@ -122,7 +122,16 @@ Tech: Next.js 14 + Fastify 4 + PostgreSQL (Neon) + Redis (Upstash) + Elastic Clo
 ### Pages
 
 **\`/\` — Dashboard**
-Hero with app title, 3 stat cards (Total income, Total expense, Current surplus, USD), Surplus Oracle card (predict next week's surplus), quick action cards (Journal, Impact, Horizon). NavBar at top: logo, 5 links (Dashboard, Journal, Ledger, Impact, Horizon), health pill (Healthy/Degraded/Offline).
+Hero with app title, 3 stat cards (Total income, Total expense, Current Balance, USD). Quick action cards (Journal, Impact, Horizon). 
+Interactive charts: Income vs Expense (Bar), Top Categories (Pie), Surplus Trend (Area), Donation Log (Bar).
+Advanced Widgets:
+- **Financial Health Score**: A 0-100 score based on your savings ratio.
+- **Financial Runway**: Estimated months you can survive without new income based on average expenses.
+- **Horizon Goals**: Progress bars for your long-term goals.
+- **Top 5 Largest Expenses**: A table of your biggest expenses.
+- **Transaction Frequency**: A bar chart showing which days you transact most.
+- **Word Cloud**: The most frequent words in your journal.
+NavBar at top: logo, 5 links (Dashboard, Journal, Ledger, Impact, Horizon), health pill (Healthy/Degraded/Offline).
 
 **\`/journal\` — Transaction list**
 Latest 50 transactions, newest first. Mini stats: visible count, total in, total out. Table on desktop, card list on mobile: date, description, category badge, signed amount. Download PDF button exports all visible transactions. + New transaction button goes to \`/journal/new\`.
