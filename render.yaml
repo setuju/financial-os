@@ -53,7 +53,7 @@ projects:
       - key: REDIS_URL
         sync: false
       region: singapore
-      buildCommand: npm install -g pnpm && cd backend && pnpm install --ignore-workspace && pnpm migrate
-      startCommand: cd backend && pnpm start
+      buildCommand: npm install -g pnpm && pnpm install --ignore-workspace && pnpm migrate
+      startCommand: pnpm start
       autoDeployTrigger: commit
       rootDir: backend/
