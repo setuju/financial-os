@@ -41,11 +41,9 @@ function parseImage(body: OcrBody): ParsedImage | null {
 
 // --- OPENROUTER VISION (Primary) ---
 async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<string> {
-  const envModel = process.env.ASSISTANT_MODEL;
-  // Ignore aliases with ~ because OpenRouter rejects them for vision endpoints
-  const model = (envModel && envModel.includes('/') && !envModel.includes('~')) 
-    ? envModel 
-    : 'google/gemini-3.8-flash';
+  // Force a known-good vision model on OpenRouter.
+  // ASSISTANT_MODEL is for the text assistant, not guaranteed to support vision.
+  const model = 'google/gemini-flash-1.5';
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: {
@@ -75,7 +73,10 @@ async function callOpenRouterVision(img: ParsedImage, apiKey: string): Promise<s
   }
   const data = (await res.json()) as any;
   const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
-  if (!reply) throw new Error('openrouter_empty_reply');
+  // If OpenRouter just echoed "spent" or failed to see numbers, force fallback
+  if (!reply || reply.split(' ').length < 2 || !/\d/.test(reply)) {
+    throw new Error(`openrouter_invalid_reply: ${reply.slice(0, 50)}`);
+  }
   return reply;
 }
 
@@ -85,14 +86,16 @@ function extractTotalAndMerchant(rawText: string): { total: number | null; merch
   const merchant = (lines[0] ?? '').slice(0, 60);
   let total: number | null = null;
 
-  // 1. Cari baris yang mengandung "TOTAL" (misal "TOTAL: $9.00")
-  const totalLine = lines.find(l => /total/i.test(l));
-  if (totalLine) {
-    const nums = totalLine.match(/\d+(?:[.,]\d{2})?/g);
+  // 1. Cari "TOTAL" dan ambil angka di baris itu ATAU 3 baris di bawahnya
+  const totalIdx = lines.findIndex(l => /total/i.test(l));
+  if (totalIdx !== -1) {
+    const chunk = lines.slice(totalIdx, totalIdx + 4).join(' ');
+    const nums = chunk.match(/\$?\s*(\d+(?:[.,]\d{2})?)/g);
     if (nums) {
-      // Ambil angka TERAKHIR di baris tersebut (biasanya jumlah akhir)
-      const num = parseFloat(nums[nums.length - 1].replace(',', '.'));
-      if (!isNaN(num) && num > 0) total = num;
+      const parsed = nums
+        .map(n => parseFloat(n.replace(/[^\d.,]/g, '').replace(',', '.')))
+        .filter(n => !isNaN(n) && n > 0);
+      if (parsed.length) total = Math.max(...parsed); // Largest number in the chunk
     }
   }
 
