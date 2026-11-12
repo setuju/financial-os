@@ -3,46 +3,26 @@
  * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
  * ├────────────────────────────────────────────────────────────────────┤
  * │  File      : backend/src/routes/reports.ts
- * │  Purpose   : API route: reports
+ * │  Purpose   : API route: reports, categories, word cloud, search
  * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 10-11-2026
+ * │  Created   : 12-11-2026
  * │  License   : MIT
  * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
- */
-
-/**
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
  */
 
 import type { FastifyPluginAsync } from 'fastify';
 import type pg from 'pg';
+import type { Client as ElasticClient } from '@elastic/elasticsearch';
 
 declare module 'fastify' {
   interface FastifyInstance {
     pg: pg.Pool;
+    elastic: ElasticClient;
   }
 }
 
 type GroupBy = 'day' | 'week' | 'month' | 'year';
 type TxnType = 'income' | 'expense' | 'all';
-
-
-interface CategoryQuery {
-  from: string;
-  to: string;
-  type: 'income' | 'expense';
-}
 
 interface SummaryQuery {
   from: string;
@@ -50,6 +30,16 @@ interface SummaryQuery {
   groupBy?: GroupBy;
   type?: TxnType;
   includeProjections?: string;
+}
+
+interface CategoryQuery {
+  from: string;
+  to: string;
+  type: 'income' | 'expense';
+}
+
+interface SearchQuery {
+  q: string;
 }
 
 interface Bucket {
@@ -67,6 +57,7 @@ interface Bucket {
 const VALID_GROUPS: GroupBy[] = ['day', 'week', 'month', 'year'];
 
 const reportsRoutes: FastifyPluginAsync = async (fastify) => {
+  // 1. Summary
   fastify.get<{ Querystring: SummaryQuery }>(
     '/reports/summary',
     {
@@ -91,10 +82,6 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       const typeFilter = req.query.type;
       const includeProjections = req.query.includeProjections === 'true';
 
-      // Convert to inclusive full-day timestamps.
-      // Client sends date strings ('YYYY-MM-DD'); backend treats as
-      // [from 00:00:00Z, to 23:59:59.999Z] so transactions added ANY time
-      // on `to` day are included (< next midnight, or <= 23:59:59.999).
       const fromTs = `${from}T00:00:00.000Z`;
       const toTs = `${to}T23:59:59.999Z`;
 
@@ -103,7 +90,6 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
         ? `AND type = '${typeFilter === 'income' ? 'income' : 'expense'}'`
         : '';
 
-      // 1) Opening = net sum of all tx BEFORE `from`
       const beforeRes = await fastify.pg.query(
         `SELECT COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE -amount END), 0) AS opening
          FROM transactions
@@ -112,7 +98,6 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       );
       let opening = Number(beforeRes.rows[0].opening);
 
-      // 2) Buckets with per-bucket actual/projection counts
       const bucketRes = await fastify.pg.query(
         `SELECT
            DATE_TRUNC($4, occurred_at) AS period,
@@ -152,7 +137,6 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
         };
       });
 
-      // 3) Totals — use same opening as the very first bucket, not the accumulated one
       const totalIncome = buckets.reduce((s, b) => s + b.income, 0);
       const totalExpense = buckets.reduce((s, b) => s + b.expense, 0);
       const totalNet = totalIncome - totalExpense;
@@ -172,6 +156,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  // 2. Categories
   fastify.get<{ Querystring: CategoryQuery }>(
     '/reports/categories',
     {
@@ -215,7 +200,7 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-
+  // 3. Word Cloud (Elasticsearch Aggregation)
   fastify.get('/reports/word-cloud', async (req, reply) => {
     const sid = req.sessionId;
     try {
@@ -244,8 +229,8 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-
-  fastify.get<{ Querystring: { q: string } }>(
+  // 4. Search (Elasticsearch with PostgreSQL Fallback)
+  fastify.get<{ Querystring: SearchQuery }>(
     '/reports/search',
     {
       schema: {
@@ -256,11 +241,12 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
         },
       },
     },
-    async (req, reply) => {
+    async (req) => {
       const sid = req.sessionId;
       const { q } = req.query;
 
       try {
+        // 1. Coba Elasticsearch (Cepat & Analitik)
         const result = await fastify.elastic.search({
           index: 'transactions',
           query: {
@@ -274,14 +260,27 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
         });
 
         const hits = result.hits.hits.map((h) => h._source);
-        return { transactions: hits };
+        
+        // Jika ES kosong, fallback ke DB
+        if (hits.length > 0) {
+          return { transactions: hits, source: 'elasticsearch' };
+        }
       } catch (err) {
-        fastify.log.error({ err }, 'Elastic search failed');
-        return reply.code(500).send({ error: 'search_failed' });
+        fastify.log.error({ err }, 'Elastic search failed, falling back to PG');
       }
-    }
-  );
 
+      // 2. Fallback PostgreSQL (Jika ES down atau kosong)
+      const pgRes = await fastify.pg.query(
+        `SELECT raw_text, amount, type, category, occurred_at 
+         FROM transactions 
+         WHERE session_id = $1 AND raw_text ILIKE $2 
+         ORDER BY occurred_at DESC LIMIT 50`,
+        [sid, `%${q}%`]
+      );
+      
+      return { transactions: pgRes.rows, source: 'postgres' };
+    },
+  );
 };
 
 export default reportsRoutes;
