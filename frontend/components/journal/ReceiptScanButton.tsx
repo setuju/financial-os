@@ -57,7 +57,7 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         onExtracted(data.extractedText);
       }
     } catch {
-      // Ignored for UI simplicity
+      // ignored
     } finally {
       setLoading(false);
     }

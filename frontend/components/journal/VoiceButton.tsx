@@ -136,14 +136,7 @@ export default function VoiceButton({
     sessionFinalRef.current = '';
   };
 
-  const finalize = () => {
-    try {
-      recRef.current?.stop();
-    } catch {
-      /* ignore */
-    }
-  };
-
+  
   const cancel = () => {
     cancelledRef.current = true;
     try {
@@ -385,6 +378,24 @@ export default function VoiceButton({
     }
   };
 
+
+  const stopAndInsert = () => {
+    cancelledRef.current = true; // Cegah auto-restart
+    try {
+      recRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    
+    // Ambil teks yang ada saat ini secara paksa
+    const final = cleanSTT(accumulatedRef.current + ' ' + interim).trim();
+    if (final) onTranscript(final);
+    
+    cleanupSideEffects();
+    resetState();
+  };
+
+
   if (support === 'unknown') return null;
   return (
     <>
@@ -458,7 +469,7 @@ export default function VoiceButton({
 
           <button
             type="button"
-            onClick={finalize}
+            onClick={stopAndInsert}
             disabled={!accumulated && !interim}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover disabled:opacity-40"
           >
