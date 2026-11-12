@@ -86,7 +86,7 @@ function extractTotalAndMerchant(rawText: string): { total: number | null; merch
 
   // 1. Ekstrak item (baris yang diakhiri harga, abaikan total/tax/cash)
   for (const line of lines) {
-    if (/total|tax|subtotal|change|cash|thank|date|time/i.test(line)) continue;
+    if (/total|tax|subtotal|change|cash|thank|date|time|sat|sun|mon|tue|wed|thu|fri|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2}:\d{2}/i.test(line)) continue;
     const parts = line.split(/\s+/);
     const lastWord = parts[parts.length - 1].replace(/[^\d.,]/g, '');
     const price = parseFloat(lastWord.replace(',', '.'));
