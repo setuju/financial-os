@@ -36,8 +36,8 @@ const DEFAULT_MODEL = 'google/gemini-3.8-flash';
 // unavailable (credit exhausted, rate limit, network). Same GEMINI_API_KEY
 // as OCR. Model: gemini-3-flash-preview (proven working via /receipts/ocr).
 const GEMINI_NATIVE_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
-const GEMINI_NATIVE_MODEL = 'gemini-3-flash-preview';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
+const GEMINI_NATIVE_MODEL = 'gemini-3.8-flash';
 const MAX_HISTORY = 6;
 const MAX_OUTPUT_TOKENS = 600;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -170,7 +170,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Try OpenRouter first (if key present)
       if (openRouterKey) {
-        const model = 'openai/gpt-4o-mini'; // Hardcoded fallback because Env Var is invalid
+        const model = resolveModel(); // Use the resolved model (defaults to google/gemini-3.8-flash)
         const openrouterMessages = [
           { role: 'system' as const, content: ASSISTANT_PROMPT },
           ...history.slice(-MAX_HISTORY).map((m) => ({
