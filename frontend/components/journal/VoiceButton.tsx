@@ -318,6 +318,7 @@ export default function VoiceButton({
 
     rec.onerror = (e) => {
       if (e.error === 'aborted' || cancelledRef.current) return;
+      if (e.error === 'no-speech') return; // Abaikan hening, biarkan user bicara
       const msg = friendlyError(e.error);
       if (msg) emitError(msg);
     };
@@ -328,12 +329,19 @@ export default function VoiceButton({
         resetState();
         return;
       }
-      
-      // Commit teks dari sesi yang baru saja berakhir
-      if (sessionFinalRef.current) {
-        accumulatedRef.current = (accumulatedRef.current + ' ' + sessionFinalRef.current).trim() + ' ';
-        sessionFinalRef.current = '';
+
+      // Jika user belum menekan tombol Stop, tapi browser memutus koneksi
+      // (misal karena hening 3 detik), kita restart otomatis.
+      if (!cancelledRef.current) {
+        try {
+          rec.start();
+          return; // Jangan cleanup, jangan reset state
+        } catch {
+          // Jika gagal restart, biarkan jatuh ke cleanup di bawah
+        }
       }
+
+      // Commit teks dan bersihkan
       const final = cleanSTT(accumulatedRef.current).trim();
       if (final) onTranscript(final);
       cleanupSideEffects();
@@ -345,6 +353,7 @@ export default function VoiceButton({
       lastResultTsRef.current = Date.now();
       rec.start();
       setPhase('listening');
+      cancelledRef.current = false;
 
       tickRef.current = setInterval(() => {
         const el = Date.now() - startTsRef.current;
