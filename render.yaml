@@ -1,26 +1,3 @@
-# ┌────────────────────────────────────────────────────────────────────┐
-# │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
-# ├────────────────────────────────────────────────────────────────────┤
-# │  File      : render.yaml
-# │  Purpose   : Config: render
-# │  Author    : Jack — Jack[at]SatuRumah[dot]Net
-# │  GitHub    : https://github.com/setuju
-# │  Website   : https://saturumah.net
-# │  Created   : 10-11-2026
-# │  License   : MIT
-# └────────────────────────────────────────────────────────────────────┘
-#
-# @author    Jack <Jack[at]SatuRumah[dot]Net>
-# @created   10-11-2026
-# @package   financial-os
-# @license   MIT
-
-#
-# @author    Jack <Jack[at]SatuRumah[dot]Net>
-# @created   10-11-2026
-# @package   financial-os
-# @license   MIT
-
 # Exported from Render on 2026-11-06
 version: "1"
 projects:
@@ -53,7 +30,7 @@ projects:
       - key: REDIS_URL
         sync: false
       region: singapore
-      buildCommand: npm install -g pnpm && pnpm install --ignore-workspace && pnpm migrate
-      startCommand: pnpm start
+      buildCommand: npm install -g pnpm && pnpm install --filter backend && pnpm --filter backend migrate
+      startCommand: pnpm --filter backend start
       autoDeployTrigger: commit
-      rootDir: backend/
+      # Hapus rootDir agar Render berjalan di root dan bisa membaca workspace
