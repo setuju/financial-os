@@ -49,7 +49,7 @@ interface Props {
 export default function DashboardCharts({ summaryData, incomeCatData, expenseCatData, impactSurplus, payouts }: Props) {
   // Formatting data untuk Recharts
   const flowData = summaryData?.buckets.map(b => ({
-    name: b.label,
+    name: new Date(b.period).toLocaleString('en-US', { month: 'short', year: 'numeric' }),
     Income: b.income,
     Expense: b.expense,
   })) || [];
