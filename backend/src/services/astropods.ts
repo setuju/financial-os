@@ -3,7 +3,7 @@
  * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
  * ├────────────────────────────────────────────────────────────────────┤
  * │  File      : backend/src/services/astropods.ts
- * │  Purpose   : AI Fallback classification using Astropods
+ * │  Purpose   : AI Fallback classification using Astropods (M2M)
  * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
  * │  GitHub    : https://github.com/setuju
  * │  Website   : https://saturumah.net
@@ -18,20 +18,26 @@
  */
 
 const TOKEN_URL = 'https://login.astropods.com/oauth2/token';
-const CLIENT_ID = 'client_01M76A3YGZHZST37QHHXG1ESW4';
-const CLIENT_SECRET = '1f1f9e7d653a5abbe0575481f5417880f47fe70aaf33b1049170e48af350608b';
 
 let cachedToken: { token: string, expiresAt: number } | null = null;
 
 async function getToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
+
+  const clientId = process.env.ASTROPODS_CLIENT_ID;
+  const clientSecret = process.env.ASTROPODS_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Astropods credentials missing in environment variables.');
+  }
+
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'client_credentials',
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
     }),
   });
   if (!res.ok) throw new Error(`Astropods auth failed: ${res.status}`);
@@ -43,7 +49,6 @@ async function getToken(): Promise<string> {
 export async function classifyCategoryWithAI(text: string, type: 'income' | 'expense'): Promise<string> {
   try {
     const token = await getToken();
-    // Astropods standard OpenAI-compatible endpoint assumption
     const url = 'https://api.astropods.com/v1/chat/completions';
     
     const prompt = `Classify this financial transaction: "${text}". Type: ${type}. Output ONLY one word from this list: food, groceries, transport, utilities, shopping, health, entertainment, subscription, gift, pocket_money, freelance, bonus, salary, investment, other. If none fit, invent a single-word lowercase category.`;
@@ -55,7 +60,7 @@ export async function classifyCategoryWithAI(text: string, type: 'income' | 'exp
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // Astropods routes this to the configured agent
+        model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 10,
         temperature: 0,
