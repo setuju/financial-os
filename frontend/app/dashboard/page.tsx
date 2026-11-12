@@ -40,6 +40,7 @@ import OnboardingBanner from '@/components/layout/OnboardingBanner';
 import EmptyState from '@/components/ui/EmptyState';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import AdvancedStats from '@/components/dashboard/AdvancedStats';
+import AdvisorCards from '@/components/dashboard/AdvisorCards';
 
 export const dynamic = 'force-dynamic';
 
@@ -172,6 +173,8 @@ export default async function Home() {
             goals={goals || []}
             metrics={surplusData.metrics}
           />
+
+          <AdvisorCards transactions={transactions || []} />
 
           <p className="mt-10 text-center text-xs text-ink-faint">
             Powered by PayPal Payouts · Elasticsearch · Bryntum Gantt

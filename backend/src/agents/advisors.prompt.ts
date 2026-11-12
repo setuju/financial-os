@@ -27,6 +27,7 @@ ${dataContext}
 
 Rules:
 - Keep your response under 4 sentences.
+- Be encouraging, positive, and constructive.
 - Be direct, human, and highly personalized.
 - Never output raw JSON. Speak naturally.
 - If the user asks something off-topic, politely decline.
