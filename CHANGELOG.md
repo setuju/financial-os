@@ -1,206 +1,35 @@
 # Changelog
 
-All notable changes to Financial OS. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning follows [SemVer](https://semver.org/).
+All notable changes to Financial OS are documented here.
 
----
-
-## [1.0.0] — 2026-11-12 — Hackathon Final Submission
-
-### Added — Intelegentia-Agentic Advisors (The F-OS Trio)
-- 3 personas: Financial-Advisor, Ombar-The Cashier, Sikitong.
-- Gatekept behind 100-transaction Easter Egg.
-- Prompt engineering with Canary protection (v1.2).
-- Astropods AI fallback for dynamic category classification.
-
-### Added — Advanced Dashboard & Charts
-- 11 interactive visualizations (Recharts): Income/Expense, Top Categories, Surplus Trend, Donation Log, Transaction Frequency, Word Cloud.
-- Metric widgets: Financial Health Score, Financial Runway, Horizon Goals Progress, Top 5 Expenses.
-- Info tooltips on every card.
-
-### Added — Channel3 Integration
-- Real product search in /horizon with auto-fill for Name and Target Amount.
-
-### Fixed — Core & Security
-- Removed admin UUID fallback (strict 401).
-- Atomic PayPal Payouts DB transactions.
-- Full English migration (IDR removed).
-- Family logic added (pocket_money / gift).
-- CI/CD GitHub Actions added.
-- Monorepo pnpm fix for Render deployment.
-
-
-## [0.6.0] — 2026-11-12 — Interactive Preview & Real Impact
-
-### Added — Live Preview (Journal)
-- Debounced (500ms) server-side parse while typing in `/journal/new`
-- Editable transaction cards BEFORE saving: amount, type (IN/OUT), category, raw text
-- Per-line pencil icon opens inline edit; hit ✓ to save
-- Submit button disabled until preview has valid transactions
-- Backend endpoint: `POST /transactions/preview` (no DB write)
-
-### Added — Channel3 Product Search (Horizon)
-- "Search Product" button opens modal; queries Channel3 API via `/api/channel3/search`
-- Selected product auto-fills goal name + target_amount
-- "Buy (Sandbox)" button opens confirmation modal (no redirect to /impact)
-- API key: `CHANNEL3_API_KEY` (Vercel env)
-
-### Added — Real Donation Organizations (Impact)
-- 8 real orgs: American Red Cross, Direct Relief, UNICEF, World Central Kitchen, Water.org, Doctors Without Borders, Rainforest Alliance, Save the Children
-- Each card has "Visit Website ↗" to real donation page
-- PayPal Payouts routes to sandbox email for demo purposes
-
-### Added — Live Disaster & News Feed
-- `/api/disasters` merges USGS earthquake data + Google News for 8 orgs
-- Displayed as "Live Global Alerts & Partner News" at bottom of `/impact`
-- Footer disclaimer about third-party content
-
-### Added — Current Balance Card
-- `/journal`: 4th stat card = Total IN − Total OUT
-- `/ledger` SummaryStats: "Net" → "Current Balance"
-- Positive = accent blue, negative = danger red
-
-### Added — Parser V8 (Context-Aware, Multi-Transaction)
-- Word-boundary chunking (split by integer tokens, not character index)
-- Context Inheritance: chunks without verbs inherit prior clause's type
-- First-verb-wins logic for `"get pay"` (income) vs `"pay"` (expense)
-- 17 transaction categories (was 12): + freelance, bonus, gift, donation, debt, investment
-- Category type-gating: income chunks can't be `shopping`; expense chunks can't be `income`
-- Removed person names (mom/dad) from `gift` category
-- Removed `'pay'` from INCOME_VERBS (was false positive)
-- Added `get`, `give to`, `freelance`, `bonus` as primary verbs/nouns
-
-### Added — Batch Insert API
-- `POST /transactions/batch` accepts array of pre-edited transactions
-- Wrapped in BEGIN/COMMIT — atomic (all-or-nothing)
-- DB check constraint respected (`source='rule'`)
-
-### Fixed — Database
-- `transactions_source_check` constraint: `'manual_edit'` → `'rule'`
-- Seed data: trimmed to Nov 10 (removed donation entries); aligned with parser categories
-- November seed enriched: freelance, dividend, bonus, donation examples
-
-### Fixed — Frontend
-- Hydration: removed duplicate `suppressHydrationWarning` in `layout.tsx`
-- Impact page: `Dashboard` link → `/dashboard` (was going to `/`)
-- PDF Journal + Ledger: amount column `halign: 'right'`, table width fills page
-- Vercel ESLint: removed all unused vars/imports
-- Category badges: format as `IN:category` / `OUT:category` (web + PDF)
-
-### Fixed — Backend
-- `/transactions/batch`: JSON schema validation + try/catch with raw error forwarding
-- Batch error UI now shows specific backend message (not "Unknown error")
-
-### Changed — UI
-- Live Preview uses compact card layout with pencil edit
-- `AmountEditor` permanently removed (superseded by inline edit in v0.6.0).
-- Cleaned up orphaned references to `AmountEditor` in `/features` page.
-- `IN:` / `OUT:` prefix universally applied (preview, journal table, PDF)
-
-### Docs
-- Added persona #15 (Linguist & Financial Grammar Expert)
-- Documented "First Verb Wins" + "Context Inheritance" NLP strategies
-
----
-
-## [0.5.0] — 2026-11-11 — Submission-ready
-
-**Full-featured multi-tenant natural-language finance demo for PayPal AI Hackathon 2026.**
-
-### Added — Multi-Tenant (B1–B5)
-- Migration 007: `demo_sessions` table + `session_id` UUID on 5 data tables
-- `demo-sessions` repository (5-char password, bcrypt, idempotent bootstrap)
-- `POST /demo/signup`, `POST /demo/login`, `POST /demo/reset`
-- Session-aware seed runner
-- Frontend auth flow: `/signup`, `/login`, `/reset`
-- Middleware cookie gate: `fos_session_id` (httpOnly) + `fos_name`, `fos_is_admin`
-- `lib/api-server.ts`: server-side fetch with `X-Session-Id` from cookies
-- `/api/proxy/[...path]` forwards session header
-
-### Added — AI Assistant (Dual-Provider)
-- Primary: OpenRouter → `google/gemini-3.8-flash`
-- Fallback: Google AI Studio → `gemini-3-flash-preview`
-- Provider status via `/assistant/info`
-- Canary protection on both paths
-
-### Added — Landing, Auth Gate, Legal Pages
-- Public landing at `/`, dashboard for authed
-- Auth gate middleware (307 redirect)
-- 5 legal/info pages
-
-### Added — SEO
-- Per-page metadata, OG, Twitter cards
-- `sitemap.xml`, `robots.txt`, JSON-LD, `/features` page
-- Middleware whitelist for static assets
-
-### Added — UX Polish
-- Onboarding banner, NavBar tooltips
-- Ledger sortable columns, hint banner
-- Light/dark mode (CSS variables + 300ms inversion)
-- Voice input with mic permission flow
-
-### Fixed — Critical
-- Impact cache stale → invalidate on mutations
-- Reports date range end-of-day inclusive
-- Malformed UUID 500 → graceful 401
-- Journal `<= now` filter → `<= endOfToday`
-- Hydration #418/#423 → theme `<script>` moved inside `<head>`
-
-### Fixed — Security
-- `Permissions-Policy: microphone=(self)` (was blocking own mic)
-- `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`
-
-### Fixed — Accessibility
-- `--ink-faint` WCAG AA in both modes
-- Footer text contrast
-- `aria-label` on logo links
-
----
-
-## [0.4.0] — 2026-11-08 — Ledger, PDF, Voice, OCR
-
+## [1.0.0] — 2026-11-12 — Final Hackathon Submission
 ### Added
-- `/ledger`: Grid + Notebook, 36 filter combos, Opening/Closing columns, PDF export
-- `/journal`: PDF export (2-page A4)
-- `/journal/new`: voice input + inline amount editor
-- `/` dashboard: USD stat cards + quick actions
-- AI assistant: scoped prompt, `POST /assistant/chat`
-- OCR receipt: `POST /receipts/ocr` (Groq Vision)
-- Surplus Oracle: predict / edit / achieve / celebrate
-- Goals API, Reports API
-- Migrations 004/005/006
-- Design system components
+- **F-OS Trio (Astropods)**: Three autonomous advisors (Financial-Advisor, Ombar-The Cashier, Sikitong) with 100-transaction gating, database persistence, and custom prompts.
+- **Elasticsearch Integration**: Global search bar and interactive word cloud with PostgreSQL fallback.
+- **Channel3 Product Search**: Real-world product lookup in Horizon with auto-fill for target amounts.
+- **Advanced Dashboard**: Recharts-based visualization (health score, runway, top expenses, word cloud) plus modern hover tooltips.
+- **Security Hardening**: Strict session enforcement, CORS restrictions, atomic payouts, and CI/CD checks.
 
 ### Fixed
-- Parser v2: negation + intent rejection
-- USD-first formatting
+- Voice STT duplication on mobile browsers (Web Speech API overlap).
+- Missing `source` enum constraints in database migrations.
+- Render monorepo build loops and Vercel ESLint strict-mode errors.
 
----
-
-## [0.3.0] — 2026-11-05 — Surplus Oracle + PayPal Payouts
-
+## [0.6.0] — 2026-11-10 — Interactive Preview & Impact
 ### Added
-- Surplus Oracle card
-- PayPal Payouts via APIMatic SDK
-- Ethical Surplus Distribution flow
-- Impact Wallet page
-- Vetted receivers
+- Live preview with inline editing (pencil icon) for parsed transactions.
+- Batch insert API (`/transactions/batch`) with atomic rollback.
+- Multi-parser V8 (context inheritance, first-verb-wins).
+- 8 real donation organizations and live USGS earthquake feed.
 
----
-
-## [0.2.0] — 2026-11-04 — Backend + Frontend Scaffold
-
+## [0.5.0] — 2026-11-08 — Multi-Tenant & Auth
 ### Added
-- Fastify 4 + TypeScript strict ESM
-- Docker Compose: PostgreSQL 16.15 + Redis 7.0.15
-- `/health` endpoint
-- Next.js 14.2 + Tailwind scaffold
-- Health dashboard
+- Session-based auth (`/demo/signup`, `/demo/login`, `/demo/reset`).
+- PostgreSQL row-level isolation via `session_id`.
+- 5-character password generation.
 
----
-
-## [0.1.0] — 2026-11-04 — Foundation
-
+## [0.4.0] — 2026-11-05 — Core Features
 ### Added
-- WSL2 Ubuntu environment
-- GitHub repo `setuju/financial-os`
-- Documentation structure
+- Natural language parser (English, USD-centric).
+- Surplus Oracle and Financial Horizon (Bryntum Gantt).
+- PayPal Payouts integration via APIMatic SDK.

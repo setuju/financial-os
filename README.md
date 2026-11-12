@@ -1,101 +1,69 @@
-# Financial OS
+# Financial OS — Ethical Surplus & Agentic Personal Finance
 
-**Natural-language personal finance with ethical surplus distribution.**
+> **PayPal AI Hackathon 2026 Submission** · *Ethical personal finance powered by natural-language reasoning and autonomous AI advisors.*
 
-Type, speak, or photograph money transactions. Track only surplus after obligations, plan long-term goals on a Gantt timeline, and route 10% of verified surplus to vetted causes via **PayPal Payouts**. Principal savings are never touched. Every payout requires two-step confirmation.
+## 🚀 The Core Vision
+Traditional finance apps treat every dollar as disposable income and push users toward reckless spending or guilt-driven automation. **Financial OS** fundamentally redefines personal finance by introducing the **Ethical Surplus Model**: only money safely left *after* committing to obligations (rent, emergency goals) and reserving principal savings can be allocated to impact.
 
-> **Sandbox only. No real money moves.**
-
-[![Live Demo](https://img.shields.io/badge/demo-financial.saturumah.net-0070ba?style=for-the-badge)](https://financial.saturumah.net)
-[![API](https://img.shields.io/badge/api-financial--api.saturumah.net-059669?style=for-the-badge)](https://financial-api.saturumah.net/health)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
-[![PayPal AI Hackathon 2026](https://img.shields.io/badge/PayPal%20AI%20Hackathon-2026-ffb700?style=for-the-badge)](https://paypalaihackathon.devpost.com/)
+We combine a deterministic natural-language parser with an autonomous **F-OS Trio** (Financial-Advisor, Ombar-The Cashier, Sikitong) and real-time Elasticsearch analytics—wrapped in a strict, multi-tenant architecture.
 
 ---
 
-## Try it now
+## 💎 Why Financial OS Stands Out
 
-| Access | Credentials | What you see |
+- **Ethical Surplus Engine**: `closing = opening + income − expense − horizon_bills − donations`. Principal savings are protected automatically.
+- **Agentic Advisors (The F-OS Trio)**: Unlocked after 100 transactions, users receive personalized, autonomous financial guidance from three distinct AI personas powered by Astropods MCP:
+  - **Financial-Advisor**: Macro-level risk auditing and compliance.
+  - **Ombar-The Cashier**: Frontline street-smart detection of daily micro-leaks.
+  - **Sikitong**: Fearless, out-of-the-box diagnosis of financial habits.
+- **Elasticsearch-Powered Semantic Search**: Instant drill-down into transactions via a global search bar and an interactive word cloud, backed by PostgreSQL fallback.
+- **Channel3 Real-World Anchoring**: Users search real products directly through Channel3 to anchor long-term Horizon goals with actual market prices.
+- **Strict Zero-Trust Security**: Strict 401 enforcement, no admin UUID fallback, rate-limited endpoints, atomic payout transactions, and PII-free sandbox sessions.
+
+---
+
+## 🏆 Hackathon Alignment
+- **Best Overall & Best Use of PayPal + AI**: Deep integration with PayPal Payouts REST API v1 (OAuth2, batch payouts) and APIMatic-generated TypeScript SDK.
+- **Most Impactful**: Principal-protected ethical giving (with two-step human confirmation).
+- **Most Creative**: Bi-modal intent rejection parser + agentic trio that unlocks through gamified usage.
+- **Sponsor Tracks**: Bryntum Gantt 8 (Horizon goals), Channel3 (Product Search), Elastic Cloud (Aggregations), APIMatic (PayPal SDK).
+
+---
+
+## 🛠️ Architecture & Tech Stack
+- **Frontend**: Next.js 14 App Router, Tailwind CSS, Recharts, Lucide, Bryntum Gantt React.
+- **Backend**: Fastify 4 (TypeScript strict ESM), PostgreSQL (Neon), Redis (Upstash), Elasticsearch.
+- **AI & Payments**: OpenRouter/Gemini (Assistant), Groq/OCR.space (Vision), Astropods MCP, Channel3 API, PayPal Payouts v1 Sandbox.
+
+---
+
+## 🚦 Live Demo & Test Credentials
+| Access | Credentials | View |
 |---|---|---|
-| **Admin** | name `admin` · password `financial-os` | Seeded demo data (Jul–Nov 2026): 117 transactions, 3 goals, 2 oracles, 5 surplus periods |
-| **New session** | [financial.saturumah.net/signup](https://financial.saturumah.net/signup) — pick a name, get a 5-char password | Empty slate. Isolated per session. |
+| **Admin Demo** | Name: `admin` · Password: `financial-os` | 117 seeded transactions, 3 goals, AI advisors unlocked |
+| **New Session** | Choose any name on `/signup` | Fresh isolated workspace |
 
-**Live frontend:** https://financial.saturumah.net · **API:** https://financial-api.saturumah.net/health
+- **Live App**: [financial.saturumah.net](https://financial.saturumah.net)
+- **Backend Health**: [financial-api.saturumah.net/health](https://financial-api.saturumah.net/health)
 
----
-
-## Core Concepts
-
-**Anti-Budget Parser** — Natural-language input in English. Rejects plans (`"i want to buy a bike"` → `planned_input`), cancellations (`"never mind the coffee"` → `negated_input`), and negations. Supports **multiple transactions** in one sentence. Uses **First-Verb-Wins** logic for context.
-
-**Ethical Surplus** — Only surplus after obligations can be distributed:
-```
-closing = opening + income − expense − horizon_bills − donations
-```
-Each month's closing becomes the next month's opening. `horizon_bills` = committed obligations from active Horizon goals.
-
-**Intelegentia-Agentic Advisors (The F-OS Trio)** — Hidden behind a 100-transaction gate (Easter Egg). Once unlocked, users get personalized, multi-perspective financial advice:
-- **Financial-Advisor**: Macro-level auditor (risk, health score, runway).
-- **Ombar-The Cashier**: Frontline eyes (daily habits, leaks, coffee spending).
-- **Sikitong**: Brutally honest ex-employee (unrealistic goals, financial culture).
-
-**Advanced Dashboard** — 11 interactive visualizations including Income vs Expense, Top Categories, Surplus Trend, Financial Runway, Health Score, Transaction Frequency, and a Word Cloud.
-
-**Channel3 Integration** — Search real products (MacBooks, iPhones) and auto-fill Horizon goals with actual market prices.
-
-**Astropods AI Fallback** — If a user types an unrecognized expense (e.g., `"bought a rare pokemon card"`), the parser falls back to Astropods AI to classify the category dynamically.
+> *Note: Render free tier may take up to 50s on first request due to cold start.*
 
 ---
 
-## Hackathon 2026
-
-Built for [PayPal AI Hackathon 2026](https://paypalaihackathon.devpost.com/) between **Oct 1 – Nov 12, 2026**, solo, targeting:
-
-- 🎯 **Most Impactful** — ethical surplus, principal untouched, human-in-the-loop
-- 🎯 **Most Creative** — parser rejects plans & cancellations; multi-transaction parsing; AI Advisors
-- 🎯 **Best Demo Delivery** — end-to-end flow within 3 minutes
-- 🎯 **Best Use of Bryntum** — Gantt timeline gates PayPal payouts
-- 🎯 **Best Use of APIMatic** — generated TypeScript SDK from PayPal OpenAPI
-- 🎯 **Best Use of PayPal + AI** — 4 AI modalities feeding a live payout pipeline
-
----
-
-## Sponsor tools
-
-| Tool | Purpose | Status |
-|---|---|---|
-| **PayPal Payouts** | Impact Wallet (sandbox) | ✅ Live |
-| **APIMatic** | TypeScript SDK from PayPal OpenAPI | ✅ Live |
-| **Bryntum Gantt 8** | Financial Horizon | ✅ Live |
-| **Channel3** | Product catalog for Horizon goals | ✅ Live |
-| **Elastic Cloud** | Search index (query layer; writes deferred to v2) | 🟡 Provisioned |
-| **OpenRouter** | AI assistant primary | ✅ Live |
-| **Google AI Studio** | Assistant fallback | ✅ Live |
-| **Groq** | OCR vision (Qwen 3.8 27B) | ✅ Live |
-| **Astropods** | Dynamic category AI fallback | ✅ Live |
-
----
-
-## Tech stack
-
-**Frontend:** Next.js 14.2 (App Router) · TypeScript strict · Tailwind CSS 3.4 · lucide-react · Recharts · jspdf · @bryntum/gantt-react-enterprise 8 · @channel3/sdk
-
-**Backend:** Fastify 4 · TypeScript strict (ESM) · PostgreSQL 16 (Neon) · ioredis (Upstash) · Elastic Cloud · PayPal Payouts · OpenRouter · Groq · Google AI Studio · Astropods · bcrypt
-
-**Infra:** Vercel (frontend) · Render (backend) · Neon (Postgres) · Upstash (Redis) · Cloudflare (DNS)
-
----
-
-## Testing
-
+## 🧪 Local Setup & Testing
 ```bash
-cd backend && pnpm test       # 16/16 parser unit tests
-cd backend && pnpm typecheck
-cd frontend && pnpm typecheck
+# 1. Install dependencies
+pnpm install
+
+# 2. Run Database Migrations
+cd backend && pnpm migrate
+
+# 3. Run Test Suite (Vitest)
+pnpm test
+
+# 4. Start Development
+cd frontend && pnpm dev
 ```
 
----
-
-## License
-
-[MIT](LICENSE) · See [NOTICE](NOTICE) for copyright and reproduction terms.
+## ⚖️ License & Disclaimer
+Released under the **MIT License**. See [`NOTICE`](NOTICE) for copyright and commercial licensing inquiries. All PayPal interactions run in **Sandbox**—no real money moves.

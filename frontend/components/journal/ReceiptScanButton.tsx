@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Camera, Loader2, AlertCircle } from 'lucide-react';
 
 interface Props {
   onExtracted: (text: string) => void;
@@ -38,11 +38,12 @@ async function resizeToDataUrl(file: File): Promise<string> {
 
 export default function ReceiptScanButton({ onExtracted }: Props) {
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
     setLoading(true);
     try {
       const dataUrl = await resizeToDataUrl(file);
@@ -53,28 +54,49 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         signal: AbortSignal.timeout(45_000),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.extractedText) {
-        onExtracted(data.extractedText);
+      
+      if (!res.ok || !data.extractedText) {
+        if (data.error === 'ocr_unconfigured') setError('Vision AI is not configured.');
+        else if (data.error === 'receipt_unreadable') setError('Could not read that image.');
+        else setError('Failed to extract text. Try again.');
+        return;
       }
+      onExtracted(data.extractedText);
     } catch {
-      // ignored
+      setError('Network error.');
     } finally {
       setLoading(false);
+      e.target.value = ''; // Reset input
     }
   }
 
   return (
-    <>
-      <input type="file" accept="image/*" capture="environment" className="hidden" ref={inputRef} onChange={handleFile} />
+    <div className="relative flex flex-col w-full">
       <button
         type="button"
-        onClick={() => inputRef.current?.click()}
         disabled={loading}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-accent-hover disabled:opacity-70"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
         Scan Receipt
       </button>
-    </>
+      
+      {/* Input transparan menutupi tombol untuk memicu kamera di mobile */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFile}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        title=""
+      />
+
+      {error && (
+        <div className="absolute -bottom-6 left-0 w-full flex items-center justify-center gap-1 text-[10px] text-danger text-center">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          <span className="truncate">{error}</span>
+        </div>
+      )}
+    </div>
   );
 }
