@@ -48,35 +48,39 @@ export default function NewTransactionForm() {
   return (
     <form action={submitTransactions}>
       <input type="hidden" name="transactions" value={JSON.stringify(previewTxs)} />
-      <label htmlFor="text" className="mb-2 block text-sm font-medium text-ink">What happened?</label>
-        
-        {/* Input Text */}
-        <div className="mb-3 w-full">
-          <input
-            type="text"
-            name="text"
-            id="text"
-            required
-            autoFocus
-            maxLength={500}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="e.g. i got 1000 from mom and buy coffee 5"
-            className="w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink focus:border-accent focus:outline-none"
-          />
-        </div>
-
-        {/* Action Buttons (Grid 2 Cols) */}
-        <div className="mb-2 grid grid-cols-2 gap-3">
-          <ReceiptScanButton onExtracted={setText} />
-          <VoiceButton onTranscript={setText} />
-        </div>
-
-        {/* Privacy Footer */}
-        <p className="mb-6 text-center text-[11px] text-ink-faint leading-tight">
-          <strong>Privacy First:</strong> Receipt images are processed securely by vision AI and are <strong>never stored</strong> on our servers.
-        </p>
       
+      <label htmlFor="text" className="mb-2 block text-sm font-medium text-ink">
+        Please input here :
+      </label>
+      
+      {/* Input Box */}
+      <div className="mb-4">
+        <input 
+          type="text" 
+          name="text" 
+          id="text" 
+          required 
+          autoFocus 
+          maxLength={500} 
+          value={text} 
+          onChange={(e) => setText(e.target.value)} 
+          placeholder="e.g. i got 1000 from mom and buy coffee 5" 
+          className="w-full rounded-lg border border-line-strong bg-surface-raised px-4 py-3 text-lg text-ink focus:border-accent focus:outline-none" 
+        />
+      </div>
+
+      {/* Buttons Grid (50:50) */}
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <ReceiptScanButton onExtracted={setText} />
+        <VoiceButton onTranscript={setText} />
+      </div>
+
+      {/* Professional Footer */}
+      <p className="mb-6 text-center text-[11px] text-ink-faint leading-relaxed">
+        <strong className="text-ink-soft">Privacy First:</strong> Receipt images are processed securely by vision AI and are <strong>never stored</strong> on our servers.
+      </p>
+
+      {/* Live Preview */}
       <div className="mb-5 mt-6 rounded-xl border border-line bg-surface-raised p-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-ink"><Sparkles className="h-4 w-4 text-accent" /> Live Preview</h3>
