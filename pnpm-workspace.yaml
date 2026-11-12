@@ -1,3 +1,8 @@
 packages:
   - "backend"
   - "frontend"
+
+# Allow build scripts for required packages to satisfy pnpm's security policy
+allowBuilds:
+  esbuild: true
+  core-js: true

@@ -4,5 +4,11 @@
   "workspaces": [
     "backend",
     "frontend"
-  ]
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "core-js"
+    ]
+  }
 }
