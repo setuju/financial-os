@@ -109,7 +109,7 @@ const VAR: Record<number, Array<[number, string, number, string]>> = {
   11: [
     [1, 'safeway groceries', 94.5, 'groceries'],
     [2, 'shell gas station', 48.2, 'transport'],
-    [3, 'freelance web design project', 1200, 'freelance'],
+    [3, 'new monitor for design project', 300, 'shopping'],
     [4, 'starbucks coffee', 7.15, 'food'],
     [5, 'chipotle mexican grill', 15.8, 'food'],
     [6, 'netflix subscription', 15.49, 'subscription'],
@@ -178,7 +178,7 @@ export async function runSeed(
     
     { rawText: 'dividend from index funds', amount: 150.5, type: 'income', category: 'investment', occurredAt: '2026-11-08T10:00:00Z' },
     { rawText: 'bonus from boss', amount: 500, type: 'income', category: 'bonus', occurredAt: '2026-11-10T10:00:00Z' },
-    { rawText: 'received pocket money from mom', amount: 200, type: 'income', category: 'pocket_money', occurredAt: '2026-11-12T10:00:00Z' },
+    { rawText: 'received pocket money from mom', amount: 200, type: 'income', category: 'pocket_money', occurredAt: '2026-11-12T02:00:00Z' },
   ];
 
   for (const md of PAYCHECKS) {

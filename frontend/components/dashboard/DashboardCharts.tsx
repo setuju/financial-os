@@ -66,10 +66,15 @@ export default function DashboardCharts({ summaryData, incomeCatData, expenseCat
     Surplus: h.closing_surplus,
   })).reverse() || [];
 
-  const donationData = payouts?.map(p => ({
-    name: new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    Amount: Number(p.amount),
-  })).reverse() || [];
+  const donationData = payouts?.map(p => {
+    // Mengubah "redcross-sandbox@example.com" menjadi "Redcross"
+    const rawName = p.receiver_email.split('@')[0].replace('-sandbox', '').replace(/-/g, ' ');
+    const cleanName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+    return {
+      name: cleanName,
+      Amount: Number(p.amount),
+    };
+  }).reverse() || [];
 
   return (
     <div className="mt-10 grid gap-6 sm:grid-cols-2">
