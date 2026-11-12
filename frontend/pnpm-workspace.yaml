@@ -1,5 +1,0 @@
-allowBuilds:
-  '@bryntum/gantt-enterprise': true
-  '@bryntum/gantt-enterprise-lib': true
-  '@bryntum/core-enterprise': true
-  core-js: true
