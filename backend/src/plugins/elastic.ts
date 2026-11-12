@@ -3,28 +3,12 @@
  * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
  * ├────────────────────────────────────────────────────────────────────┤
  * │  File      : backend/src/plugins/elastic.ts
- * │  Purpose   : Plugin: elastic
+ * │  Purpose   : Elasticsearch client & index initialization
  * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 10-11-2026
+ * │  Created   : 12-11-2026
  * │  License   : MIT
  * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
  */
-
-/**
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   10-11-2026
- * @package   financial-os/backend
- * @license   MIT
- */
-
 import fp from 'fastify-plugin';
 import { Client } from '@elastic/elasticsearch';
 import type { FastifyInstance } from 'fastify';
@@ -46,27 +30,28 @@ export default fp(
     });
     app.decorate('elastic', client);
 
-    // Buat index jika belum ada (opsional, error diabaikan jika sudah ada)
     try {
+      const indexExists = await client.indices.exists({ index: 'transactions' });
+      if (indexExists) {
+        await client.indices.delete({ index: 'transactions' });
+        app.log.info('Elasticsearch index "transactions" deleted for recreation');
+      }
       await client.indices.create({
         index: 'transactions',
         mappings: {
           properties: {
-            raw_text: { type: 'text' },
+            raw_text: { type: 'text', analyzer: 'standard' },
             category: { type: 'keyword' },
             type: { type: 'keyword' },
             amount: { type: 'float' },
             occurred_at: { type: 'date' },
-              session_id: { type: 'keyword' },
+            session_id: { type: 'keyword' },
           },
         },
       });
       app.log.info('Elasticsearch index "transactions" created');
     } catch (err: any) {
-      // Error 400 resource_already_exists_exception diabaikan
-      if (!(err.meta && err.meta.statusCode === 400)) {
-        app.log.error('Failed to create Elastic index', err);
-      }
+      app.log.error('Failed to create Elastic index', err);
     }
 
     app.addHook('onClose', async () => {

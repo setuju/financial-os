@@ -66,7 +66,7 @@ interface ChatMessage {
 
 
 interface AdvisorBody {
-  persona: 'financial' | 'cashier' | 'insider';
+  persona: 'financial' | 'cashier' | 'sikitong';
 }
 
 interface ChatBody {
@@ -308,7 +308,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
           type: 'object',
           required: ['persona'],
           properties: {
-            persona: { type: 'string', enum: ['financial', 'cashier', 'insider'] },
+            persona: { type: 'string', enum: ['financial', 'cashier', 'sikitong'] },
           },
         },
       },

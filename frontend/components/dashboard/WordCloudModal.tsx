@@ -35,7 +35,7 @@ export default function WordCloudModal({ word, onClose }: { word: string; onClos
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div 
-        className="w-full max-w-2xl max-h-[80vh] flex flex-col rounded-xl bg-surface-raised p-6 shadow-xl"
+        className="w-full max-w-3xl max-h-[80vh] flex flex-col rounded-xl bg-surface-raised p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -63,24 +63,32 @@ export default function WordCloudModal({ word, onClose }: { word: string; onClos
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-surface-raised border-b border-line text-xs uppercase text-ink-faint">
                 <tr>
+                  <th className="pb-2">Type</th>
                   <th className="pb-2">Date</th>
+                  <th className="pb-2">Keyword</th>
                   <th className="pb-2">Description</th>
-                  <th className="pb-2">Category</th>
                   <th className="pb-2 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {results.map((tx, i) => (
                   <tr key={i} className="hover:bg-surface-sunken/50">
-                    <td className="py-2 whitespace-nowrap text-ink-soft">
-                      {new Date(tx.occurred_at).toLocaleDateString()}
-                    </td>
-                    <td className="py-2 text-ink">{tx.raw_text}</td>
                     <td className="py-2">
-                      <span className="rounded bg-surface-sunken px-2 py-0.5 text-[10px] uppercase text-ink-soft">
-                        {tx.type === 'income' ? 'IN' : 'OUT'}:{tx.category}
+                      <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                        tx.type === 'income' ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'
+                      }`}>
+                        {tx.type === 'income' ? 'IN' : 'OUT'}
                       </span>
                     </td>
+                    <td className="py-2 whitespace-nowrap text-ink-soft">
+                      {new Date(tx.occurred_at).toLocaleDateString('en-GB').replace(/\//g, '-')}
+                    </td>
+                    <td className="py-2">
+                      <span className="rounded bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">
+                        {word}
+                      </span>
+                    </td>
+                    <td className="py-2 text-ink">{tx.raw_text}</td>
                     <td className={`py-2 text-right font-mono ${tx.type === 'income' ? 'text-success' : 'text-danger'}`}>
                       {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toFixed(2)}
                     </td>
