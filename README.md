@@ -37,7 +37,7 @@ Each month's closing becomes the next month's opening. `horizon_bills` = committ
 **Intelegentia-Agentic Advisors (The F-OS Trio)** — Hidden behind a 100-transaction gate (Easter Egg). Once unlocked, users get personalized, multi-perspective financial advice:
 - **Financial-Advisor**: Macro-level auditor (risk, health score, runway).
 - **Ombar-The Cashier**: Frontline eyes (daily habits, leaks, coffee spending).
-- **Stephen-The Insider**: Brutally honest ex-employee (unrealistic goals, financial culture).
+- **Sikitong**: Brutally honest ex-employee (unrealistic goals, financial culture).
 
 **Advanced Dashboard** — 11 interactive visualizations including Income vs Expense, Top Categories, Surplus Trend, Financial Runway, Health Score, Transaction Frequency, and a Word Cloud.
 

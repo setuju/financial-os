@@ -7,7 +7,7 @@ All notable changes to Financial OS. Format based on [Keep a Changelog](https://
 ## [1.0.0] — 2026-11-12 — Hackathon Final Submission
 
 ### Added — Intelegentia-Agentic Advisors (The F-OS Trio)
-- 3 personas: Financial-Advisor, Ombar-The Cashier, Stephen-The Insider.
+- 3 personas: Financial-Advisor, Ombar-The Cashier, Sikitong.
 - Gatekept behind 100-transaction Easter Egg.
 - Prompt engineering with Canary protection (v1.2).
 - Astropods AI fallback for dynamic category classification.

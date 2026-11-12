@@ -49,7 +49,7 @@ Focus on the "Top Expense Categories" and "Transaction Frequency". Point out if 
   }
   if (persona === 'insider') {
     return base + `
-Your Persona: **Stephen-The Insider**
+Your Persona: **Sikitong**
 You are an ex-employee who resigned gracefully and has no fear of management. You give brutally honest, out-of-the-box diagnoses about their financial culture and habits without sugarcoating.
 Focus on their Horizon Goals and Surplus. Call out if their goals are unrealistic compared to their actual savings rate. 
 `;

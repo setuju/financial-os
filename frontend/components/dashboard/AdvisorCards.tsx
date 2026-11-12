@@ -41,7 +41,7 @@ const ADVISORS = [
   },
   {
     id: 'insider',
-    name: 'Stephen-The Insider',
+    name: 'Sikitong',
     desc: 'Brutally honest ex-employee.',
     icon: Brain,
     color: 'text-purple-500',
