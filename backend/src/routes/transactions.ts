@@ -218,13 +218,18 @@ const transactionsRoutes: FastifyPluginAsync = async (fastify) => {
       const client = await fastify.pg.connect();
       try {
         await client.query('BEGIN');
-        for (const tx of transactions) {
-          const transaction = await insertTransaction(client as any, sid, {
-            userId: null,
-            parsed: { amount: tx.amount, type: tx.type, category: tx.category, occurredAt: new Date(), rawText: tx.rawText, source: 'manual_edit' }
-          });
-          inserted.push(transaction);
-        }
+                  for (const tx of transactions) {
+            let finalCategory = tx.category;
+            if (finalCategory === 'other') {
+              finalCategory = await classifyCategoryWithAI(tx.rawText, tx.type);
+            }
+
+            const transaction = await insertTransaction(client as any, sid, {
+              userId: null,
+              parsed: { amount: tx.amount, type: tx.type, category: finalCategory, occurredAt: new Date(), rawText: tx.rawText, source: 'manual_edit' }
+            });
+            inserted.push(transaction);
+          }
         await client.query('COMMIT');
       } catch (err: any) { 
         await client.query('ROLLBACK'); 
