@@ -22,6 +22,7 @@
 import { Info } from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
 import WordCloudModal from './WordCloudModal';
+import DashboardSearch from './DashboardSearch';
 
 import { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
@@ -186,6 +187,11 @@ export default function AdvancedStats({ transactions, goals, metrics, esWordClou
           </ResponsiveContainer>
         </div>
       </Card>
+
+      {/* Global Search */}
+      <div className="lg:col-span-3">
+        <DashboardSearch />
+      </div>
 
       {/* Word Cloud */}
       <Card className="lg:col-span-3">

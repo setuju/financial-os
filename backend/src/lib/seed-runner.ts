@@ -269,7 +269,7 @@ export async function runSeed(
                 session_id: sessionId 
               }
             ]);
-            await esClient.bulk({ operations }).catch(err => console.error('[Seed ES Sync] Bulk failed:', err));
+            await esClient.bulk({ operations, refresh: true }).catch(err => console.error('[Seed ES Sync] Bulk failed:', err));
           }
   }
 

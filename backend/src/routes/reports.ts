@@ -40,6 +40,7 @@ interface CategoryQuery {
 
 interface SearchQuery {
   q: string;
+  type?: 'all' | 'income' | 'expense';
 }
 
 interface Bucket {
@@ -237,23 +238,30 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
         querystring: {
           type: 'object',
           required: ['q'],
-          properties: { q: { type: 'string' } },
+          properties: { 
+            q: { type: 'string' },
+            type: { type: 'string', enum: ['all', 'income', 'expense'], default: 'all' }
+          },
         },
       },
     },
     async (req) => {
       const sid = req.sessionId;
-      const { q } = req.query;
+      const { q, type = 'all' } = req.query;
 
       try {
+        const must: any[] = [{ match: { raw_text: q } }];
+        const filter: any[] = [{ term: { session_id: sid } }];
+        
+        if (type !== 'all') {
+          filter.push({ term: { type: type } });
+        }
+
         // 1. Coba Elasticsearch (Cepat & Analitik)
         const result = await fastify.elastic.search({
           index: 'transactions',
           query: {
-            bool: {
-              must: [{ match: { raw_text: q } }],
-              filter: [{ term: { session_id: sid } }]
-            }
+            bool: { must, filter }
           },
           sort: [{ occurred_at: { order: 'desc' } }],
           size: 50
@@ -270,10 +278,11 @@ const reportsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // 2. Fallback PostgreSQL (Jika ES down atau kosong)
+      const typeClause = type !== 'all' ? `AND type = '${type}'` : '';
       const pgRes = await fastify.pg.query(
         `SELECT raw_text, amount, type, category, occurred_at 
          FROM transactions 
-         WHERE session_id = $1 AND raw_text ILIKE $2 
+         WHERE session_id = $1 AND raw_text ILIKE $2 ${typeClause}
          ORDER BY occurred_at DESC LIMIT 50`,
         [sid, `%${q}%`]
       );
