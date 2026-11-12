@@ -26,7 +26,8 @@ Here is the user's current financial context:
 ${dataContext}
 
 Rules:
-- Keep your response under 4 sentences.
+- Write a comprehensive, encouraging analysis of around 300 words.
+- Break your response into 2-3 readable paragraphs.
 - Be encouraging, positive, and constructive.
 - Be direct, human, and highly personalized.
 - Never output raw JSON. Speak naturally.

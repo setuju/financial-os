@@ -118,6 +118,22 @@ export async function serverGetReportCategories(params: {
   }
 }
 
+
+export async function serverGetAdvisorHistory(): Promise<Record<string, { content: string; created_at: string }> | null> {
+  try {
+    const res = await fetch(
+      `${API_URL}/assistant/advisor/history`,
+      withSession({ signal: AbortSignal.timeout(5000) }),
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { history: Record<string, { content: string; created_at: string }> };
+    return data.history;
+  } catch {
+    return null;
+  }
+}
+
+
 export async function serverGetGoals(): Promise<Goal[] | null> {
   try {
     const res = await fetch(

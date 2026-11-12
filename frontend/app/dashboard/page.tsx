@@ -33,7 +33,8 @@ import {
   serverGetImpactSurplus,
   serverGetImpactPayouts,
   serverGetTransactions,
-  serverGetGoals
+  serverGetGoals,
+  serverGetAdvisorHistory
 } from '@/lib/api-server';
 import StatCard from '@/components/ui/StatCard';
 import OnboardingBanner from '@/components/layout/OnboardingBanner';
@@ -59,7 +60,7 @@ export default async function Home() {
   sixMonthsAgo.setMonth(now.getMonth() - 6);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts, transactions, goals] = await Promise.all([
+  const [summaryData, incomeCatData, expenseCatData, impactSurplus, payouts, transactions, goals, advisorHistory] = await Promise.all([
     serverGetReportSummary({ from: fmt(sixMonthsAgo), to: fmt(now), groupBy: 'month', type: 'all', includeProjections: false }),
     serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'income' }),
     serverGetReportCategories({ from: fmt(sixMonthsAgo), to: fmt(now), type: 'expense' }),
@@ -67,6 +68,7 @@ export default async function Home() {
     serverGetImpactPayouts(),
     serverGetTransactions(200),
     serverGetGoals(),
+    serverGetAdvisorHistory(),
   ]);
 
   return (
@@ -174,7 +176,7 @@ export default async function Home() {
             metrics={surplusData.metrics}
           />
 
-          <AdvisorCards transactions={transactions || []} />
+          <AdvisorCards transactions={transactions || []} initialData={advisorHistory} />
 
           <p className="mt-10 text-center text-xs text-ink-faint">
             Powered by PayPal Payouts · Elasticsearch · Bryntum Gantt

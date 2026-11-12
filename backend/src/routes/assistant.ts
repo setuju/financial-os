@@ -282,7 +282,25 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
     // Do NOT return canary or prompt content here.
   }));
 
+
+  fastify.get('/assistant/advisor/history', async (req) => {
+    const sid = req.sessionId;
+    const res = await fastify.pg.query(
+      `SELECT DISTINCT ON (persona) persona, content, created_at 
+       FROM advisor_advice 
+       WHERE session_id = $1 
+       ORDER BY persona, created_at DESC`,
+      [sid]
+    );
+    const history: Record<string, { content: string; created_at: string }> = {};
+    res.rows.forEach(r => {
+      history[r.persona] = { content: r.content, created_at: r.created_at };
+    });
+    return { history };
+  });
+
   fastify.post<{ Body: AdvisorBody }>(
+
     '/assistant/advisor',
     {
       schema: {
@@ -373,7 +391,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
             body: JSON.stringify({
               model: resolveModel(),
               messages: [{ role: 'system', content: prompt }, { role: 'user', content: 'Give me your advice.' }],
-              max_tokens: 300,
+              max_tokens: 800,
               temperature: 0.7,
             }),
             signal: AbortSignal.timeout(30000),
@@ -396,7 +414,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: prompt }] },
               contents: [{ role: 'user', parts: [{ text: 'Give me your advice.' }] }],
-              generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
+              generationConfig: { maxOutputTokens: 800, temperature: 0.7 },
             }),
             signal: AbortSignal.timeout(30000),
           });
@@ -419,6 +437,13 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(500).send({ error: 'internal_error' });
       }
 
+      
+      // Simpan ke database
+      await fastify.pg.query(
+        `INSERT INTO advisor_advice (session_id, persona, content) VALUES ($1, $2, $3)`,
+        [sid, persona, replyText.trim()]
+      );
+      
       return { reply: replyText.trim(), provider, model };
     }
   );

@@ -1,22 +1,3 @@
-/**
- * ┌────────────────────────────────────────────────────────────────────┐
- * │  ⌂  SATURUMAH.NET · FINANCIAL OS · FILE CONTRACT
- * ├────────────────────────────────────────────────────────────────────┤
- * │  File      : frontend/components/dashboard/AdvisorCards.tsx
- * │  Purpose   : AI Financial Advisors (Financial, Cashier, Insider)
- * │  Author    : Jack — Jack[at]SatuRumah[dot]Net
- * │  GitHub    : https://github.com/setuju
- * │  Website   : https://saturumah.net
- * │  Created   : 12-11-2026
- * │  License   : MIT
- * └────────────────────────────────────────────────────────────────────┘
- *
- * @author    Jack <Jack[at]SatuRumah[dot]Net>
- * @created   12-11-2026
- * @package   financial-os/frontend
- * @license   MIT
- */
-
 'use client';
 
 import { useState } from 'react';
@@ -40,7 +21,7 @@ const ADVISORS = [
     color: 'text-emerald-500',
   },
   {
-    id: 'insider',
+    id: 'sikitong',
     name: 'Sikitong',
     desc: 'Brutally honest ex-employee.',
     icon: Brain,
@@ -48,14 +29,27 @@ const ADVISORS = [
   },
 ] as const;
 
-export default function AdvisorCards({ transactions }: { transactions: Transaction[] }) {
+interface Props {
+  transactions: Transaction[];
+  initialData: Record<string, { content: string; created_at: string }> | null;
+}
+
+export default function AdvisorCards({ transactions, initialData }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [results, setResults] = useState<Record<string, string>>({});
+  const [results, setResults] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    if (initialData) {
+      Object.entries(initialData).forEach(([k, v]) => {
+        initial[k] = v.content;
+      });
+    }
+    return initial;
+  });
   const [error, setError] = useState<string | null>(null);
 
   const isUnlocked = transactions.length >= 100;
 
-  async function getAdvice(personaId: string) {
+  async function generateNew(personaId: string) {
     setLoadingId(personaId);
     setError(null);
 
@@ -64,17 +58,14 @@ export default function AdvisorCards({ transactions }: { transactions: Transacti
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ persona: personaId }),
-        signal: AbortSignal.timeout(35000),
+        signal: AbortSignal.timeout(60000),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        if (res.status === 403) {
-          setError(data.message || 'Data insufficient.');
-        } else {
-          setError(data.error || 'Failed to get advice.');
-        }
+        if (res.status === 403) setError(data.message || 'Data insufficient.');
+        else setError(data.error || 'Failed to get advice.');
         return;
       }
 
@@ -122,26 +113,32 @@ export default function AdvisorCards({ transactions }: { transactions: Transacti
             
             <p className="mb-4 text-xs text-ink-soft">{adv.desc}</p>
 
-            {results[adv.id] ? (
-              <div className="rounded-md bg-surface-sunken p-3 text-sm text-ink leading-relaxed">
-                {results[adv.id]}
-              </div>
-            ) : (
-              <div className="mt-auto pt-4">
-                <button
-                  onClick={() => getAdvice(adv.id)}
-                  disabled={!isUnlocked || loadingId !== null}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-accent px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
-                >
-                  {loadingId === adv.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-3.5 w-3.5" />
-                  )}
-                  {loadingId === adv.id ? 'Analyzing...' : 'Get Advice'}
-                </button>
-              </div>
-            )}
+            <div className="flex-1">
+              {results[adv.id] ? (
+                <div className="rounded-md bg-surface-sunken p-4 text-sm text-ink leading-relaxed whitespace-pre-wrap">
+                  {results[adv.id]}
+                </div>
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-md border border-dashed border-line-strong p-4 text-center text-xs text-ink-faint">
+                  No advice generated yet.
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => generateNew(adv.id)}
+                disabled={!isUnlocked || loadingId !== null}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-accent px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+              >
+                {loadingId === adv.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {loadingId === adv.id ? 'Analyzing...' : 'Generate New Advice'}
+              </button>
+            </div>
           </Card>
         ))}
       </div>
