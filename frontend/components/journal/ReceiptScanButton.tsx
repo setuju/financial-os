@@ -7,8 +7,8 @@ interface Props {
   onExtracted: (text: string) => void;
 }
 
-const MAX_DIM = 1600;
-const JPEG_QUALITY = 0.85;
+const MAX_DIM = 1024;
+const JPEG_QUALITY = 0.75;
 
 async function resizeToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -51,7 +51,7 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ image: dataUrl }),
-        signal: AbortSignal.timeout(45_000),
+        signal: AbortSignal.timeout(65_000),
       });
       const data = await res.json().catch(() => ({}));
       
@@ -62,8 +62,13 @@ export default function ReceiptScanButton({ onExtracted }: Props) {
         return;
       }
       onExtracted(data.extractedText);
-    } catch {
-      setError('Network error.');
+    } catch (err: unknown) {
+      console.error('[OCR Upload Error]', err);
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        setError('Request timed out. Backend might be waking up.');
+      } else {
+        setError('Connection failed. Image might be too large.');
+      }
     } finally {
       setLoading(false);
       e.target.value = ''; // Reset input
