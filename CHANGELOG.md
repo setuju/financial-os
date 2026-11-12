@@ -4,6 +4,31 @@ All notable changes to Financial OS. Format based on [Keep a Changelog](https://
 
 ---
 
+## [1.0.0] — 2026-11-12 — Hackathon Final Submission
+
+### Added — AI Financial Advisors (AOS Trio)
+- 3 personas: Financial-Advisor, Ombar-The Cashier, Stephen-The Insider.
+- Gatekept behind 100-transaction Easter Egg.
+- Prompt engineering with Canary protection (v1.2).
+- Astropods AI fallback for dynamic category classification.
+
+### Added — Advanced Dashboard & Charts
+- 11 interactive visualizations (Recharts): Income/Expense, Top Categories, Surplus Trend, Donation Log, Transaction Frequency, Word Cloud.
+- Metric widgets: Financial Health Score, Financial Runway, Horizon Goals Progress, Top 5 Expenses.
+- Info tooltips on every card.
+
+### Added — Channel3 Integration
+- Real product search in /horizon with auto-fill for Name and Target Amount.
+
+### Fixed — Core & Security
+- Removed admin UUID fallback (strict 401).
+- Atomic PayPal Payouts DB transactions.
+- Full English migration (IDR removed).
+- Family logic added (pocket_money / gift).
+- CI/CD GitHub Actions added.
+- Monorepo pnpm fix for Render deployment.
+
+
 ## [0.6.0] — 2026-11-12 — Interactive Preview & Real Impact
 
 ### Added — Live Preview (Journal)
