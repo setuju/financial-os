@@ -1,6 +1,9 @@
 {
   "name": "financial-os",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "workspaces": [
     "backend",
     "frontend"
