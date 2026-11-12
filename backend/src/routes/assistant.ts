@@ -170,7 +170,7 @@ const assistantRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Try OpenRouter first (if key present)
       if (openRouterKey) {
-        const model = resolveModel();
+        const model = 'openai/gpt-4o-mini'; // Hardcoded fallback because Env Var is invalid
         const openrouterMessages = [
           { role: 'system' as const, content: ASSISTANT_PROMPT },
           ...history.slice(-MAX_HISTORY).map((m) => ({
